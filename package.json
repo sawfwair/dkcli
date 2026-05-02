@@ -47,7 +47,7 @@
   },
   "scripts": {
     "dk": "node ./bin/dk.js",
-    "docs:tokens": "node ./scripts/generate-docs-design.mjs",
+    "docs:tokens": "pnpm build:core && pnpm build:tokens && node ./scripts/generate-docs-design.mjs",
     "docs:dev": "pnpm docs:tokens && vitepress dev docs",
     "docs:build": "pnpm docs:tokens && vitepress build docs",
     "docs:preview": "vitepress preview docs",
