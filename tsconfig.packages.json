@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "lib": ["es2022"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "paths": {
+      "@dkcli/core": ["packages/core/src/index.ts"],
+      "@dkcli/core/*": ["packages/core/src/*"],
+      "@dkcli/tokens": ["packages/tokens/src/index.ts"],
+      "@dkcli/tokens/*": ["packages/tokens/src/*"],
+      "@dkcli/components": ["packages/components/src/index.ts"],
+      "@dkcli/components/*": ["packages/components/src/*"]
+    },
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "ES2022",
+    "verbatimModuleSyntax": true
+  }
+}

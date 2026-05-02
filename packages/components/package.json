@@ -1,0 +1,259 @@
+{
+  "name": "@dkcli/components",
+  "version": "0.2.3",
+  "description": "Svelte 5 DesignKit components with proof-backed recipes and theme-driven styling.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sawfwair/dkcli.git",
+    "directory": "packages/components"
+  },
+  "homepage": "https://dkcli.com/components",
+  "bugs": {
+    "url": "https://github.com/sawfwair/dkcli/issues"
+  },
+  "keywords": [
+    "svelte",
+    "design-system",
+    "components",
+    "tokens",
+    "accessibility"
+  ],
+  "svelte": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "svelte": "./dist/index.js",
+      "import": "./dist/index.js"
+    },
+    "./accordion": {
+      "types": "./dist/accordion/index.d.ts",
+      "svelte": "./dist/accordion/index.js",
+      "import": "./dist/accordion/index.js"
+    },
+    "./alert": {
+      "types": "./dist/alert/index.d.ts",
+      "svelte": "./dist/alert/index.js",
+      "import": "./dist/alert/index.js"
+    },
+    "./avatar": {
+      "types": "./dist/avatar/index.d.ts",
+      "svelte": "./dist/avatar/index.js",
+      "import": "./dist/avatar/index.js"
+    },
+    "./badge": {
+      "types": "./dist/badge/index.d.ts",
+      "svelte": "./dist/badge/index.js",
+      "import": "./dist/badge/index.js"
+    },
+    "./breadcrumbs": {
+      "types": "./dist/breadcrumbs/index.d.ts",
+      "svelte": "./dist/breadcrumbs/index.js",
+      "import": "./dist/breadcrumbs/index.js"
+    },
+    "./button": {
+      "types": "./dist/button/index.d.ts",
+      "svelte": "./dist/button/index.js",
+      "import": "./dist/button/index.js"
+    },
+    "./card": {
+      "types": "./dist/card/index.d.ts",
+      "svelte": "./dist/card/index.js",
+      "import": "./dist/card/index.js"
+    },
+    "./chip": {
+      "types": "./dist/chip/index.d.ts",
+      "svelte": "./dist/chip/index.js",
+      "import": "./dist/chip/index.js"
+    },
+    "./combobox": {
+      "types": "./dist/combobox/index.d.ts",
+      "svelte": "./dist/combobox/index.js",
+      "import": "./dist/combobox/index.js"
+    },
+    "./command-palette": {
+      "types": "./dist/command-palette/index.d.ts",
+      "svelte": "./dist/command-palette/index.js",
+      "import": "./dist/command-palette/index.js"
+    },
+    "./data-chart": {
+      "types": "./dist/data-chart/index.d.ts",
+      "svelte": "./dist/data-chart/index.js",
+      "import": "./dist/data-chart/index.js"
+    },
+    "./data-grid-lite": {
+      "types": "./dist/data-grid-lite/index.d.ts",
+      "svelte": "./dist/data-grid-lite/index.js",
+      "import": "./dist/data-grid-lite/index.js"
+    },
+    "./date-picker": {
+      "types": "./dist/date-picker/index.d.ts",
+      "svelte": "./dist/date-picker/index.js",
+      "import": "./dist/date-picker/index.js"
+    },
+    "./text-field": {
+      "types": "./dist/text-field/index.d.ts",
+      "svelte": "./dist/text-field/index.js",
+      "import": "./dist/text-field/index.js"
+    },
+    "./textarea": {
+      "types": "./dist/textarea/index.d.ts",
+      "svelte": "./dist/textarea/index.js",
+      "import": "./dist/textarea/index.js"
+    },
+    "./checkbox": {
+      "types": "./dist/checkbox/index.d.ts",
+      "svelte": "./dist/checkbox/index.js",
+      "import": "./dist/checkbox/index.js"
+    },
+    "./switch": {
+      "types": "./dist/switch/index.d.ts",
+      "svelte": "./dist/switch/index.js",
+      "import": "./dist/switch/index.js"
+    },
+    "./radio-group": {
+      "types": "./dist/radio-group/index.d.ts",
+      "svelte": "./dist/radio-group/index.js",
+      "import": "./dist/radio-group/index.js"
+    },
+    "./tabs": {
+      "types": "./dist/tabs/index.d.ts",
+      "svelte": "./dist/tabs/index.js",
+      "import": "./dist/tabs/index.js"
+    },
+    "./dialog": {
+      "types": "./dist/dialog/index.d.ts",
+      "svelte": "./dist/dialog/index.js",
+      "import": "./dist/dialog/index.js"
+    },
+    "./empty-state": {
+      "types": "./dist/empty-state/index.d.ts",
+      "svelte": "./dist/empty-state/index.js",
+      "import": "./dist/empty-state/index.js"
+    },
+    "./drawer": {
+      "types": "./dist/drawer/index.d.ts",
+      "svelte": "./dist/drawer/index.js",
+      "import": "./dist/drawer/index.js"
+    },
+    "./popover": {
+      "types": "./dist/popover/index.d.ts",
+      "svelte": "./dist/popover/index.js",
+      "import": "./dist/popover/index.js"
+    },
+    "./menu": {
+      "types": "./dist/menu/index.d.ts",
+      "svelte": "./dist/menu/index.js",
+      "import": "./dist/menu/index.js"
+    },
+    "./inline-edit": {
+      "types": "./dist/inline-edit/index.d.ts",
+      "svelte": "./dist/inline-edit/index.js",
+      "import": "./dist/inline-edit/index.js"
+    },
+    "./pagination": {
+      "types": "./dist/pagination/index.d.ts",
+      "svelte": "./dist/pagination/index.js",
+      "import": "./dist/pagination/index.js"
+    },
+    "./file-upload": {
+      "types": "./dist/file-upload/index.d.ts",
+      "svelte": "./dist/file-upload/index.js",
+      "import": "./dist/file-upload/index.js"
+    },
+    "./progress": {
+      "types": "./dist/progress/index.d.ts",
+      "svelte": "./dist/progress/index.js",
+      "import": "./dist/progress/index.js"
+    },
+    "./range-date-picker": {
+      "types": "./dist/range-date-picker/index.d.ts",
+      "svelte": "./dist/range-date-picker/index.js",
+      "import": "./dist/range-date-picker/index.js"
+    },
+    "./select": {
+      "types": "./dist/select/index.d.ts",
+      "svelte": "./dist/select/index.js",
+      "import": "./dist/select/index.js"
+    },
+    "./segmented-control": {
+      "types": "./dist/segmented-control/index.d.ts",
+      "svelte": "./dist/segmented-control/index.js",
+      "import": "./dist/segmented-control/index.js"
+    },
+    "./side-nav": {
+      "types": "./dist/side-nav/index.d.ts",
+      "svelte": "./dist/side-nav/index.js",
+      "import": "./dist/side-nav/index.js"
+    },
+    "./skeleton": {
+      "types": "./dist/skeleton/index.d.ts",
+      "svelte": "./dist/skeleton/index.js",
+      "import": "./dist/skeleton/index.js"
+    },
+    "./stepper": {
+      "types": "./dist/stepper/index.d.ts",
+      "svelte": "./dist/stepper/index.js",
+      "import": "./dist/stepper/index.js"
+    },
+    "./table": {
+      "types": "./dist/table/index.d.ts",
+      "svelte": "./dist/table/index.js",
+      "import": "./dist/table/index.js"
+    },
+    "./toast": {
+      "types": "./dist/toast/index.d.ts",
+      "svelte": "./dist/toast/index.js",
+      "import": "./dist/toast/index.js"
+    },
+    "./tooltip": {
+      "types": "./dist/tooltip/index.d.ts",
+      "svelte": "./dist/tooltip/index.js",
+      "import": "./dist/tooltip/index.js"
+    },
+    "./tree-view": {
+      "types": "./dist/tree-view/index.d.ts",
+      "svelte": "./dist/tree-view/index.js",
+      "import": "./dist/tree-view/index.js"
+    },
+    "./primitives": {
+      "types": "./dist/primitives/index.d.ts",
+      "svelte": "./dist/primitives/index.js",
+      "import": "./dist/primitives/index.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts.d.ts",
+      "svelte": "./dist/contracts.js",
+      "import": "./dist/contracts.js"
+    },
+    "./verification": {
+      "types": "./dist/verification.d.ts",
+      "svelte": "./dist/verification.js",
+      "import": "./dist/verification.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "svelte-package --output dist && node ../../scripts/prune-components-dist.mjs dist && publint",
+    "pack:dry": "env -u npm_config_link_workspace_packages npm_config_cache=../../.npm-cache npm pack --dry-run",
+    "prepublishOnly": "node ../../scripts/check-package-contents.mjs components",
+    "publint": "publint"
+  },
+  "dependencies": {
+    "@dkcli/core": "0.2.1",
+    "@dkcli/tokens": "0.2.1"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0"
+  }
+}

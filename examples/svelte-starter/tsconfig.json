@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "checkJs": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "baseUrl": "../..",
+    "paths": {
+      "@dkcli/core": ["packages/core/src/index.ts"],
+      "@dkcli/core/*": ["packages/core/src/*"],
+      "@dkcli/tokens": ["packages/tokens/src/index.ts"],
+      "@dkcli/tokens/*": ["packages/tokens/src/*"],
+      "@dkcli/components": ["packages/components/src/index.ts"],
+      "@dkcli/components/*": ["packages/components/src/*"]
+    },
+    "strict": true,
+    "target": "ES2022",
+    "types": ["svelte"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.svelte"]
+}

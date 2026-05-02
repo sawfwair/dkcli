@@ -1,0 +1,123 @@
+{
+  "name": "@dkcli/cli",
+  "version": "0.3.0",
+  "description": "Mathematical design CLI for palettes, scales, contrast, layout, motion, and CSS analysis.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sawfwair/dkcli.git"
+  },
+  "homepage": "https://dkcli.com",
+  "bugs": {
+    "url": "https://github.com/sawfwair/dkcli/issues"
+  },
+  "keywords": [
+    "design",
+    "cli",
+    "oklch",
+    "apca",
+    "typography",
+    "layout",
+    "motion"
+  ],
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "main": "./dist/lib/dk/index.js",
+  "types": "./dist/lib/dk/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib/dk/index.d.ts",
+      "import": "./dist/lib/dk/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "dk": "./dist/bin/dk.js",
+    "dkcli": "./dist/bin/dk.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dk": "node ./bin/dk.js",
+    "build:core": "pnpm --dir packages/core build",
+    "build:tokens": "pnpm --dir packages/tokens build",
+    "build:components": "pnpm --dir packages/components build",
+    "build:packages": "pnpm build:core && pnpm build:tokens && pnpm build:components",
+    "build:cli": "pnpm build:core && tsup --config ./tsup.config.ts && tsc -p ./tsconfig.core-dts.json && node ./scripts/patch-cli-dts.mjs",
+    "build": "pnpm build:cli",
+    "pack:core:dry": "pnpm --dir packages/core pack:dry",
+    "pack:tokens:dry": "pnpm --dir packages/tokens pack:dry",
+    "pack:components:dry": "pnpm --dir packages/components pack:dry",
+    "pack:packages:dry": "pnpm pack:core:dry && pnpm pack:tokens:dry && pnpm pack:components:dry && pnpm pack:dry",
+    "pack:dry": "env -u npm_config_link_workspace_packages npm_config_cache=.npm-cache npm pack --dry-run",
+    "check:package-contents": "node ./scripts/check-package-contents.mjs",
+    "prepack": "pnpm build:cli",
+    "prepublishOnly": "node ./scripts/check-package-contents.mjs cli",
+    "prepare": "node ./scripts/prepare.mjs",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:status": "changeset status --verbose",
+    "check:types": "pnpm build:core && tsc -p ./tsconfig.cli.json --noEmit",
+    "check:components": "pnpm --dir packages/components exec svelte-check --tsconfig ./tsconfig.json",
+    "check:components:strict": "pnpm --dir packages/components exec svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+    "check": "pnpm check:types && pnpm check:components",
+    "check:strict": "pnpm check:types && pnpm check:components:strict",
+    "lint": "eslint . --max-warnings=0",
+    "publint": "pnpm publint:core && pnpm publint:tokens && pnpm publint:components",
+    "publint:core": "pnpm --dir packages/core publint",
+    "publint:tokens": "pnpm --dir packages/tokens publint",
+    "publint:components": "pnpm --dir packages/components publint",
+    "test:unit": "vitest run --config ./vitest.config.ts --maxWorkers=4",
+    "test:coverage": "vitest run --config ./vitest.config.ts --coverage --maxWorkers=2",
+    "test": "pnpm test:unit",
+    "example:install:tarballs": "node ./scripts/install-example-tarballs.mjs",
+    "example:build": "pnpm --dir examples/svelte-starter build",
+    "example:verify": "pnpm example:install:tarballs && pnpm example:build",
+    "release:verify": "pnpm lint && pnpm check:strict && pnpm test && pnpm build && pnpm build:packages && pnpm publint && pnpm pack:packages:dry && pnpm check:package-contents && pnpm example:verify",
+    "preflight": "pnpm lint && pnpm check:strict && pnpm test && pnpm test:coverage",
+    "verify": "pnpm release:verify"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.6",
+    "@dkcli/components": "workspace:*",
+    "@dkcli/core": "workspace:*",
+    "@dkcli/tokens": "workspace:*",
+    "@eslint/compat": "^2.0.3",
+    "@eslint/js": "^9.39.4",
+    "@sveltejs/package": "^2.4.1",
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@testing-library/svelte": "^5.3.1",
+    "@types/node": "^22",
+    "@vitest/coverage-v8": "^4.1.1",
+    "eslint": "^9.39.4",
+    "globals": "^17.4.0",
+    "husky": "^9.1.7",
+    "jsdom": "^29.0.1",
+    "publint": "^0.3.13",
+    "svelte": "^5.46.1",
+    "svelte-check": "^4.3.4",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.0",
+    "vite": "^7.3.2",
+    "vitest": "^4.1.0"
+  },
+  "dependencies": {
+    "colorjs.io": "^0.6.1"
+  },
+  "pnpm": {
+    "overrides": {
+      "brace-expansion@<1.1.13": "1.1.13",
+      "cookie@<0.7.0": "0.7.2",
+      "postcss@<8.5.10": "8.5.10"
+    }
+  }
+}

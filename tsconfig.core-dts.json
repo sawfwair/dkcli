@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.packages.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "outDir": "./dist/lib/dk/_core",
+    "rewriteRelativeImportExtensions": true,
+    "rootDir": "./packages/core/src"
+  },
+  "include": ["packages/core/src/**/*.ts"],
+  "exclude": ["packages/core/src/**/*.test.ts"]
+}

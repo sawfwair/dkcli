@@ -1,0 +1,11 @@
+*.map
+**/*.map
+.env
+.env.*
+src/
+coverage/
+__tests__/
+**/*.test.*
+**/*Harness.svelte
+**/*Harness.svelte.d.ts
+**/test-utils/

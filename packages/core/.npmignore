@@ -1,0 +1,9 @@
+*.map
+**/*.map
+.env
+.env.*
+src/
+coverage/
+__tests__/
+**/*.test.*
+**/*.spec.*

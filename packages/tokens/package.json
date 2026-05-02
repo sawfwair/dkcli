@@ -1,0 +1,61 @@
+{
+  "name": "@dkcli/tokens",
+  "version": "0.2.1",
+  "description": "Compiled DesignKit themes, aliases, and token emitters.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sawfwair/dkcli.git",
+    "directory": "packages/tokens"
+  },
+  "homepage": "https://dkcli.com/foundations/color",
+  "bugs": {
+    "url": "https://github.com/sawfwair/dkcli/issues"
+  },
+  "keywords": [
+    "design-system",
+    "tokens",
+    "theme",
+    "oklch",
+    "css-variables"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./create-theme": {
+      "types": "./dist/create-theme.d.ts",
+      "import": "./dist/create-theme.js"
+    },
+    "./emit-css": {
+      "types": "./dist/emit-css.d.ts",
+      "import": "./dist/emit-css.js"
+    },
+    "./emit-json": {
+      "types": "./dist/emit-json.d.ts",
+      "import": "./dist/emit-json.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup --config ./tsup.config.ts",
+    "pack:dry": "env -u npm_config_link_workspace_packages npm_config_cache=../../.npm-cache npm pack --dry-run",
+    "prepublishOnly": "node ../../scripts/check-package-contents.mjs tokens",
+    "publint": "publint"
+  },
+  "dependencies": {
+    "@dkcli/core": "0.2.1"
+  }
+}

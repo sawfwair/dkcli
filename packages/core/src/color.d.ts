@@ -1,0 +1,51 @@
+import type { ColorSpace, Gamut } from './types.ts';
+export type ColorResult = {
+    oklch: string;
+    hex: string;
+    css: string;
+    l: number;
+    c: number;
+    h: number;
+    gamut: Gamut;
+};
+export type ParsedColor = {
+    hex: string;
+    css: string;
+    oklch: [number, number, number];
+    cam16Ucs: [number, number, number];
+    jzazbz: [number, number, number];
+    gamut: Gamut;
+};
+export declare function hexToSrgb(hex: string): [number, number, number];
+export declare function srgbToHex(r: number, g: number, b: number): string;
+export declare function srgbToLinear(c: number): number;
+export declare function linearToSrgb(c: number): number;
+export declare function hexToOklch(input: string): [number, number, number];
+export declare function oklchToSrgb(L: number, C: number, H: number): [number, number, number];
+export declare function oklchToHex(L: number, C: number, H: number): string;
+export declare function oklchInGamut(L: number, C: number, H: number, gamut?: Gamut): boolean;
+export declare function gamutClip(L: number, C: number, H: number, gamut?: Gamut): [number, number, number];
+export declare function hexToCam16Ucs(input: string): [number, number, number];
+export declare function hexToJzazbz(input: string): [number, number, number];
+export declare function parseCssColor(input: string, gamut?: Gamut): ParsedColor;
+export declare function toColorSpace(input: string, space: ColorSpace): [number, number, number];
+export declare function serializeColorSpace(coords: [number, number, number], space?: ColorSpace, gamut?: Gamut): string;
+export declare function luminance(hex: string): number;
+export declare function contrastRatio(hex1: string, hex2: string): number;
+export declare function autoContrast(bgHex: string): string;
+export type APCAResult = {
+    Lc: number;
+    polarity: 'light-bg' | 'dark-bg';
+    abs: number;
+};
+export type SizeWeightCheck = {
+    pass: boolean;
+    minLc: number;
+    recommendation: string;
+};
+export declare function hexToY(hex: string): number;
+export declare function apcaContrast(fgHex: string, bgHex: string): APCAResult;
+export declare function apcaCheck(Lc: number, size: number, weight: number): SizeWeightCheck;
+export declare function autoContrastAPCA(bgHex: string): string;
+export declare function fmtOklch(L: number, C: number, H: number): string;
+export declare function makeColor(L: number, C: number, H: number, gamut?: Gamut): ColorResult;

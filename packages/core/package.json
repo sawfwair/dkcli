@@ -1,0 +1,106 @@
+{
+  "name": "@dkcli/core",
+  "version": "0.2.1",
+  "description": "Framework-agnostic DesignKit math, proofs, specs, and recipe compilation.",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sawfwair/dkcli.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://dkcli.com/components",
+  "bugs": {
+    "url": "https://github.com/sawfwair/dkcli/issues"
+  },
+  "keywords": [
+    "design-system",
+    "tokens",
+    "contrast",
+    "layout",
+    "apca",
+    "oklch"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./audit": {
+      "types": "./dist/audit.d.ts",
+      "import": "./dist/audit.js"
+    },
+    "./color": {
+      "types": "./dist/color.d.ts",
+      "import": "./dist/color.js"
+    },
+    "./component-compiler": {
+      "types": "./dist/component-compiler.d.ts",
+      "import": "./dist/component-compiler.js"
+    },
+    "./component-spec": {
+      "types": "./dist/component-spec.d.ts",
+      "import": "./dist/component-spec.js"
+    },
+    "./compose": {
+      "types": "./dist/compose.d.ts",
+      "import": "./dist/compose.js"
+    },
+    "./design": {
+      "types": "./dist/design.d.ts",
+      "import": "./dist/design.js"
+    },
+    "./interaction": {
+      "types": "./dist/interaction.d.ts",
+      "import": "./dist/interaction.js"
+    },
+    "./layout": {
+      "types": "./dist/layout.d.ts",
+      "import": "./dist/layout.js"
+    },
+    "./palette": {
+      "types": "./dist/palette.d.ts",
+      "import": "./dist/palette.js"
+    },
+    "./perception": {
+      "types": "./dist/perception.d.ts",
+      "import": "./dist/perception.js"
+    },
+    "./saliency": {
+      "types": "./dist/saliency.d.ts",
+      "import": "./dist/saliency.js"
+    },
+    "./scale": {
+      "types": "./dist/scale.d.ts",
+      "import": "./dist/scale.js"
+    },
+    "./theme-contract": {
+      "types": "./dist/theme-contract.d.ts",
+      "import": "./dist/theme-contract.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup --config ./tsup.config.ts",
+    "pack:dry": "env -u npm_config_link_workspace_packages npm_config_cache=../../.npm-cache npm pack --dry-run",
+    "prepublishOnly": "node ../../scripts/check-package-contents.mjs core",
+    "publint": "publint"
+  },
+  "dependencies": {
+    "colorjs.io": "^0.6.1"
+  }
+}
