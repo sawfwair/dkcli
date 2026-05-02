@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="DesignKit mark">
+  <rect width="64" height="64" rx="18" fill="#1e1711"/>
+  <path d="M14 42 30 10h20L34 42H14Z" fill="#fdf3ea"/>
+  <path d="M18 50h28" stroke="#d96f32" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="46" cy="18" r="5" fill="#00a8ad"/>
+</svg>

@@ -1,0 +1,486 @@
+{
+  "seed": "#D96F32",
+  "perfect": {
+    "tokens": {
+      "baseColor": "#d96f32",
+      "optimizedSeed": "#d08c43",
+      "primaryHex": "#af6100",
+      "onPrimaryHex": "#ffffff",
+      "surfaceHex": "#fdf3ea",
+      "surfaceInk": "#1e1711",
+      "outlineHex": "#9f968e",
+      "accentA": "#00a8ad",
+      "accentB": "#5190ec",
+      "motionCurve": "linear( 0.000, 0.041, 0.141, 0.272, 0.413, 0.549, 0.672, 0.777, 0.863, 0.929, 0.977, 1.010, 1.031, 1.042, 1.046, 1.045, 1.041, 1.035, 1.029, 1.022, 1.016, 1.011, 1.007, 1.004, 1.002, 1.000, 0.999, 0.998, 0.998, 0.998, 0.998, 0.998, 1.000 )"
+    },
+    "proofCards": [
+      {
+        "label": "Body on surface",
+        "fg": "#1e1711",
+        "bg": "#fdf3ea",
+        "lc": 98.3,
+        "minLc": 60,
+        "recommendation": "PASS (Lc 98.3 >= 60)",
+        "pass": true
+      },
+      {
+        "label": "Primary action",
+        "fg": "#ffffff",
+        "bg": "#af6100",
+        "lc": 77.2,
+        "minLc": 60,
+        "recommendation": "PASS (Lc 77.2 >= 60)",
+        "pass": true
+      },
+      {
+        "label": "Signal accent",
+        "fg": "#ffffff",
+        "bg": "#008b91",
+        "lc": 73.2,
+        "minLc": 60,
+        "recommendation": "PASS (Lc 73.2 >= 60)",
+        "pass": true
+      }
+    ],
+    "layout": {
+      "measure": 573,
+      "gap": 14,
+      "padding": 23,
+      "result": {
+        "items": [
+          {
+            "id": "signal",
+            "min": 68,
+            "preferred": 100,
+            "max": 152,
+            "grow": 1.1,
+            "shrink": 1,
+            "size": 119.32432432432432,
+            "start": 23,
+            "end": 142.32,
+            "delta": 19.32,
+            "clamped": false
+          },
+          {
+            "id": "body",
+            "min": 155,
+            "preferred": 232,
+            "max": 266,
+            "grow": 1.8,
+            "shrink": 1.8,
+            "size": 263.6216216216216,
+            "start": 156.32,
+            "end": 419.95,
+            "delta": 31.62,
+            "clamped": false
+          },
+          {
+            "id": "assist",
+            "min": 71,
+            "preferred": 102,
+            "max": 130,
+            "grow": 0.8,
+            "shrink": 0.9,
+            "size": 116.05405405405405,
+            "start": 433.95,
+            "end": 550,
+            "delta": 14.05,
+            "clamped": false
+          }
+        ],
+        "metrics": {
+          "available": 499,
+          "preferredTotal": 434,
+          "used": 573,
+          "free": 0,
+          "overflow": 0,
+          "compression": 1
+        }
+      },
+      "composition": {
+        "frame": {
+          "width": 573,
+          "height": 300
+        },
+        "metrics": {
+          "balance": 0.975,
+          "symmetry": 0.684,
+          "alignment": 0.667,
+          "rhythm": 0.516,
+          "density": 0.627,
+          "simplicity": 0.333,
+          "order": 0.634
+        },
+        "total": 63
+      },
+      "advancedLayout": {
+        "frame": {
+          "width": 573,
+          "height": 300,
+          "padding": 23,
+          "gap": 14,
+          "columns": 12
+        },
+        "elements": [
+          {
+            "id": "signal",
+            "x": 24,
+            "y": 24,
+            "width": 120,
+            "height": 80,
+            "kind": "shape",
+            "role": "cta",
+            "color": "#1e1711",
+            "background": "#af6100",
+            "fontSize": 16,
+            "fontWeight": 700,
+            "collisions": 0,
+            "importance": 0.3401
+          },
+          {
+            "id": "body",
+            "x": 286,
+            "y": 120,
+            "width": 264,
+            "height": 144,
+            "kind": "text",
+            "role": "body",
+            "color": "#1e1711",
+            "background": "#fdf3ea",
+            "fontSize": 22,
+            "fontWeight": 500,
+            "collisions": 0,
+            "importance": 0.3748
+          },
+          {
+            "id": "assist",
+            "x": 23,
+            "y": 173,
+            "width": 120,
+            "height": 104,
+            "kind": "text",
+            "role": "support",
+            "color": "#1e1711",
+            "background": "#fdf3ea",
+            "fontSize": 16,
+            "fontWeight": 500,
+            "collisions": 0,
+            "importance": 0.2851
+          }
+        ],
+        "avoidedRegions": [
+          {
+            "x": 206.28,
+            "y": 82,
+            "width": 103.14,
+            "height": 104
+          }
+        ],
+        "metrics": {
+          "overlapPenalty": 0,
+          "safeRegionPenalty": 1545.72,
+          "alignment": 0.333,
+          "whitespace": 0.65,
+          "hierarchy": 0.965,
+          "total": 71
+        }
+      },
+      "advancedComposition": {
+        "frame": {
+          "width": 573,
+          "height": 300,
+          "padding": 23,
+          "gap": 14,
+          "columns": 12
+        },
+        "metrics": {
+          "balance": 0.89,
+          "symmetry": 0.684,
+          "alignment": 0.333,
+          "rhythm": 0.53,
+          "density": 0.636,
+          "simplicity": 0.417,
+          "order": 0.582,
+          "weightedBalance": 0.471,
+          "hierarchy": 0.91,
+          "saliencyRespect": 0.985
+        },
+        "total": 68
+      },
+      "saliency": {
+        "mode": "heuristic",
+        "focusRegions": [
+          {
+            "x": 206.28,
+            "y": 82,
+            "width": 103.14,
+            "height": 104
+          }
+        ],
+        "elements": [
+          {
+            "id": "body",
+            "score": 0.6395,
+            "reasons": [
+              "role:body",
+              "area:0.467",
+              "contrast:0.78",
+              "spatial:0.953"
+            ],
+            "relationHints": [],
+            "normalized": 0.3748
+          },
+          {
+            "id": "signal",
+            "score": 0.5803,
+            "reasons": [
+              "role:cta",
+              "area:0.239",
+              "contrast:0.78",
+              "spatial:0.671"
+            ],
+            "relationHints": [],
+            "normalized": 0.3401
+          },
+          {
+            "id": "assist",
+            "score": 0.4864,
+            "reasons": [
+              "role:support",
+              "area:0.265",
+              "contrast:0.78",
+              "spatial:0.719"
+            ],
+            "relationHints": [],
+            "normalized": 0.2851
+          }
+        ]
+      }
+    },
+    "typography": {
+      "charactersPerLine": 55.1,
+      "lineHeight": 1.45,
+      "letterSpacingEm": 0,
+      "wordSpacingEm": 0.16,
+      "paragraphSpacingPx": 17,
+      "crowdingRisk": "low",
+      "warnings": [],
+      "engine": "auto",
+      "advanced": {
+        "engine": "advanced",
+        "whiteSpace": "normal",
+        "lines": [
+          {
+            "text": "A proof solver should resolve layout, distinction, movement,",
+            "width": 433.5,
+            "paintWidth": 433.5,
+            "ratio": 1
+          },
+          {
+            "text": "and reading comfort together.",
+            "width": 221.33,
+            "paintWidth": 221.33,
+            "ratio": 0.515
+          }
+        ],
+        "badness": 7867,
+        "averageWidth": 327.42,
+        "variance": 11254.03,
+        "usedHyphenation": false,
+        "lineCount": 2,
+        "maxLineWidth": 433.5,
+        "heightPx": 43.5,
+        "segmentCount": 23,
+        "chunkCount": 1
+      }
+    }
+  },
+  "scale": {
+    "meta": {
+      "base": 19,
+      "ratio": 1.3333333333333333,
+      "ratioName": "perfect-fourth",
+      "unit": "clamp",
+      "naming": "natural",
+      "baseMin": 15,
+      "baseMax": 19,
+      "vwMin": 320,
+      "vwMax": 1440
+    },
+    "scale": [
+      {
+        "step": -2,
+        "name": "2xs",
+        "token": "--space-2xs",
+        "value": "clamp(0.527rem, 0.4872rem + 0.201vw, 0.668rem)",
+        "px": 10.7,
+        "rem": 0.668,
+        "clamp": "clamp(0.527rem, 0.4872rem + 0.201vw, 0.668rem)",
+        "pxMin": 8.4,
+        "pxMax": 10.7
+      },
+      {
+        "step": -1,
+        "name": "xs",
+        "token": "--space-xs",
+        "value": "clamp(0.703rem, 0.6496rem + 0.268vw, 0.891rem)",
+        "px": 14.3,
+        "rem": 0.891,
+        "clamp": "clamp(0.703rem, 0.6496rem + 0.268vw, 0.891rem)",
+        "pxMin": 11.3,
+        "pxMax": 14.3
+      },
+      {
+        "step": 0,
+        "name": "base",
+        "token": "--space-base",
+        "value": "clamp(0.938rem, 0.8661rem + 0.357vw, 1.188rem)",
+        "px": 19,
+        "rem": 1.188,
+        "clamp": "clamp(0.938rem, 0.8661rem + 0.357vw, 1.188rem)",
+        "pxMin": 15,
+        "pxMax": 19
+      },
+      {
+        "step": 1,
+        "name": "sm",
+        "token": "--space-sm",
+        "value": "clamp(1.25rem, 1.1548rem + 0.476vw, 1.583rem)",
+        "px": 25.3,
+        "rem": 1.583,
+        "clamp": "clamp(1.25rem, 1.1548rem + 0.476vw, 1.583rem)",
+        "pxMin": 20,
+        "pxMax": 25.3
+      },
+      {
+        "step": 2,
+        "name": "md",
+        "token": "--space-md",
+        "value": "clamp(1.667rem, 1.5397rem + 0.635vw, 2.111rem)",
+        "px": 33.8,
+        "rem": 2.111,
+        "clamp": "clamp(1.667rem, 1.5397rem + 0.635vw, 2.111rem)",
+        "pxMin": 26.7,
+        "pxMax": 33.8
+      },
+      {
+        "step": 3,
+        "name": "lg",
+        "token": "--space-lg",
+        "value": "clamp(2.222rem, 2.0529rem + 0.847vw, 2.815rem)",
+        "px": 45,
+        "rem": 2.815,
+        "clamp": "clamp(2.222rem, 2.0529rem + 0.847vw, 2.815rem)",
+        "pxMin": 35.6,
+        "pxMax": 45
+      },
+      {
+        "step": 4,
+        "name": "xl",
+        "token": "--space-xl",
+        "value": "clamp(2.963rem, 2.7372rem + 1.129vw, 3.753rem)",
+        "px": 60,
+        "rem": 3.753,
+        "clamp": "clamp(2.963rem, 2.7372rem + 1.129vw, 3.753rem)",
+        "pxMin": 47.4,
+        "pxMax": 60
+      },
+      {
+        "step": 5,
+        "name": "2xl",
+        "token": "--space-2xl",
+        "value": "clamp(3.951rem, 3.6496rem + 1.505vw, 5.004rem)",
+        "px": 80.1,
+        "rem": 5.004,
+        "clamp": "clamp(3.951rem, 3.6496rem + 1.505vw, 5.004rem)",
+        "pxMin": 63.2,
+        "pxMax": 80.1
+      },
+      {
+        "step": 6,
+        "name": "3xl",
+        "token": "--space-3xl",
+        "value": "clamp(5.267rem, 4.8662rem + 2.007vw, 6.672rem)",
+        "px": 106.8,
+        "rem": 6.672,
+        "clamp": "clamp(5.267rem, 4.8662rem + 2.007vw, 6.672rem)",
+        "pxMin": 84.3,
+        "pxMax": 106.8
+      }
+    ]
+  },
+  "text": {
+    "charactersPerLine": 72.6,
+    "lineHeight": 1.51,
+    "letterSpacingEm": 0,
+    "wordSpacingEm": 0.16,
+    "paragraphSpacingPx": 22,
+    "crowdingRisk": "low",
+    "warnings": [],
+    "engine": "auto",
+    "advanced": {
+      "engine": "advanced",
+      "whiteSpace": "normal",
+      "lines": [
+        {
+          "text": "Mathematical typography is not sterile. It is the disciplined shaping of measure,",
+          "width": 692.18,
+          "paintWidth": 692.18,
+          "ratio": 1
+        },
+        {
+          "text": "contrast, spacing, and rhythm until reading feels effortless.",
+          "width": 527.64,
+          "paintWidth": 527.64,
+          "ratio": 0.776
+        }
+      ],
+      "badness": 4255,
+      "averageWidth": 609.91,
+      "variance": 6768.35,
+      "usedHyphenation": false,
+      "lineCount": 2,
+      "maxLineWidth": 692.18,
+      "heightPx": 54.36,
+      "segmentCount": 39,
+      "chunkCount": 1
+    }
+  },
+  "target": {
+    "input": {
+      "distance": 280,
+      "width": 44,
+      "choices": 6,
+      "modality": "touch",
+      "pathLength": 180,
+      "pathWidth": 28
+    },
+    "report": {
+      "modality": "touch",
+      "movementMs": 555.4,
+      "choiceMs": 416.9,
+      "steeringMs": 942.9,
+      "occlusionPenaltyMs": 0,
+      "totalMs": 1915.2,
+      "difficultyBits": 3.369,
+      "effectiveWidth": 30
+    }
+  },
+  "palette": {
+    "type": "split-complementary",
+    "colors": [
+      {
+        "label": "primary",
+        "hex": "#d96f32"
+      },
+      {
+        "label": "secondary",
+        "hex": "#00a8ad"
+      },
+      {
+        "label": "tertiary",
+        "hex": "#5190ec"
+      }
+    ]
+  }
+}

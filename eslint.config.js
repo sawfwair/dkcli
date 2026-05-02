@@ -64,6 +64,10 @@ export default defineConfig(
 		}
 	},
 	{
+		...ts.configs.disableTypeChecked,
+		files: ['docs/.vitepress/**/*.{ts,mts,cts}']
+	},
+	{
 		files: ['**/*.{test,spec}.{ts,js}', '**/*.svelte.{test,spec}.{ts,js}'],
 		rules: {
 			'@typescript-eslint/no-non-null-assertion': 'off',

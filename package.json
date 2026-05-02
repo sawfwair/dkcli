@@ -47,6 +47,10 @@
   },
   "scripts": {
     "dk": "node ./bin/dk.js",
+    "docs:tokens": "node ./scripts/generate-docs-design.mjs",
+    "docs:dev": "pnpm docs:tokens && vitepress dev docs",
+    "docs:build": "pnpm docs:tokens && vitepress build docs",
+    "docs:preview": "vitepress preview docs",
     "build:core": "pnpm --dir packages/core build",
     "build:tokens": "pnpm --dir packages/tokens build",
     "build:components": "pnpm --dir packages/components build",
@@ -108,6 +112,7 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.0",
     "vite": "^7.3.2",
+    "vitepress": "1.6.4",
     "vitest": "^4.1.0"
   },
   "dependencies": {

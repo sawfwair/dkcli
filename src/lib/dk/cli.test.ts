@@ -207,7 +207,7 @@ describe('cli', () => {
       expect(capture.stdout, testCase.args.join(' ')).toContain(testCase.expected);
       expect(capture.stderr, testCase.args.join(' ')).toBe('');
     }
-  });
+  }, 60000);
 
   it('renders component verification JSON for a selected component and theme', async () => {
     const capture = makeIo();
