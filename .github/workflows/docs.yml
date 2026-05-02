@@ -56,7 +56,6 @@ jobs:
 
       - name: Build docs site
         env:
-          DOCS_BASE: /
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: pnpm docs:build
 
