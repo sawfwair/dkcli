@@ -24,15 +24,62 @@ if (selected.length === 0) {
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function parsePackJson(stdout) {
-  const start = stdout.indexOf('[');
-  const end = stdout.lastIndexOf(']');
+function tryParsePackJson(stdout) {
+  for (let index = stdout.indexOf('['); index !== -1; index = stdout.indexOf('[', index + 1)) {
+    const candidate = stdout.slice(index);
 
-  if (start === -1 || end === -1 || end <= start) {
-    throw new Error('npm pack did not return JSON output');
+    try {
+      const parsed = JSON.parse(candidate);
+      if (Array.isArray(parsed) && parsed.every((entry) => Array.isArray(entry.files))) {
+        return parsed;
+      }
+    } catch {
+      // Lifecycle scripts can print arbitrary text before npm's JSON output.
+    }
   }
 
-  return JSON.parse(stdout.slice(start, end + 1));
+  return null;
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function parsePackNotice(stderr) {
+  const files = [];
+  let inContents = false;
+
+  for (const line of stderr.split(/\r?\n/)) {
+    if (/^npm notice Tarball Contents$/.test(line)) {
+      inContents = true;
+      continue;
+    }
+
+    if (/^npm notice Tarball Details$/.test(line)) {
+      break;
+    }
+
+    if (!inContents) continue;
+
+    const match = line.match(/^npm notice\s+\S+\s+(.+)$/);
+    if (match) files.push({ path: match[1] });
+  }
+
+  return files.length > 0 ? [{ files }] : null;
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function parsePackOutput(stdout, stderr) {
+  const json = tryParsePackJson(stdout);
+  if (json) return json;
+
+  const notice = parsePackNotice(stderr);
+  if (notice) return notice;
+
+  const preview = [stdout, stderr]
+    .join('\n')
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .slice(0, 8)
+    .join('\n');
+  throw new Error(`npm pack output did not include parseable JSON or notice file list.${preview ? `\n${preview}` : ''}`);
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -113,7 +160,7 @@ for (const pkg of selected) {
 
   let packed;
   try {
-    packed = parsePackJson(result.stdout);
+    packed = parsePackOutput(result.stdout, result.stderr);
   } catch (error) {
     hasFailures = true;
     console.error(`Package content check could not parse npm pack output for ${pkg.name}: ${error.message}`);

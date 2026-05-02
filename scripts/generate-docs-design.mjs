@@ -1,12 +1,29 @@
 #!/usr/bin/env node
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { execFileSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(new URL('../package.json', import.meta.url)));
 const outDir = join(root, 'docs/.vitepress/theme/generated');
+
+function runPnpm(args) {
+  execFileSync('pnpm', args, {
+    cwd: root,
+    stdio: 'inherit'
+  });
+}
+
+function ensureWorkspaceBuilds() {
+  if (!existsSync(join(root, 'packages/core/dist/index.js'))) {
+    runPnpm(['build:core']);
+  }
+
+  if (!existsSync(join(root, 'packages/tokens/dist/index.js'))) {
+    runPnpm(['build:tokens']);
+  }
+}
 
 function dkJson(args) {
   const stdout = execFileSync(process.execPath, [join(root, 'bin/dk.js'), ...args, '--json'], {
@@ -16,6 +33,8 @@ function dkJson(args) {
   });
   return JSON.parse(stdout);
 }
+
+ensureWorkspaceBuilds();
 
 const seed = '#D96F32';
 const perfect = dkJson(['perfect', '--seed', seed, '--ratio', 'perfect-fourth', '--motion', 'snappy', '--mode', 'light']);
