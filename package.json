@@ -32,8 +32,8 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "dk": "./dist/bin/dk.js",
-    "dkcli": "./dist/bin/dk.js"
+    "dk": "dist/bin/dk.js",
+    "dkcli": "dist/bin/dk.js"
   },
   "files": [
     "dist",
@@ -86,6 +86,7 @@
     "example:build": "pnpm --dir examples/svelte-starter build",
     "example:verify": "pnpm example:install:tarballs && pnpm example:build",
     "release:verify": "pnpm lint && pnpm check:strict && pnpm test && pnpm build && pnpm build:packages && pnpm publint && pnpm pack:packages:dry && pnpm check:package-contents && pnpm example:verify",
+    "release:publish": "npm publish ./packages/core --access public && npm publish ./packages/tokens --access public && npm publish ./packages/components --access public && npm publish . --access public",
     "preflight": "pnpm lint && pnpm check:strict && pnpm test && pnpm test:coverage",
     "verify": "pnpm release:verify"
   },
