@@ -100,6 +100,25 @@ describe('generateLayoutCss', () => {
 
     expect(cssBefore).not.toBe(cssAfter);
   });
+
+  it('escapes item ids and roles before emitting generated CSS', () => {
+    const report = analyzeEmbeddingTopologyHeuristic(
+      [
+        {
+          id: 'x"]{} body{outline:999px solid red}/*',
+          role: 'hero*/ body{background:red}/*',
+          label: 'Injected',
+          text: 'Injected'
+        }
+      ],
+      'Arrange an editorial landing page.'
+    );
+    const css = generateLayoutCss(report);
+
+    expect(css).toContain('[data-dk-item="x\\"]{} body{outline:999px solid red}/*"]');
+    expect(css).not.toContain('[data-dk-item="x"]{} body');
+    expect(css).not.toContain('hero*/ body');
+  });
 });
 
 describe('diagnoseFutureTopology with audit', () => {

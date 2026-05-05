@@ -1,4 +1,6 @@
 import {
+  assertSafeCssCustomPropertyName,
+  assertSafeCssValue,
   componentCaseKey,
   serializeStateVarName,
   type CompiledComponentCase,
@@ -8,7 +10,10 @@ import {
 
 function styleString(vars: Record<string, string>): string {
   return Object.entries(vars)
-    .map(([name, value]) => `${name}: ${value};`)
+    .map(([name, value]) => {
+      const propertyName = assertSafeCssCustomPropertyName(name, 'compiled component slot style');
+      return `${propertyName}: ${assertSafeCssValue(value, propertyName)};`;
+    })
     .join(' ');
 }
 

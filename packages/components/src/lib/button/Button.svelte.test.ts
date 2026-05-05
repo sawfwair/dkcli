@@ -30,6 +30,14 @@ describe('Button', () => {
     expect(anchorRender.container.querySelector('a')?.getAttribute('href')).toBe('/docs');
   });
 
+  it('drops unsafe href schemes before rendering anchor mode', () => {
+    const { container } = render(ButtonHarness, {
+      props: { theme, href: 'javascript:alert(1)', as: 'a', variant: 'link' }
+    });
+
+    expect(container.querySelector('a')?.hasAttribute('href')).toBe(false);
+  });
+
   it('renders leading and trailing slots and preserves variant metadata', () => {
     const { container } = render(ButtonHarness, {
       props: { theme, variant: 'destructive', showLeading: true, showTrailing: true }

@@ -1,5 +1,5 @@
 import { round } from './types.ts';
-import type { AuditReport } from '@dkcli/core';
+import { escapeCssComment, escapeCssString, type AuditReport } from '@dkcli/core';
 
 export const FUTURE_EMBEDDING_MODELS = [
   '@cf/baai/bge-small-en-v1.5',
@@ -641,8 +641,8 @@ export function generateLayoutCss(report: FutureTopologyReport): string {
       `  grid-column: ${span};`,
       `  padding: ${zt.padding}px;`,
       `  gap: ${zt.gap}px;`,
-      `  /* ${slot.itemIds.length} items: ${slot.itemIds.join(', ')} */`,
-      `  /* ${slot.rationale} */`,
+      `  /* ${slot.itemIds.length} items: ${escapeCssComment(slot.itemIds.join(', '))} */`,
+      `  /* ${escapeCssComment(slot.rationale)} */`,
       `}`,
       ''
     );
@@ -661,9 +661,9 @@ export function generateLayoutCss(report: FutureTopologyReport): string {
     ];
     if (rt.bg) props.push(`background-color: ${rt.bg}`);
     lines.push(
-      `[data-dk-item="${node.id}"] {`,
+      `[data-dk-item="${escapeCssString(node.id)}"] {`,
       `  ${props.join('; ')};`,
-      `  /* ${flags.join(', ')} */`,
+      `  /* ${escapeCssComment(flags.join(', '))} */`,
       `}`
     );
   }

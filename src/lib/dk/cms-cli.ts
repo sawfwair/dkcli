@@ -267,7 +267,10 @@ async function loadSession(io: CliIO, flags: FlagMap): Promise<CmsSession> {
   }
 
   const baseUrl = resolveBaseUrl(flags, io, session);
-  return session.baseUrl === baseUrl ? session : { ...session, baseUrl };
+  if (session.baseUrl !== baseUrl) {
+    fail(`CMS session is for ${session.baseUrl}. Run \`dk cms login --base-url=${baseUrl}\` before using that host.`);
+  }
+  return session;
 }
 
 async function readEmailCampaignContent(io: CliIO, filePath: string): Promise<EmailCampaignContent> {

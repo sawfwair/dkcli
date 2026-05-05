@@ -29,18 +29,21 @@ export type AxisSpec = {
   default: string;
 };
 
-export type ComponentStateName =
-  | 'rest'
-  | 'hover'
-  | 'focus-visible'
-  | 'pressed'
-  | 'checked'
-  | 'indeterminate'
-  | 'disabled'
-  | 'invalid'
-  | 'loading'
-  | 'open'
-  | 'selected';
+export const COMPONENT_STATE_NAMES = [
+  'rest',
+  'hover',
+  'focus-visible',
+  'pressed',
+  'checked',
+  'indeterminate',
+  'disabled',
+  'invalid',
+  'loading',
+  'open',
+  'selected'
+] as const;
+
+export type ComponentStateName = (typeof COMPONENT_STATE_NAMES)[number];
 
 export type RecipeMatch = {
   axes?: Record<string, string>;
@@ -158,8 +161,72 @@ export type ComponentCase = {
   axes: Record<string, string>;
 };
 
-export function createComponentSpec(spec: ComponentSpec): ComponentSpec {
+const COMPONENT_STATE_NAME_SET = new Set<string>(COMPONENT_STATE_NAMES);
+const UNSAFE_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
+
+export function isComponentStateName(value: unknown): value is ComponentStateName {
+  return typeof value === 'string' && COMPONENT_STATE_NAME_SET.has(value);
+}
+
+function assertSafeObjectKey(value: string, label: string): void {
+  if (!value || UNSAFE_OBJECT_KEYS.has(value)) {
+    throw new Error(`Unsafe component spec ${label}: ${value}`);
+  }
+}
+
+export function validateComponentSpec(spec: ComponentSpec): ComponentSpec {
+  assertSafeObjectKey(spec.id, 'id');
+
+  for (const axis of spec.axes) {
+    assertSafeObjectKey(axis.name, 'axis name');
+    for (const value of axis.values) {
+      assertSafeObjectKey(value, `axis value for ${axis.name}`);
+    }
+  }
+
+  for (const slot of spec.slots) {
+    assertSafeObjectKey(slot.name, 'slot name');
+  }
+
+  for (const state of spec.states) {
+    if (!isComponentStateName(state)) {
+      throw new Error(`Unsupported component state: ${String(state)}`);
+    }
+  }
+
+  for (const [slotName, rules] of Object.entries(spec.recipe)) {
+    assertSafeObjectKey(slotName, 'recipe slot name');
+    for (const rule of rules) {
+      if (rule.match?.axes) {
+        for (const [name, value] of Object.entries(rule.match.axes)) {
+          assertSafeObjectKey(name, 'recipe axis match name');
+          assertSafeObjectKey(value, `recipe axis match value for ${name}`);
+        }
+      }
+      if (rule.match?.states) {
+        for (const state of Object.keys(rule.match.states)) {
+          if (!isComponentStateName(state)) {
+            throw new Error(`Unsupported component state in recipe match: ${state}`);
+          }
+        }
+      }
+    }
+  }
+
+  for (const proofCase of spec.proofCases ?? []) {
+    assertSafeObjectKey(proofCase.name, 'proof case name');
+    for (const state of proofCase.states ?? []) {
+      if (!isComponentStateName(state)) {
+        throw new Error(`Unsupported component state in proof case: ${String(state)}`);
+      }
+    }
+  }
+
   return spec;
+}
+
+export function createComponentSpec(spec: ComponentSpec): ComponentSpec {
+  return validateComponentSpec(spec);
 }
 
 export function enumerateComponentCases(spec: ComponentSpec): ComponentCase[] {

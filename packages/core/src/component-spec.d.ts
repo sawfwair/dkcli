@@ -36,7 +36,8 @@ export type AxisSpec = {
     values: string[];
     default: string;
 };
-export type ComponentStateName = 'rest' | 'hover' | 'focus-visible' | 'pressed' | 'checked' | 'indeterminate' | 'disabled' | 'invalid' | 'loading' | 'open' | 'selected';
+export declare const COMPONENT_STATE_NAMES: readonly ["rest", "hover", "focus-visible", "pressed", "checked", "indeterminate", "disabled", "invalid", "loading", "open", "selected"];
+export type ComponentStateName = (typeof COMPONENT_STATE_NAMES)[number];
 export type RecipeMatch = {
     axes?: Record<string, string>;
     states?: Partial<Record<ComponentStateName, boolean>>;
@@ -138,5 +139,7 @@ export type ComponentCase = {
     componentId: string;
     axes: Record<string, string>;
 };
+export declare function isComponentStateName(value: unknown): value is ComponentStateName;
+export declare function validateComponentSpec(spec: ComponentSpec): ComponentSpec;
 export declare function createComponentSpec(spec: ComponentSpec): ComponentSpec;
 export declare function enumerateComponentCases(spec: ComponentSpec): ComponentCase[];

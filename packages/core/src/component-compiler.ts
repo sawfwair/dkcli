@@ -11,8 +11,10 @@ import {
   type OptionRowProofSpec,
   type ProofCaseSpec,
   type RecipeMatch,
-  type TokenExpr
+  type TokenExpr,
+  validateComponentSpec
 } from './component-spec.ts';
+import { assertSafeCssCustomPropertyName, assertSafeCssValue } from './css-safety.ts';
 import type { ThemeContract } from './theme-contract.ts';
 
 type ResolvedSlotVars = Record<string, string>;
@@ -128,6 +130,14 @@ type ResolveContext = {
   activeStates?: ComponentStateName[];
   slotVars?: Record<string, ResolvedSlotVars>;
 };
+
+function createRecord<T>(): Record<string, T> {
+  return Object.create(null) as Record<string, T>;
+}
+
+function createResolvedSlotVars(): ResolvedSlotVars {
+  return createRecord<string>();
+}
 
 function canonicalStateName(state: ComponentStateName): string {
   return state.replace(/[^a-z0-9]+/gi, '-');
@@ -603,8 +613,14 @@ export function buildComponentProofFixtures(
 }
 
 export function compileComponentRecipe(spec: ComponentSpec, theme: ThemeContract): CompiledComponentRecipe {
-  const axisMap = Object.fromEntries(spec.axes.map((axis) => [axis.name, axis.values]));
-  const cases: Record<string, CompiledComponentCase> = {};
+  validateComponentSpec(spec);
+
+  const axisMap = createRecord<string[]>();
+  for (const axis of spec.axes) {
+    axisMap[axis.name] = axis.values;
+  }
+
+  const cases: Record<string, CompiledComponentCase> = createRecord();
 
   for (const componentCase of enumerateComponentCases(spec)) {
     const compiledCase: CompiledComponentCase = {
@@ -616,8 +632,8 @@ export function compileComponentRecipe(spec: ComponentSpec, theme: ThemeContract
     for (const slot of spec.slots) {
       const slotRules = spec.recipe[slot.name] ?? [];
       const compiledSlot: CompiledSlotRecipe = {
-        baseVars: {},
-        stateVars: {}
+        baseVars: createResolvedSlotVars(),
+        stateVars: Object.create(null) as Partial<Record<ComponentStateName, ResolvedSlotVars>>
       };
 
       for (const rule of slotRules) {
@@ -625,9 +641,11 @@ export function compileComponentRecipe(spec: ComponentSpec, theme: ThemeContract
           continue;
         }
 
-        const resolvedStyle = Object.fromEntries(
-          Object.entries(rule.style).map(([name, value]) => [name, resolveExprToString(theme, value)])
-        );
+        const resolvedStyle = createResolvedSlotVars();
+        for (const [name, value] of Object.entries(rule.style)) {
+          assertSafeCssCustomPropertyName(name, `component ${spec.id} style`);
+          resolvedStyle[name] = assertSafeCssValue(resolveExprToString(theme, value), name);
+        }
         const states = matchedStates(rule.match, spec.states);
 
         if (states.length === 0) {
@@ -636,7 +654,7 @@ export function compileComponentRecipe(spec: ComponentSpec, theme: ThemeContract
         }
 
         for (const state of states) {
-          compiledSlot.stateVars[state] ??= {};
+          compiledSlot.stateVars[state] ??= createResolvedSlotVars();
           mergeVars(compiledSlot.stateVars[state]!, resolvedStyle);
         }
       }

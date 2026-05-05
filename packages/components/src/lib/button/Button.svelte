@@ -7,6 +7,7 @@
     getButtonRecipeCase,
     serializeButtonSlotStyles
   } from './button.recipe.js';
+  import { sanitizeHref } from '../shared/url.js';
   import type { ButtonContentMode, ButtonSize, ButtonVariant } from './button.spec.js';
 
   export let variant: ButtonVariant = 'solid';
@@ -28,6 +29,7 @@
   let contentMode: ButtonContentMode = 'label';
   let busy = false;
   let anchorRel: string | undefined = undefined;
+  let safeHref: string | undefined = undefined;
   let compiledCase = getButtonRecipeCase(defaultRegistration.recipe, {
     variant,
     size,
@@ -41,7 +43,8 @@
     throw new Error('Button with iconOnly=true requires ariaLabel.');
   }
 
-  $: elementTag = href || as === 'a' ? 'a' : 'button';
+  $: safeHref = sanitizeHref(href);
+  $: elementTag = safeHref || as === 'a' ? 'a' : 'button';
   $: contentMode = resolveContentMode(iconOnly, Boolean($$slots.leading), Boolean($$slots.trailing));
   $: compiledCase = getButtonRecipeCase(registration.recipe, {
     variant,
@@ -91,7 +94,7 @@
     aria-busy={loading ? 'true' : undefined}
     aria-disabled={busy ? 'true' : undefined}
     aria-label={iconOnly ? ariaLabel : undefined}
-    href={href}
+    href={safeHref}
     target={target}
     rel={anchorRel}
     tabindex={busy ? -1 : undefined}
