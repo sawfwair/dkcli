@@ -1,6 +1,6 @@
 {
   "name": "@dkcli/cli",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Mathematical design CLI for palettes, scales, contrast, layout, motion, and CSS analysis.",
   "license": "MIT",
   "repository": {

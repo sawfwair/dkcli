@@ -1,6 +1,6 @@
 {
   "name": "@dkcli/tokens",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Compiled DesignKit themes, aliases, and token emitters.",
   "type": "module",
   "license": "MIT",
@@ -56,6 +56,6 @@
     "publint": "publint"
   },
   "dependencies": {
-    "@dkcli/core": "0.2.1"
+    "@dkcli/core": "0.2.2"
   }
 }

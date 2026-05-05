@@ -1,6 +1,6 @@
 {
   "name": "@dkcli/core",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Framework-agnostic DesignKit math, proofs, specs, and recipe compilation.",
   "type": "module",
   "license": "MIT",
