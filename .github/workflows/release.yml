@@ -39,9 +39,9 @@ jobs:
             exit 0
           fi
 
-          version_changed=0
+          should_publish=0
           if git rev-parse HEAD^ >/dev/null 2>&1; then
-            version_changed=$(node --input-type=module <<'NODE'
+            should_publish=$(node --input-type=module <<'NODE'
           import { execFileSync } from 'node:child_process';
           import { readFileSync } from 'node:fs';
 
@@ -52,26 +52,45 @@ jobs:
             'packages/components/package.json'
           ];
 
-          function currentVersion(file) {
-            return JSON.parse(readFileSync(file, 'utf8')).version ?? '';
-          }
+          const packages = files.map((file) => ({
+            file,
+            ...JSON.parse(readFileSync(file, 'utf8'))
+          }));
 
-          function previousVersion(file) {
+          function previousVersion(pkg) {
             try {
-              return JSON.parse(execFileSync('git', ['show', `HEAD^:${file}`], { encoding: 'utf8' })).version ?? '';
+              return JSON.parse(execFileSync('git', ['show', `HEAD^:${pkg.file}`], { encoding: 'utf8' })).version ?? '';
             } catch {
               return '';
             }
           }
 
-          process.stdout.write(files.some((file) => previousVersion(file) !== currentVersion(file)) ? '1' : '0');
+          function isPublished(pkg) {
+            try {
+              const publishedVersion = JSON.parse(
+                execFileSync('npm', ['view', `${pkg.name}@${pkg.version}`, 'version', '--json'], {
+                  encoding: 'utf8',
+                  stdio: ['ignore', 'pipe', 'ignore']
+                })
+              );
+              return publishedVersion === pkg.version;
+            } catch {
+              console.error(`${pkg.name}@${pkg.version} is not published yet; enabling publish-versioned mode.`);
+              return false;
+            }
+          }
+
+          const versionChanged = packages.some((pkg) => previousVersion(pkg) !== pkg.version);
+          const unpublishedCurrentVersion = packages.some((pkg) => !isPublished(pkg));
+
+          process.stdout.write(versionChanged || unpublishedCurrentVersion ? '1' : '0');
           NODE
             )
           else
             echo "No parent commit available; skipping publish-versioned detection." >&2
           fi
 
-          if [[ "${version_changed}" == "1" ]]; then
+          if [[ "${should_publish}" == "1" ]]; then
             echo "mode=publish-versioned" >> "$GITHUB_OUTPUT"
           else
             echo "mode=none" >> "$GITHUB_OUTPUT"
