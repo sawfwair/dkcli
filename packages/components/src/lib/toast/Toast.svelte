@@ -16,6 +16,7 @@
   import { resolveTokenExpr, type ThemeContract } from '@dkcli/core';
 
   import { portal } from '../internal/behavior/index.js';
+  import { sanitizeHref } from '../shared/url.js';
   import {
     DEFAULT_TOAST_THEME,
     createToastRegistration,
@@ -114,6 +115,7 @@
 {#if visibleItems.length > 0}
   <div class="dk-toast-stack" style={slotStyles.root} data-placement={placement} use:portal>
     {#each visibleItems as item (item.id)}
+      {@const safeActionHref = sanitizeHref(item.actionHref)}
       <article class="toast-item" style={`${slotStyles.item} ${toneStyles(item.tone)}`} role="status">
         <div class="toast-copy">
           <h3 class="toast-title" style={slotStyles.title}>{item.title}</h3>
@@ -122,8 +124,8 @@
           {/if}
 
           {#if item.actionLabel}
-            {#if item.actionHref}
-              <a class="toast-action" style={slotStyles.action} href={item.actionHref} onclick={() => handleAction(item.id)}>
+            {#if safeActionHref}
+              <a class="toast-action" style={slotStyles.action} href={safeActionHref} onclick={() => handleAction(item.id)}>
                 {item.actionLabel}
               </a>
             {:else}

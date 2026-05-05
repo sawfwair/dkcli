@@ -42,4 +42,20 @@ describe('@dkcli/tokens createTheme', () => {
     expect(css).toContain('--primary: var(--color-primary);');
     expect(css).toContain('--control-radius: var(--radius-md);');
   });
+
+  it('rejects CSS declaration breakout values in custom theme contracts', () => {
+    const contract = createTheme({
+      name: 'Night',
+      seed: {
+        color: '#295dff',
+        ratio: 'golden',
+        mode: 'dark',
+        density: 'compact',
+        motion: 'calm'
+      }
+    });
+    contract.families.color.primary = 'red; } body { outline: 1px solid red; }';
+
+    expect(() => emitThemeCss(contract)).toThrow(/Unsafe CSS value/);
+  });
 });

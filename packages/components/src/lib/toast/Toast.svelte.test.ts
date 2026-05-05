@@ -35,4 +35,27 @@ describe('Toast', () => {
     await fireEvent.click(screen.getByRole('button', { name: /dismiss deployment queued/i }));
     expect(onDismiss).toHaveBeenCalledWith({ id: 'deploy' });
   });
+
+  it('renders unsafe action href schemes as buttons', async () => {
+    const onAction = vi.fn();
+
+    render(Toast, {
+      props: {
+        onAction,
+        items: [
+          {
+            id: 'deploy',
+            tone: 'brand',
+            title: 'Deployment queued',
+            actionLabel: 'Open',
+            actionHref: 'javascript:alert(1)'
+          }
+        ]
+      }
+    });
+
+    expect(screen.queryByRole('link', { name: 'Open' })).toBeNull();
+    await fireEvent.click(screen.getByRole('button', { name: 'Open' }));
+    expect(onAction).toHaveBeenCalledWith({ id: 'deploy' });
+  });
 });

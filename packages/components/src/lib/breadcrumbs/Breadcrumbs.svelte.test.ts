@@ -18,4 +18,18 @@ describe('Breadcrumbs', () => {
     expect(screen.getByRole('link', { name: 'Workspace' })).toBeTruthy();
     expect(screen.getByText('Production').getAttribute('aria-current')).toBe('page');
   });
+
+  it('renders unsafe href schemes as non-links', () => {
+    render(Breadcrumbs, {
+      props: {
+        items: [
+          { label: 'Workspace', href: 'javascript:alert(1)' },
+          { label: 'Production', current: true }
+        ]
+      }
+    });
+
+    expect(screen.queryByRole('link', { name: 'Workspace' })).toBeNull();
+    expect(screen.getByText('Workspace').tagName).toBe('SPAN');
+  });
 });

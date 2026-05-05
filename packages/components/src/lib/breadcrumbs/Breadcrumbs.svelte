@@ -15,6 +15,7 @@
     getBreadcrumbsRecipeCase,
     serializeBreadcrumbsSlotStyles
   } from './breadcrumbs.recipe.js';
+  import { sanitizeHref } from '../shared/url.js';
   import type { BreadcrumbsSize } from './breadcrumbs.spec.js';
 
   export let items: BreadcrumbItem[] = [];
@@ -40,11 +41,12 @@
   <ol>
     {#each items as item, index (item.label + index)}
       {@const current = index === resolvedCurrentIndex}
+      {@const safeHref = sanitizeHref(item.href)}
       <li class="breadcrumb-item">
         {#if current}
           <span class="breadcrumb-current" style={slotStyles.current} aria-current="page">{item.label}</span>
-        {:else if item.href}
-          <a class="breadcrumb-link" style={slotStyles.item} href={item.href}>{item.label}</a>
+        {:else if safeHref}
+          <a class="breadcrumb-link" style={slotStyles.item} href={safeHref}>{item.label}</a>
         {:else}
           <span class="breadcrumb-link" style={slotStyles.item}>{item.label}</span>
         {/if}

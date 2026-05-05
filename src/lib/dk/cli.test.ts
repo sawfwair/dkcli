@@ -535,6 +535,45 @@ describe('cli', () => {
     await rm(configDir, { recursive: true, force: true });
   });
 
+  it('refuses to reuse an existing dkcms session on a different base URL', async () => {
+    const configDir = await mkdtemp(path.join(tmpdir(), 'dkcms-cli-'));
+    const capture = makeIo();
+    const env = {
+      DKCMS_CLI_CONFIG_DIR: configDir
+    };
+    capture.io.getEnv = (name) => env[name as keyof typeof env];
+    const fetchMock = vi.fn();
+    capture.io.fetch = fetchMock as unknown as typeof fetch;
+
+    await writeFile(
+      path.join(configDir, 'dkcms-session.json'),
+      JSON.stringify({
+        baseUrl: 'https://cms.example.com',
+        accessToken: fakeDkCmsCliAccessToken({
+          sub: 'user-1',
+          email: 'hello@example.com',
+          name: 'Casey'
+        }),
+        refreshToken: 'refresh-token-1',
+        updatedAt: new Date().toISOString(),
+        user: {
+          userId: 'user-1',
+          email: 'hello@example.com',
+          displayName: 'Casey'
+        }
+      }),
+      'utf8'
+    );
+
+    const code = await runCli(['cms', 'sites', 'list', '--base-url', 'https://attacker.example'], capture.io);
+
+    expect(code).toBe(1);
+    expect(capture.stderr).toContain('CMS session is for https://cms.example.com.');
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    await rm(configDir, { recursive: true, force: true });
+  });
+
   it('smoke-tests the dkcms page create, build, publish, and email export commands', async () => {
     const configDir = await mkdtemp(path.join(tmpdir(), 'dkcms-cli-'));
     const fixtureDir = await mkdtemp(path.join(tmpdir(), 'dkcms-content-'));

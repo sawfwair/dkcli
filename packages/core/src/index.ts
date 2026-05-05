@@ -43,6 +43,7 @@ export {
   serializeStateVarName
 } from './component-compiler.ts';
 export * from './compose.ts';
+export * from './css-safety.ts';
 export * from './design.ts';
 export * from './interaction.ts';
 export * from './layout.ts';
