@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+  <title id="title">DesignKit CLI hero graphic</title>
+  <desc id="desc">A dark editorial graphic showing the dk command line turning a seed color into palette, type, motion, layout, and proof outputs.</desc>
+  <defs>
+    <clipPath id="hero-clip">
+      <rect width="1200" height="560" rx="36"/>
+    </clipPath>
+    <pattern id="dot-grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#9f968e" opacity=".24"/>
+    </pattern>
+    <filter id="soft-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#000000" flood-opacity=".28"/>
+    </filter>
+  </defs>
+
+  <g clip-path="url(#hero-clip)">
+    <rect width="1200" height="560" fill="#1e1711"/>
+    <rect width="1200" height="560" fill="url(#dot-grid)" opacity=".64"/>
+    <path d="M770 34h352L914 526H552Z" fill="#fdf3ea"/>
+    <path d="M814 80h246L904 456H660Z" fill="#d96f32"/>
+    <path d="M902 122h122L874 428H754Z" fill="#00a8ad"/>
+    <path d="M1020 296c61 0 110 49 110 110s-49 110-110 110-110-49-110-110 49-110 110-110Z" fill="#5190ec" opacity=".95"/>
+    <path d="M746 452h358" stroke="#1e1711" stroke-width="18" stroke-linecap="round" opacity=".85"/>
+
+    <g transform="translate(72 70)">
+      <rect x="0" y="0" width="112" height="112" rx="30" fill="#fdf3ea"/>
+      <rect x="16" y="16" width="80" height="80" rx="22" fill="#1e1711"/>
+      <path d="M32 68 52 28h28L60 68H32Z" fill="#fdf3ea"/>
+      <path d="M36 80h38" stroke="#d96f32" stroke-width="8" stroke-linecap="round"/>
+      <circle cx="76" cy="34" r="7" fill="#00a8ad"/>
+
+      <text x="144" y="30" fill="#fdf3ea" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="700" letter-spacing="3">DKCLI</text>
+      <text x="144" y="76" fill="#fdf3ea" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="54" font-weight="800">Design tokens</text>
+      <text x="144" y="128" fill="#fdf3ea" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="54" font-weight="800">with proof.</text>
+      <text x="144" y="168" fill="#d7cac0" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="22">Run one command. Keep the proof.</text>
+    </g>
+
+    <g transform="translate(72 280)" filter="url(#soft-shadow)">
+      <rect width="610" height="214" rx="18" fill="#120f0c" stroke="#473a31"/>
+      <rect width="610" height="42" rx="18" fill="#2b211b"/>
+      <circle cx="24" cy="21" r="6" fill="#d96f32"/>
+      <circle cx="46" cy="21" r="6" fill="#f2c14e"/>
+      <circle cx="68" cy="21" r="6" fill="#00a8ad"/>
+      <text x="92" y="27" fill="#d7cac0" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="14">dk perfect</text>
+
+      <text x="30" y="76" fill="#fdf3ea" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="18">$ dk perfect --seed "#D96F32" --ratio perfect-fourth</text>
+      <text x="30" y="112" fill="#00a8ad" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="16">palette</text>
+      <text x="130" y="112" fill="#d7cac0" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="16">OKLCH, APCA, CVD distinctness</text>
+      <text x="30" y="142" fill="#d96f32" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="16">layout</text>
+      <text x="130" y="142" fill="#d7cac0" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="16">12 rails, no overlap, scored composition</text>
+      <text x="30" y="172" fill="#5190ec" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="16">proof</text>
+      <text x="130" y="172" fill="#d7cac0" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="16">PASS Lc 98.3 / 77.2 / 73.2</text>
+    </g>
+
+    <g transform="translate(730 84)" filter="url(#soft-shadow)">
+      <rect width="356" height="344" rx="24" fill="#fdf3ea" stroke="#1e1711" stroke-width="3"/>
+      <text x="30" y="50" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="24" font-weight="800">Generated proof</text>
+      <text x="30" y="82" fill="#5f5148" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="16">#D96F32 seed, light mode</text>
+
+      <g transform="translate(30 112)">
+        <rect width="296" height="58" rx="14" fill="#1e1711"/>
+        <text x="18" y="25" fill="#fdf3ea" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" font-weight="700">Body on surface</text>
+        <text x="18" y="45" fill="#d7cac0" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="13">Lc 98.3 PASS</text>
+      </g>
+      <g transform="translate(30 184)">
+        <rect width="296" height="58" rx="14" fill="#af6100"/>
+        <text x="18" y="25" fill="#ffffff" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" font-weight="700">Primary action</text>
+        <text x="18" y="45" fill="#fff5ed" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="13">Lc 77.2 PASS</text>
+      </g>
+      <g transform="translate(30 256)">
+        <rect width="296" height="58" rx="14" fill="#008b91"/>
+        <text x="18" y="25" fill="#ffffff" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="14" font-weight="700">Signal accent</text>
+        <text x="18" y="45" fill="#e9feff" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="13">Lc 73.2 PASS</text>
+      </g>
+    </g>
+  </g>
+</svg>

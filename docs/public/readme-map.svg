@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480" role="img" aria-labelledby="title desc">
+  <title id="title">DesignKit CLI command and package map</title>
+  <desc id="desc">A diagram mapping dk commands through proof, foundations, motion, layout, and product command families into the cli, core, tokens, and components packages.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
+      <path d="M1 1 11 6 1 11Z" fill="#1e1711"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="480" rx="30" fill="#ffffff"/>
+  <rect x="28" y="28" width="1144" height="424" rx="24" fill="#fdf3ea" stroke="#d7cac0"/>
+
+  <text x="62" y="78" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="30" font-weight="800">Command families and package flow</text>
+  <text x="62" y="110" fill="#6e6057" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="17">DesignKit keeps heavy proof math in deterministic packages and emits artifacts consumers can ship.</text>
+
+  <g transform="translate(62 156)">
+    <rect width="230" height="126" rx="18" fill="#1e1711"/>
+    <text x="24" y="40" fill="#fdf3ea" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="20" font-weight="800">dk command</text>
+    <text x="24" y="76" fill="#d7cac0" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="15">dk perfect</text>
+    <text x="24" y="101" fill="#d7cac0" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="15">dk palette --json</text>
+  </g>
+
+  <path d="M318 219H396" stroke="#1e1711" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <g transform="translate(412 142)">
+    <rect width="128" height="48" rx="14" fill="#af6100"/>
+    <text x="20" y="30" fill="#ffffff" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="800">Proof</text>
+
+    <rect x="152" width="150" height="48" rx="14" fill="#d96f32"/>
+    <text x="173" y="30" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="800">Foundations</text>
+
+    <rect x="326" width="128" height="48" rx="14" fill="#00a8ad"/>
+    <text x="348" y="30" fill="#ffffff" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="800">Motion</text>
+
+    <rect y="70" width="128" height="48" rx="14" fill="#5190ec"/>
+    <text x="20" y="100" fill="#ffffff" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="800">Layout</text>
+
+    <rect x="152" y="70" width="150" height="48" rx="14" fill="#1e1711"/>
+    <text x="174" y="100" fill="#fdf3ea" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="800">Product</text>
+
+    <rect x="326" y="70" width="128" height="48" rx="14" fill="#f7ede4" stroke="#9f968e"/>
+    <text x="348" y="100" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="800">Audit</text>
+  </g>
+
+  <path d="M882 219H960" stroke="#1e1711" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <g transform="translate(982 134)">
+    <rect width="138" height="170" rx="18" fill="#ffffff" stroke="#d7cac0"/>
+    <text x="22" y="38" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="800">Artifacts</text>
+    <text x="22" y="74" fill="#6e6057" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="14">theme.css</text>
+    <text x="22" y="101" fill="#6e6057" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="14">proof.json</text>
+    <text x="22" y="128" fill="#6e6057" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="14">tokens</text>
+    <text x="22" y="155" fill="#6e6057" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="14">recipes</text>
+  </g>
+
+  <g transform="translate(154 348)">
+    <rect width="190" height="62" rx="16" fill="#ffffff" stroke="#d7cac0"/>
+    <text x="24" y="38" fill="#1e1711" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="16">@dkcli/cli</text>
+    <rect x="218" width="190" height="62" rx="16" fill="#ffffff" stroke="#d7cac0"/>
+    <text x="242" y="38" fill="#1e1711" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="16">@dkcli/core</text>
+    <rect x="436" width="204" height="62" rx="16" fill="#ffffff" stroke="#d7cac0"/>
+    <text x="460" y="38" fill="#1e1711" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="16">@dkcli/tokens</text>
+    <rect x="668" width="242" height="62" rx="16" fill="#ffffff" stroke="#d7cac0"/>
+    <text x="692" y="38" fill="#1e1711" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="16">@dkcli/components</text>
+  </g>
+</svg>
