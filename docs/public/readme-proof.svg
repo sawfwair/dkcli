@@ -13,8 +13,8 @@
   <text x="54" y="62" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="32" font-weight="800">Proof snapshot from dk perfect</text>
   <text x="54" y="94" fill="#6e6057" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="17">Seed #D96F32 resolves into inspectable colors, contrast checks, motion, layout, and token output.</text>
 
-  <g transform="translate(54 130)" filter="url(#card-shadow)">
-    <rect width="310" height="154" rx="18" fill="#ffffff"/>
+  <g transform="translate(54 130)">
+    <rect width="310" height="154" rx="18" fill="#ffffff" filter="url(#card-shadow)"/>
     <text x="22" y="36" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="800">Palette</text>
     <g transform="translate(22 58)">
       <rect width="46" height="72" rx="10" fill="#d96f32"/>
@@ -30,8 +30,8 @@
     </g>
   </g>
 
-  <g transform="translate(394 130)" filter="url(#card-shadow)">
-    <rect width="302" height="154" rx="18" fill="#ffffff"/>
+  <g transform="translate(394 130)">
+    <rect width="302" height="154" rx="18" fill="#ffffff" filter="url(#card-shadow)"/>
     <text x="22" y="36" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="800">APCA contrast</text>
     <g transform="translate(22 58)">
       <rect width="258" height="26" rx="8" fill="#1e1711"/>
@@ -43,8 +43,8 @@
     </g>
   </g>
 
-  <g transform="translate(726 130)" filter="url(#card-shadow)">
-    <rect width="420" height="154" rx="18" fill="#ffffff"/>
+  <g transform="translate(726 130)">
+    <rect width="420" height="154" rx="18" fill="#ffffff" filter="url(#card-shadow)"/>
     <text x="22" y="36" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="18" font-weight="800">Layout rail</text>
     <text x="300" y="36" fill="#6e6057" font-family="SFMono-Regular, Menlo, Consolas, Liberation Mono, monospace" font-size="13">573px frame</text>
     <g transform="translate(22 58)">
