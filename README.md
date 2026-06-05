@@ -5,6 +5,10 @@
 [![Docs](https://github.com/sawfwair/dkcli/actions/workflows/docs.yml/badge.svg)](https://github.com/sawfwair/dkcli/actions/workflows/docs.yml)
 [![npm](https://img.shields.io/npm/v/%40dkcli%2Fcli?color=%23af6100)](https://www.npmjs.com/package/@dkcli/cli)
 
+<p align="center">
+  <img src="docs/public/readme-hero.svg" alt="DesignKit CLI turns a seed color into palette, type, motion, layout, and proof outputs." width="100%" />
+</p>
+
 Proof-driven design tooling for teams that want interface decisions to leave evidence behind.
 
 DesignKit ships a deterministic CLI and package workspace for OKLCH palettes, APCA contrast, fluid scales, motion curves, optical corrections, layout rails, composition scoring, typography recommendations, CSS audits, token emission, and Svelte 5 component recipes.
@@ -47,6 +51,10 @@ dk text --font 18 --measure 680 --contrast 72
 dk audit --css app.css
 ```
 
+<p align="center">
+  <img src="docs/public/readme-proof.svg" alt="A generated DesignKit proof snapshot with palette swatches, APCA passes, layout metrics, and motion output." width="100%" />
+</p>
+
 ## Packages
 
 - `@dkcli/cli`: the `dk` and `dkcli` command line tools.
@@ -63,6 +71,10 @@ dk audit --css app.css
 | Motion | `ease`, `jerk` | Convert spring physics and minimum-jerk motion into CSS-ready curves. |
 | Layout | `layout`, `compose`, `saliency`, `future` | Solve rails, score composition, and explore content topology. |
 | Product | `components`, `cms` | Verify component recipes and manage hosted DKCMS content. |
+
+<p align="center">
+  <img src="docs/public/readme-map.svg" alt="DesignKit command families flowing into CLI, core, tokens, and components packages." width="100%" />
+</p>
 
 ## Local Development
 
