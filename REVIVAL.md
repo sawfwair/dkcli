@@ -278,9 +278,17 @@ regressions failed before repair and now pass with the same-origin ABeeZee face.
 The generated Dialog close action retains a 44 CSS px minimum in both dimensions.
 The release gate runs these WebKit checks alongside its Chromium source checks.
 
+Hosted dark/font/CSS zoom capture also exposed Accordion text escaping narrow
+disclosure rows. Shrinking grid tracks and complete-text wrapping repair that
+overflow. Extended Firefox scope then exposed intrinsic Combobox option grids
+wider than their available flex space. Its source regression now preserves
+complete labels and descriptions, option padding, fonts, selection marks, and
+keyboard selection while requiring contained geometry. The public release gate
+includes this Firefox source check.
+
 The workbench release gate requires all 132 declared scenes at the three
 recorded widths in Chromium, Firefox, and WebKit, using the actual bundled
-ABeeZee font. Five named scenes additionally exercise a dark theme and 200%
+ABeeZee font. Eight named scenes additionally exercise a dark theme and 200%
 CSS zoom. Its hosted harness exercises the actual built Worker, authentication
 hooks, Browser Rendering binding, assets, and expiring fixture sessions.
 Receipts distinguish raw failures from exact reviewed release criteria.

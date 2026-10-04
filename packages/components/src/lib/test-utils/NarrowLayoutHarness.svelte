@@ -3,9 +3,15 @@
   import Dialog from '../dialog/Dialog.svelte';
   import EmptyState from '../empty-state/EmptyState.svelte';
   import Accordion from '../accordion/Accordion.svelte';
+  import Combobox from '../combobox/Combobox.svelte';
 
   const theme = createProjectTheme({ name: 'Release reference', seed: { color: '#3366cc', ratio: 'perfect-fourth', mode: 'dark', density: 'comfortable', motion: 'snappy' }, fonts: { body: 'ABeeZee, sans-serif', display: 'ABeeZee, sans-serif', mono: 'ABeeZee, sans-serif' } });
   const text = 'Release readiness for the international workspace, including accessibility review, deployment notes, and remaining dependencies';
+  const comboboxItems = [
+    { value: 'cobalt', label: 'Cobalt', description: 'High-energy release system.' },
+    { value: 'sage', label: 'Sage', description: 'Calmer operational workspace.' },
+    { value: 'ember', label: 'Ember', description: 'Dark high-contrast command mode.' }
+  ];
 </script>
 
 <main data-ready="true">
@@ -18,6 +24,9 @@
   </section>
   <section data-narrow-accordion style="width: 66.8125px">
     <Accordion {theme} size="md" value="overview" items={['overview', 'timeline', 'risks'].map((value) => ({ value, label: text, description: text, content: text }))} />
+  </section>
+  <section data-narrow-combobox style="width: 72.8px">
+    <Combobox {theme} size="md" label="Choose a system" items={comboboxItems} />
   </section>
 </main>
 

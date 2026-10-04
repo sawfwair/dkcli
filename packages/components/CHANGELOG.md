@@ -9,6 +9,7 @@
 - Deliver native Button click events and observable Menu actions. Scope Select and Combobox keyboard navigation to their controls, preserve destination focus when closing, and enforce disabled behavior.
 - Give field and overlay instances unique IDs that remain stable through server rendering and hydration. Preserve explicit IDs, bindings, and legacy slots.
 - Keep Combobox inputs and icons within the available field width without requiring a global CSS reset.
+- Let Combobox option grids shrink into their available width and wrap complete labels and descriptions with CSS zoom. Preserve option padding, fonts, selection marks, and target dimensions.
 - Wrap complete Button and Badge labels within their available width while preserving short-label dimensions. Clamp anchored surfaces along their cross axis to keep open controls within the viewport.
 - Keep field and tab grids within their available width at 200% CSS zoom. Scale anchored positions and surface caps consistently with root CSS zoom.
 - Keep calendar day columns and complete weekday labels within their available width. Preserve day heights and report compact widths separately from the 44 px target criterion.

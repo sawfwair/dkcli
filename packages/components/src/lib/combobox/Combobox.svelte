@@ -370,8 +370,16 @@
   .combobox-item-copy {
     display: grid;
     gap: 0.15rem;
+    grid-template-columns: minmax(0, 1fr);
+    min-inline-size: 0;
     padding-block: 0.5rem;
     text-align: left;
+  }
+
+  .combobox-item-label,
+  .combobox-item-description {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
   }
 
   .combobox-item-label {

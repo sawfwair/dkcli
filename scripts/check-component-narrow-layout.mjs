@@ -5,13 +5,14 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
-import { chromium, webkit } from '@playwright/test';
+import { chromium, firefox, webkit } from '@playwright/test';
 
 const repository = fileURLToPath(new URL('../', import.meta.url));
 const cache = await mkdtemp(join(tmpdir(), 'dk-component-narrow-'));
 const server = await createServer({ configFile: false, root: repository, cacheDir: cache, plugins: [svelte({ configFile: false, hot: false })], resolve: { alias: { '@dkcli/core': `${repository}packages/core/src/index.ts`, '@dkcli/tokens': `${repository}packages/tokens/src/index.ts` } }, server: { host: '127.0.0.1', port: 0 } });
 let browser;
 let chromiumBrowser;
+let firefoxBrowser;
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 async function observeAccordion(page, engine) {
@@ -90,12 +91,64 @@ try {
   const chromiumAccordion = await observeAccordion(chromiumPage, 'chromium');
   observations.push(chromiumAccordion);
   failures.push(...chromiumAccordion.failures);
-  const receipt = { browsers: ['webkit', 'chromium'], viewport: { width: 320, height: 960 }, zoom: 2, font: 'same-origin ABeeZee', observations, failures };
+  firefoxBrowser = await firefox.launch({ headless: true });
+  const firefoxPage = await firefoxBrowser.newPage({ viewport: { width: 320, height: 960 } });
+  firefoxPage.on('pageerror', (error) => errors.push(error.message));
+  await firefoxPage.goto(`http://127.0.0.1:${address.port}/packages/components/src/lib/test-utils/narrow-layout.html`);
+  await firefoxPage.locator('[data-ready=true]').waitFor();
+  await firefoxPage.evaluate(async () => { await document.fonts.load('16px ABeeZee'); await document.fonts.ready; document.documentElement.style.zoom = '2'; });
+  const input = firefoxPage.locator('[data-narrow-combobox] input[role=combobox]');
+  await input.scrollIntoViewIfNeeded();
+  await input.focus();
+  await firefoxPage.locator('.combobox-surface').waitFor({ state: 'visible' });
+  await firefoxPage.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const combobox = await firefoxPage.locator('.combobox-surface').evaluate((surface) => [surface, ...surface.querySelectorAll('.combobox-item,.combobox-item-copy,.combobox-item-label,.combobox-item-description')].map((element) => {
+    const bounds = element.getBoundingClientRect();
+    const parent = element.parentElement.getBoundingClientRect();
+    const css = getComputedStyle(element);
+    const text = element.matches('.combobox-item-label,.combobox-item-description');
+    const range = document.createRange();
+    if (text) range.selectNodeContents(element);
+    return { selector: element.getAttribute('class'), text: text ? element.textContent : null, width: bounds.width, height: bounds.height, left: bounds.left, right: bounds.right, parentLeft: parent.left, parentRight: parent.right, clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, css: { boxSizing: css.boxSizing, width: css.width, minWidth: css.minWidth, paddingLeft: css.paddingLeft, paddingRight: css.paddingRight, gridTemplateColumns: css.gridTemplateColumns, flexShrink: css.flexShrink, overflowWrap: css.overflowWrap, fontFamily: css.fontFamily, fontSize: css.fontSize }, ranges: text ? [...range.getClientRects()].map((rect) => ({ left: rect.left, right: rect.right })) : [] };
+  }));
+  observations.push({ component: 'combobox-zoom', engine: 'firefox', geometry: combobox });
+  assert.deepEqual(combobox.filter((node) => node.selector.includes('combobox-item-label')).map((node) => node.text), ['Cobalt', 'Sage', 'Ember'], 'Complete option labels must remain visible.');
+  assert.deepEqual(combobox.filter((node) => node.selector.includes('combobox-item-description')).map((node) => node.text), ['High-energy release system.', 'Calmer operational workspace.', 'Dark high-contrast command mode.'], 'Complete option descriptions must remain visible.');
+  for (const node of combobox) {
+    if (node.scrollWidth > node.clientWidth + 1) failures.push(`firefox: Combobox ${node.selector} overflows its allocated width.`);
+    if (node.selector.includes('combobox-item') && (node.left < node.parentLeft - 1 || node.right > node.parentRight + 1 || node.ranges.some((rect) => rect.left < node.parentLeft - 1 || rect.right > node.parentRight + 1))) failures.push(`firefox: Combobox ${node.selector} paints outside its parent.`);
+    if (node.selector.split(' ').includes('combobox-item') && (node.width / 2 < 44 || node.height / 2 < 44)) failures.push('firefox: Combobox option misses the named 44px logical target criterion.');
+  }
+  await input.press('ArrowDown');
+  await input.press('Enter');
+  assert.equal(await input.inputValue(), 'Sage', 'ArrowDown and Enter must select the next enabled option.');
+  assert.equal(await input.getAttribute('aria-expanded'), 'false', 'Selecting an option must close the list.');
+  await input.press('ArrowDown');
+  const selectedOption = firefoxPage.locator('.combobox-item[aria-selected=true]');
+  await selectedOption.waitFor({ state: 'visible' });
+  const selection = await selectedOption.evaluate((option) => {
+    const mark = option.querySelector('[aria-hidden=true]');
+    const bounds = option.getBoundingClientRect();
+    const icon = mark?.getBoundingClientRect();
+    const label = option.querySelector('.combobox-item-label');
+    const description = option.querySelector('.combobox-item-description');
+    return { label: label?.textContent, description: description?.textContent, clientWidth: option.clientWidth, scrollWidth: option.scrollWidth, left: bounds.left, right: bounds.right, mark: mark?.textContent, icon: icon ? { width: icon.width, height: icon.height, left: icon.left, right: icon.right } : null };
+  });
+  observations.push({ component: 'combobox-selected-zoom', engine: 'firefox', ...selection });
+  assert.equal(selection.label, 'Sage');
+  assert.equal(selection.description, 'Calmer operational workspace.');
+  assert.equal(selection.mark, '✓', 'The selected option must retain its visible selection adornment.');
+  assert.ok(selection.icon && selection.icon.width > 0 && selection.icon.height > 0 && selection.icon.left >= selection.left - 1 && selection.icon.right <= selection.right + 1, 'The selection adornment must fit inside its option.');
+  if (selection.scrollWidth > selection.clientWidth + 1) failures.push('firefox: The selected Combobox option overflows its allocated width.');
+  await input.press('Escape');
+  assert.equal(await input.getAttribute('aria-expanded'), 'false', 'Escape must close the reopened selected list.');
+  const receipt = { browsers: ['webkit', 'chromium', 'firefox'], viewport: { width: 320, height: 960 }, zoom: 2, font: 'same-origin ABeeZee', observations, failures };
   await writeFile(join(tmpdir(), 'dk-component-narrow-layout.json'), JSON.stringify(receipt, null, 2));
   console.log(JSON.stringify(receipt, null, 2));
   assert.deepEqual(errors, [], 'Source widgets must render without browser errors.');
   assert.deepEqual(failures, [], 'Narrow source widget content and generated actions must fit.');
 } finally {
+  await firefoxBrowser?.close();
   await chromiumBrowser?.close();
   await browser?.close();
   await server.close();

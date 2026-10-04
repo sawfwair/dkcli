@@ -37,7 +37,7 @@ jobs:
         run: pnpm test:coverage
 
       - name: Install browsers for component geometry
-        run: pnpm exec playwright install --with-deps chromium webkit
+        run: pnpm exec playwright install --with-deps chromium firefox webkit
 
       - name: Check component hit regions
         run: pnpm check:component-targets
