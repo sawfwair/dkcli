@@ -138,12 +138,15 @@
   .dk-accordion {
     display: grid;
     gap: var(--dk-accordion-gap);
+    grid-template-columns: minmax(0, 1fr);
+    min-inline-size: 0;
   }
 
   .accordion-item {
     background: var(--dk-accordion-item-bg);
     border: var(--dk-accordion-item-border-width) solid var(--dk-accordion-item-border);
     border-radius: var(--dk-accordion-item-radius);
+    min-inline-size: 0;
     overflow: clip;
   }
 
@@ -151,6 +154,7 @@
     align-items: center;
     background: var(--dk-accordion-trigger-bg);
     border: 0;
+    box-sizing: border-box;
     color: var(--dk-accordion-trigger-fg);
     cursor: pointer;
     display: grid;
@@ -158,7 +162,8 @@
     grid-template-columns: minmax(0, 1fr) auto;
     inline-size: 100%;
     min-block-size: var(--dk-accordion-trigger-block-size);
-    padding-inline: var(--dk-accordion-trigger-inline-padding);
+    min-inline-size: 0;
+    padding-inline: min(var(--dk-accordion-trigger-inline-padding), max(0.25rem, calc(20% - 1rem)));
     text-align: left;
   }
 
@@ -180,6 +185,8 @@
   .accordion-copy {
     display: grid;
     gap: 0.2rem;
+    grid-template-columns: minmax(0, 1fr);
+    min-inline-size: 0;
   }
 
   .accordion-label {
@@ -193,6 +200,13 @@
     color: var(--dk-accordion-description-color);
     font-size: var(--dk-accordion-description-size);
     line-height: 1.45;
+  }
+
+  .accordion-label,
+  .accordion-description,
+  .accordion-panel :global(p) {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
   }
 
   .accordion-trigger[data-open='true'] .accordion-description {

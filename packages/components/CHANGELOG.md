@@ -14,6 +14,7 @@
 - Keep calendar day columns and complete weekday labels within their available width. Preserve day heights and report compact widths separately from the 44 px target criterion.
 - Wrap long Dialog and Drawer headings. Keep the zoomed Dialog within the viewport with a scrollable body and visible close action.
 - Constrain EmptyState text to shrinking grid tracks. Wrap generated Dialog triggers and reduce surface padding at narrow widths to retain usable action space.
+- Keep Accordion articles and complete disclosure text within shrinking grid tracks. Reduce trigger padding at narrow widths to retain readable glyph space with CSS zoom.
 - Restore InlineEdit focus after cancelling or committing keyboard edits. Animate only the fallback spinner wrapper and include its border within the declared ring size.
 - Declare authored responsive surface caps in the corresponding proof specifications. Keep compact Chip and Tabs recipe dimensions unchanged.
 - Require Svelte 5.20 or later. Update `@dkcli/core` and `@dkcli/tokens` to version `0.3.0`.
