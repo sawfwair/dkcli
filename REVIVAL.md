@@ -202,11 +202,12 @@ and the Northstar project identity, emits all 114 measurements/screenshots, then
 exits 1 under `--strict`. Source-free verification does not require workspace
 dependencies. The four-preset 720-fixture/45-estimate-failure baseline is unchanged.
 
-Actual Cloudflare browser acquisition and the delivered rendered snapshot path
-pass against the remote `BROWSER` binding. The complete 114-scene capture is local
-Chromium evidence; the full hosted project run remains untested. The temporary
-hosted harness and development qualification server have been stopped. The built
-workbench runs locally at `http://127.0.0.1:4177/design-systems`.
+During the project milestone, Cloudflare browser acquisition and the delivered
+rendered snapshot path passed against the remote `BROWSER` binding. Its complete
+114-scene capture was local Chromium evidence; it did not qualify the full hosted
+project. That temporary harness and development qualification server were stopped
+afterward. The subsequent release qualification uses a separately staged built
+Worker and records its complete scope.
 
 Current receipts, summaries, and desktop/phone captures are in
 `dkweb/.tmp/qualification/` in the sibling checkout. Layout checks report no page
@@ -218,9 +219,10 @@ overflow or alerts at 1440 px and 390 px. Final logs are
 `/tmp/dkweb-project-final-browser-20261004.log`, and
 `/tmp/dkweb-project-final-build-20261004.log`.
 
-The global `dk` installation still reports package version 0.2.0. Use `pnpm dk`
-from this checkout for the new source commands, or the built standalone CLI.
-The implementation and pending release changesets remain local and uncommitted.
+At the end of the project milestone, the global `dk` installation contained
+package version 0.2.0, and its implementation and Changesets were local and
+uncommitted. Release qualification tracks the committed versions, registry
+publication, and installed executable separately.
 
 ## Earlier verification
 
