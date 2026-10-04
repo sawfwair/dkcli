@@ -82,15 +82,22 @@ export type RenderedAuditReport = AuditReport & {
     ruleCount: number;
     selectorCount: number;
 };
+/** Extracts supported declaration values from source CSS without resolving the cascade. */
 export declare function extractCssValues(css: string): ExtractedValues;
+/** Finds the named ratio and base size with the lowest scale-fitting error. */
 export declare function fitScale(values: number[]): ScaleFit;
 export declare function scoreColorCoherence(values: ExtractedValues): CategoryScore;
+/** Scores APCA checks for color pairs extracted from individual source rules. */
 export declare function scoreContrast(values: ExtractedValues): CategoryScore;
 export declare function scoreSpacing(values: ExtractedValues): CategoryScore;
 export declare function scoreTypography(values: ExtractedValues): CategoryScore;
 export declare function scoreConsistency(values: ExtractedValues): CategoryScore;
 export declare function scoreGridAlignment(values: ExtractedValues): CategoryScore;
+/** Scores source CSS heuristics without resolving the cascade or rendering elements. */
 export declare function audit(css: string): AuditReport;
+/** Formats heuristic scores and up to 10 issues as CSS comments. */
 export declare function formatAuditCss(report: AuditReport): string;
+/** Serializes the audit report as JSON. */
 export declare function formatAuditJson(report: AuditReport): string;
+/** Scores supplied CSS and adds rule counts under the rendered mode label. Does not collect browser evidence. */
 export declare function auditRenderedCss(css: string): RenderedAuditReport;

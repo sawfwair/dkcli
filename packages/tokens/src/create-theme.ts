@@ -9,6 +9,7 @@ import {
   type ThemeSeed
 } from '@dkcli/core';
 
+/** Names a theme and supplies its color, scale, density, and motion inputs. */
 export type CreateThemeOptions = {
   name: string;
   seed: ThemeSeed;
@@ -26,6 +27,7 @@ function scaleValue(scale: FluidScaleStep[], name: string, fallback: string): st
   return String(scale.find((step) => step.name === name)?.value ?? fallback);
 }
 
+/** Compiles token families and semantic aliases from a theme seed. */
 export function createTheme({ name, seed }: CreateThemeOptions): ThemeContract {
   const optimized = optimizePalette(seed.color, {
     engine: 'advanced',

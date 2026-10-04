@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   export type DateRangeValue = {
     start?: string;
     end?: string;
@@ -6,7 +6,8 @@
 </script>
 
 <script lang="ts">
-  import { createEventDispatcher, tick } from 'svelte';
+  import { run } from 'svelte/legacy';
+  import { createEventDispatcher, tick, untrack } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import {
@@ -32,88 +33,74 @@
   } from './range-date-picker.recipe.js';
   import type { RangeDatePickerSize } from './range-date-picker.spec.js';
 
+  const uid = $props.id();
+
   const dispatch = createEventDispatcher<{
     change: { value: InternalDateRangeValue };
     openchange: { open: boolean };
   }>();
 
-  let nextId = 0;
+  interface Props {
+    value?: InternalDateRangeValue | undefined;
+    label?: string | undefined;
+    description?: string | undefined;
+    error?: string | undefined;
+    placeholder?: string;
+    required?: boolean;
+    disabled?: boolean;
+    name?: string | undefined;
+    id?: string | undefined;
+    size?: RangeDatePickerSize;
+    min?: string | undefined;
+    max?: string | undefined;
+    disabledDates?: string[];
+    weekStartsOn?: 0 | 1;
+    open?: boolean;
+    theme?: ThemeContract;
+    onOpenChange?: ((detail: { open: boolean }) => void) | undefined;
+    onChange?: ((detail: { value: InternalDateRangeValue }) => void) | undefined;
+  }
 
-  export let value: InternalDateRangeValue | undefined = undefined;
-  export let label: string | undefined = undefined;
-  export let description: string | undefined = undefined;
-  export let error: string | undefined = undefined;
-  export let placeholder = 'Select a date range';
-  export let required = false;
-  export let disabled = false;
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let size: RangeDatePickerSize = 'md';
-  export let min: string | undefined = undefined;
-  export let max: string | undefined = undefined;
-  export let disabledDates: string[] = [];
-  export let weekStartsOn: 0 | 1 = 0;
-  export let open = false;
-  export let theme: ThemeContract = DEFAULT_RANGE_DATE_PICKER_THEME;
-  export let onOpenChange: ((detail: { open: boolean }) => void) | undefined = undefined;
-  export let onChange: ((detail: { value: InternalDateRangeValue }) => void) | undefined = undefined;
+  let {
+    value = $bindable(undefined),
+    label = $bindable(undefined),
+    description = $bindable(undefined),
+    error = $bindable(undefined),
+    placeholder = $bindable('Select a date range'),
+    required = $bindable(false),
+    disabled = $bindable(false),
+    name = $bindable(undefined),
+    id = $bindable(undefined),
+    size = $bindable('md'),
+    min = $bindable(undefined),
+    max = $bindable(undefined),
+    disabledDates = $bindable([]),
+    weekStartsOn = $bindable(0),
+    open = $bindable(false),
+    theme = $bindable(DEFAULT_RANGE_DATE_PICKER_THEME),
+    onOpenChange = $bindable(undefined),
+    onChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createRangeDatePickerRegistration(DEFAULT_RANGE_DATE_PICKER_THEME);
-  const localId = `dk-range-date-picker-${++nextId}`;
+  const localId = `dk-range-date-picker-${uid}`;
   const dateFormatter = new Intl.DateTimeFormat('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric'
   });
 
-  let registration = defaultRegistration;
-  let fieldId = id ?? localId;
-  let compiledCase = getRangeDatePickerRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeRangeDatePickerSlotStyles(compiledCase);
-  let internalValue = normalizeRange(value);
-  let previousValue = JSON.stringify(value ?? {});
-  let internalOpen = open;
-  let previousOpen = open;
-  let invalid = Boolean(error);
-  let visibleMonth = monthStartIso(value?.start ?? todayIso());
-  let focusedDate = value?.end ?? value?.start ?? todayIso();
-  let triggerEl: HTMLButtonElement | null = null;
-  let surfaceEl: HTMLDivElement | null = null;
+  let internalValue = $state(untrack(() => normalizeRange(value)));
+  let previousValue = $state(untrack(() => JSON.stringify(value ?? {})));
+  let internalOpen = $state(untrack(() => open));
+  let previousOpen = $state(untrack(() => open));
+
+  let visibleMonth = $state(untrack(() => monthStartIso(value?.start ?? todayIso())));
+  let focusedDate = $state(untrack(() => value?.end ?? value?.start ?? todayIso()));
+  let triggerEl: HTMLButtonElement | null = $state(null);
+  let surfaceEl: HTMLDivElement | null = $state(null);
   let restoreFocusEl: HTMLElement | null = null;
   let dayRefs: Record<string, HTMLButtonElement | undefined> = {};
-
-  $: registration =
-    theme.name === DEFAULT_RANGE_DATE_PICKER_THEME.name
-      ? defaultRegistration
-      : createRangeDatePickerRegistration(theme);
-  $: fieldId = id ?? localId;
-  $: compiledCase = getRangeDatePickerRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeRangeDatePickerSlotStyles(compiledCase);
-  $: invalid = Boolean(error);
-  $: nextValueKey = JSON.stringify(value ?? {});
-  $: if (nextValueKey !== previousValue) {
-    internalValue = normalizeRange(value);
-    previousValue = nextValueKey;
-    focusedDate = value?.end ?? value?.start ?? focusedDate;
-    visibleMonth = monthStartIso(value?.start ?? visibleMonth);
-  }
-  $: if (open !== previousOpen) {
-    internalOpen = open;
-    previousOpen = open;
-    if (internalOpen) {
-      void syncFocus();
-    }
-  }
-  $: describedBy = error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined;
-  $: calendarPair = buildRangeCalendarPair({
-    visibleMonth,
-    value: internalValue,
-    min,
-    max,
-    disabledDates,
-    focusedDate,
-    weekStartsOn
-  });
 
   function registerDay(node: HTMLButtonElement, iso: string) {
     dayRefs[iso] = node;
@@ -267,6 +254,41 @@
     }
     return `${formatLabel(normalized.start)} – ${formatLabel(normalized.end)}`;
   }
+  let registration = $derived(theme.name === DEFAULT_RANGE_DATE_PICKER_THEME.name
+        ? defaultRegistration
+        : createRangeDatePickerRegistration(theme));
+  let fieldId = $derived(id ?? localId);
+  let compiledCase = $derived(getRangeDatePickerRecipeCase(registration.recipe, { size }));
+  let slotStyles = $derived(serializeRangeDatePickerSlotStyles(compiledCase));
+  let invalid = $derived(Boolean(error));
+  let nextValueKey = $derived(JSON.stringify(value ?? {}));
+  run(() => {
+    if (nextValueKey !== previousValue) {
+      internalValue = normalizeRange(value);
+      previousValue = nextValueKey;
+      focusedDate = value?.end ?? value?.start ?? focusedDate;
+      visibleMonth = monthStartIso(value?.start ?? visibleMonth);
+    }
+  });
+  run(() => {
+    if (open !== previousOpen) {
+      internalOpen = open;
+      previousOpen = open;
+      if (internalOpen) {
+        void syncFocus();
+      }
+    }
+  });
+  let describedBy = $derived(error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined);
+  let calendarPair = $derived(buildRangeCalendarPair({
+    visibleMonth,
+    value: internalValue,
+    min,
+    max,
+    disabledDates,
+    focusedDate,
+    weekStartsOn
+  }));
 </script>
 
 <svelte:window onclick={handleWindowClick} />
@@ -291,6 +313,7 @@
 
   <button
     bind:this={triggerEl}
+    id={fieldId}
     class="range-trigger"
     style={slotStyles.trigger}
     type="button"
@@ -402,6 +425,8 @@
   }
 
   .range-surface {
+    box-sizing: border-box;
+    max-inline-size: 100%;
     background: var(--dk-range-surface-bg);
     border: 1px solid var(--dk-range-surface-border);
     border-radius: var(--dk-range-surface-radius);
@@ -453,6 +478,8 @@
   .range-weekday {
     color: var(--dk-range-weekday-color);
     font-size: var(--dk-range-weekday-size);
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     padding: 0.25rem 0;
     text-align: center;
   }
@@ -470,8 +497,8 @@
     background: var(--dk-range-nav-bg);
     border-radius: 999px;
     color: var(--dk-range-nav-fg);
-    inline-size: var(--dk-range-nav-size);
-    min-block-size: var(--dk-range-nav-size);
+    inline-size: max(44px, var(--dk-range-nav-size));
+    min-block-size: max(44px, var(--dk-range-nav-size));
   }
 
   .range-day {

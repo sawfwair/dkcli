@@ -1,16 +1,22 @@
-# Ship Components
+# Ship components
 
-Components should ship with behavior, tokens, and proof fixtures.
+For component maintainers, this guide connects API, behavior, recipe, and consumer checks before packaging a component.
 
-## Component Checklist
+## Review the component
 
-- Public props are typed and documented.
-- Accessibility behavior is covered by tests.
-- Recipe output is stable and proofable.
-- Visual density, target size, and contrast are checked.
-- The package can be packed and consumed by the starter app.
+Verify the following requirements:
 
-## Verification Commands
+- Type and document public props.
+- Test keyboard behavior and accessible names.
+- Verify recipe output and declared mathematical checks.
+- Inspect density, target sizes, and contrast.
+- Install the packed component in a consumer app.
+
+Mathematical fixtures do not establish browser behavior or accessibility compliance. Review their evidence scope and any failing or unsupported checks.
+
+## Run component checks
+
+To type-check components, inspect fixture verdicts, build the package, and test the starter, run:
 
 ```bash
 pnpm check:components:strict
@@ -19,6 +25,8 @@ pnpm build:components
 pnpm example:verify
 ```
 
-## Recipe Pattern
+To fail on any unsuccessful or unsupported mathematical check, add `--strict` to component verification. Default generation returns exit code `0` even when a fixture fails.
 
-Keep component rendering thin. Let recipes describe intent and proof inputs, let tokens carry compiled values, and let tests catch drift.
+## Separate recipes and rendering
+
+Keep rendering focused on the component API and behavior. Put style inputs and mathematical checks in recipes. Use tokens for shared values and tests for behavior changes.

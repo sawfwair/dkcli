@@ -99,6 +99,11 @@ export function hexToJzazbz(input: string): [number, number, number] {
     .coords.map((value) => round(value ?? 0, 6)) as [number, number, number];
 }
 
+/** Returns the original CSS color opacity before gamut conversion or hex rounding. */
+export function cssColorAlpha(input: string): number {
+  return Number(asColor(input).alpha);
+}
+
 export function parseCssColor(input: string, gamut: Gamut = 'srgb'): ParsedColor {
   const color = asColor(input).toGamut({ space: gamutSpace(gamut), method: 'css' });
   const hex = color.to('srgb').toString({ format: 'hex' });
@@ -150,12 +155,14 @@ export function luminance(hex: string): number {
   return 0.2126 * srgbToLinear(sr) + 0.7152 * srgbToLinear(sg) + 0.0722 * srgbToLinear(sb);
 }
 
+/** Computes the WCAG contrast ratio for two colors, without evaluating page compliance. */
 export function contrastRatio(hex1: string, hex2: string): number {
   const y1 = luminance(hex1);
   const y2 = luminance(hex2);
   return (Math.max(y1, y2) + 0.05) / (Math.min(y1, y2) + 0.05);
 }
 
+/** Selects the higher-contrast light or dark foreground by contrast ratio. */
 export function autoContrast(bgHex: string): string {
   return contrastRatio(bgHex, '#ffffff') >= contrastRatio(bgHex, '#0a0a0a')
     ? '#ffffff'
@@ -172,6 +179,7 @@ export function hexToY(hex: string): number {
   return Y > 0.022 ? Y : Y + Math.pow(0.022 - Y, 1.414);
 }
 
+/** Computes signed APCA lightness contrast for foreground and background colors. */
 export function apcaContrast(fgHex: string, bgHex: string): APCAResult {
   const txtY = hexToY(fgHex);
   const bgY = hexToY(bgHex);
@@ -199,6 +207,7 @@ export function apcaContrast(fgHex: string, bgHex: string): APCAResult {
   };
 }
 
+/** Checks APCA contrast against DesignKit font size and weight thresholds, without WCAG certification. */
 export function apcaCheck(Lc: number, size: number, weight: number): SizeWeightCheck {
   const absLc = Math.abs(Lc);
   let minLc: number;
@@ -214,10 +223,11 @@ export function apcaCheck(Lc: number, size: number, weight: number): SizeWeightC
   return {
     pass: absLc >= minLc,
     minLc,
-    recommendation: absLc >= minLc ? `PASS (Lc ${absLc} >= ${minLc})` : `FAIL (Lc ${absLc} < ${minLc})`
+    recommendation: absLc >= minLc ? `Pass (Lc ${absLc} >= ${minLc})` : `Fail (Lc ${absLc} < ${minLc})`
   };
 }
 
+/** Selects the higher-contrast light or dark foreground by absolute APCA contrast. */
 export function autoContrastAPCA(bgHex: string): string {
   const whiteResult = apcaContrast('#ffffff', bgHex);
   const blackResult = apcaContrast('#0a0a0a', bgHex);

@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
+    "test": "vitest run --config vitest.config.mjs --maxWorkers=1",
+    "check:entry": "node ./scripts/check-built-entry.mjs"
   },
   "dependencies": {
     "@dkcli/components": "0.0.0-local",
@@ -16,7 +19,11 @@
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@testing-library/svelte": "^5.3.1",
+    "jsdom": "^29.0.1",
+    "svelte-check": "^4.3.4",
     "typescript": "^5.9.3",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.1.0"
   }
 }

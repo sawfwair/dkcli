@@ -1,3 +1,4 @@
+/** Defines the inputs used to compile a DesignKit theme. */
 export type ThemeSeed = {
     color: `#${string}`;
     ratio: string | number;
@@ -6,6 +7,7 @@ export type ThemeSeed = {
     motion: string;
     contrastProfile?: 'default' | 'low-vision';
 };
+/** References a theme value, a slot variable, or a literal recipe value. */
 export type TokenExpr = {
     ref: string;
 } | {
@@ -60,13 +62,17 @@ export type TargetProofSpec = {
     actualSize?: TokenExpr | number;
     modality: 'mouse' | 'touch';
 };
+/** Defines minimum color differences for the base model and optional vision simulations. */
 export type DistinctnessProofSpec = {
     tokens: string[];
     minDeltaE: number;
+    /** If true, requires the threshold under protan, deutan, and tritan simulations. */
     cvd: boolean;
 };
+/** Defines conservative layout estimates without measuring rendered elements. */
 export type LayoutProofSpec = {
     target: string;
+    /** The positive viewport widths in pixels. Each width receives a verdict. */
     widths: number[];
     heights?: number[];
     noOverflow: boolean;
@@ -102,6 +108,8 @@ export type AnchoredSurfaceProofSpec = {
     surfaceHeight: TokenExpr | number;
     offset: TokenExpr | number;
     viewportPadding: number;
+    /** Set only when authored CSS caps inline size to viewport width minus this padding. */
+    viewportConstrained?: boolean;
 };
 export type ComponentProofs = {
     contrast?: ContrastProofSpec[];
@@ -113,11 +121,13 @@ export type ComponentProofs = {
     optionRow?: OptionRowProofSpec[];
     anchoredSurface?: AnchoredSurfaceProofSpec[];
 };
+/** Declares intended semantics and keyboard behavior, without certifying compliance. */
 export type AccessibilityContract = {
     role: string;
     keyboardModel?: string;
     labelling?: 'slot-label' | 'aria-label' | 'external-label';
 };
+/** Selects recipe cases, states, props, and sample text for mathematical checks. */
 export type ProofCaseSpec = {
     name: string;
     axes?: Record<string, string>;
@@ -125,6 +135,7 @@ export type ProofCaseSpec = {
     props?: Record<string, boolean | number | string>;
     sampleText?: string;
 };
+/** Defines component slots, recipe variants, proof requirements, and intended semantics. */
 export type ComponentSpec = {
     id: string;
     slots: SlotSpec[];
@@ -139,7 +150,11 @@ export type ComponentCase = {
     componentId: string;
     axes: Record<string, string>;
 };
+/** Returns true if the value is a supported component state name. */
 export declare function isComponentStateName(value: unknown): value is ComponentStateName;
+/** Checks safe keys, supported states, distinctness thresholds, and layout dimensions. */
 export declare function validateComponentSpec(spec: ComponentSpec): ComponentSpec;
+/** Validates and returns the supplied component spec. */
 export declare function createComponentSpec(spec: ComponentSpec): ComponentSpec;
+/** Enumerates every combination of the declared axis values. */
 export declare function enumerateComponentCases(spec: ComponentSpec): ComponentCase[];

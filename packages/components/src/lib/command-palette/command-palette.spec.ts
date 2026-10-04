@@ -154,7 +154,8 @@ export const commandPaletteSpec: ComponentSpec = createComponentSpec({
         surfaceWidth: literal('672px'),
         surfaceHeight: literal('512px'),
         offset: slotVar('root', '--dk-command-offset'),
-        viewportPadding: 16
+        viewportPadding: 16,
+        viewportConstrained: true
       }
     ]
   },

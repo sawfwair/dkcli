@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480" role="img" aria-labelledby="title desc">
   <title id="title">DesignKit CLI command and package map</title>
-  <desc id="desc">A diagram mapping dk commands through proof, foundations, motion, layout, and product command families into the cli, core, tokens, and components packages.</desc>
+  <desc id="desc">Command families produce CSS, mathematical data, tokens, and recipes. The repository contains CLI, core, tokens, and components packages.</desc>
   <defs>
     <marker id="arrow" markerWidth="12" markerHeight="12" refX="9" refY="6" orient="auto">
       <path d="M1 1 11 6 1 11Z" fill="#1e1711"/>
@@ -10,8 +10,8 @@
   <rect width="1200" height="480" rx="30" fill="#ffffff"/>
   <rect x="28" y="28" width="1144" height="424" rx="24" fill="#fdf3ea" stroke="#d7cac0"/>
 
-  <text x="62" y="78" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="30" font-weight="800">Command families and package flow</text>
-  <text x="62" y="110" fill="#6e6057" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="17">DesignKit keeps heavy proof math in deterministic packages and emits artifacts consumers can ship.</text>
+  <text x="62" y="78" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="30" font-weight="800">Commands and repository packages</text>
+  <text x="62" y="110" fill="#6e6057" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="17">Commands generate mathematical data and token artifacts.</text>
 
   <g transform="translate(62 156)">
     <rect width="230" height="126" rx="18" fill="#1e1711"/>
@@ -24,7 +24,7 @@
 
   <g transform="translate(412 142)">
     <rect width="128" height="48" rx="14" fill="#af6100"/>
-    <text x="20" y="30" fill="#ffffff" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="800">Proof</text>
+    <text x="20" y="30" fill="#ffffff" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="800">Checks</text>
 
     <rect x="152" width="150" height="48" rx="14" fill="#d96f32"/>
     <text x="173" y="30" fill="#1e1711" font-family="Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif" font-size="15" font-weight="800">Foundations</text>

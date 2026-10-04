@@ -209,6 +209,7 @@ function scoreCandidate(
   };
 }
 
+/** Generates a palette and optionally optimizes its seed against weighted color heuristics. */
 export function optimizePalette(
   hex: string,
   options: PaletteOptimizeOptions = {}

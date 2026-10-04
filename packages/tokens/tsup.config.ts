@@ -6,7 +6,7 @@ export default defineConfig({
   target: 'es2022',
   format: ['esm'],
   clean: true,
-  dts: true,
+  dts: { entry: { 'index': '.types/index.d.ts', 'create-theme': '.types/create-theme.d.ts', 'emit-css': '.types/emit-css.d.ts', 'emit-json': '.types/emit-json.d.ts' } },
   sourcemap: false,
   splitting: false,
   shims: false,

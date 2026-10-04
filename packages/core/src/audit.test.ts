@@ -24,6 +24,32 @@ describe('audit', () => {
     expect(extracted.colorPairs).toHaveLength(2);
   });
 
+  it('detects the same contrast failure regardless of declaration order and leading whitespace', () => {
+    const colorFirst = audit(`
+      .card {
+        color: #aaaaaa;
+        background: #ffffff;
+        font-size: 16px;
+      }
+    `);
+    const backgroundFirst = audit(`
+      .card {
+        background: #ffffff;
+        color: #aaaaaa;
+        font-size: 16px;
+      }
+    `);
+
+    expect(colorFirst.extracted.colorPairs).toEqual(backgroundFirst.extracted.colorPairs);
+    expect(colorFirst.extracted.colorPairs).toHaveLength(1);
+    expect(colorFirst.categories.find((category) => category.label === 'Contrast')).toEqual(
+      backgroundFirst.categories.find((category) => category.label === 'Contrast')
+    );
+    expect(colorFirst.categories.find((category) => category.label === 'Contrast')?.issues).toEqual(
+      expect.arrayContaining([expect.objectContaining({ severity: 'fail' })])
+    );
+  });
+
   it('fits exact scales with low error', () => {
     const fit = fitScale([8, 16, 32]);
 
@@ -38,7 +64,7 @@ describe('audit', () => {
 
     expect(report.categories).toHaveLength(6);
     expect(report.overall).toBeGreaterThan(0);
-    expect(cssOutput).toContain('Overall:');
+    expect(cssOutput).toContain('Source heuristic score:');
     expect(JSON.parse(jsonOutput)).toMatchObject({ overall: report.overall });
   });
 });

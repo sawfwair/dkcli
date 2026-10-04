@@ -90,7 +90,7 @@
   }
 
   function toggleBranch(item: SideNavItem): void {
-    if (!item.children?.length) {
+    if (item.disabled || !item.children?.length) {
       return;
     }
     internalExpandedIds = toggleExpandedIds(internalExpandedIds, item.id);
@@ -103,6 +103,7 @@
   }
 
   function handleKeydown(event: KeyboardEvent, entry: FlatHierarchyItem<HierarchyItem>, index: number): void {
+    if (entry.item.disabled) return;
     if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'Home' || event.key === 'End') {
       const nextIndex = nextVisibleHierarchyIndex(visibleItems, index, event.key);
       focusVisible(nextIndex);
@@ -153,6 +154,7 @@
               class="side-nav-branch"
               style={slotStyles.branch}
               type="button"
+              disabled={entry.item.disabled}
               aria-label={entry.expanded ? `Collapse ${entry.item.label}` : `Expand ${entry.item.label}`}
               onclick={() => toggleBranch(entry.item as SideNavItem)}
             >
@@ -231,6 +233,7 @@
     display: flex;
     justify-content: space-between;
     min-block-size: var(--dk-side-nav-item-min-height);
+    min-inline-size: 0;
     padding-inline: var(--dk-side-nav-item-inline-padding);
     text-align: left;
     width: 100%;
@@ -245,11 +248,14 @@
     align-items: center;
     display: inline-flex;
     gap: 0.5rem;
+    min-width: 0;
   }
 
   .side-nav-label {
     font-size: var(--dk-side-nav-label-size);
     font-weight: var(--dk-side-nav-label-weight);
+    min-width: 0;
+    overflow-wrap: anywhere;
   }
 
   .side-nav-badge {
@@ -261,7 +267,8 @@
     border: 0;
     color: inherit;
     cursor: pointer;
-    inline-size: 1.5rem;
+    inline-size: 44px;
+    min-block-size: 44px;
     font-size: var(--dk-side-nav-branch-size);
     padding: 0;
   }

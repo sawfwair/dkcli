@@ -25,6 +25,7 @@ export type CompositionScore = {
     metrics: CompositionMetrics;
     total: number;
 };
+/** Scores geometric composition heuristics for rectangles within a frame. */
 export declare function scoreComposition(rects: Rect[], frame: Frame): CompositionScore;
 export type AdvancedCompositionMetrics = CompositionMetrics & {
     weightedBalance: number;
@@ -36,4 +37,5 @@ export type AdvancedCompositionScore = {
     metrics: AdvancedCompositionMetrics;
     total: number;
 };
+/** Scores composition heuristics using element importance estimates. */
 export declare function scoreDesignComposition(document: DesignDocument, importanceReport?: ImportanceReport): AdvancedCompositionScore;

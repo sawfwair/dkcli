@@ -1,6 +1,6 @@
 {
   "name": "@dkcli/tokens",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Compiled DesignKit themes, aliases, and token emitters.",
   "type": "module",
   "license": "MIT",
@@ -50,12 +50,12 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsup --config ./tsup.config.ts",
+    "build": "tsc -p ./tsconfig.build.json && tsup --config ./tsup.config.ts",
     "pack:dry": "env -u npm_config_link_workspace_packages npm_config_cache=../../.npm-cache npm pack --dry-run",
     "prepublishOnly": "node ../../scripts/check-package-contents.mjs tokens",
     "publint": "publint"
   },
   "dependencies": {
-    "@dkcli/core": "0.2.2"
+    "@dkcli/core": "0.3.0"
   }
 }

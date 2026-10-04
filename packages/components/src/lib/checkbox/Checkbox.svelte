@@ -1,47 +1,63 @@
 <script lang="ts">
+  import { run } from 'svelte/legacy';
   import { createEventDispatcher } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import { DEFAULT_CHECKBOX_THEME, createCheckboxRegistration, getCheckboxRecipeCase, serializeCheckboxSlotStyles } from './checkbox.recipe.js';
   import type { CheckboxSize } from './checkbox.spec.js';
 
-  let nextId = 0;
+  const uid = $props.id();
+
   const dispatch = createEventDispatcher<{ change: { checked: boolean; indeterminate: boolean } }>();
 
-  export let checked = false;
-  export let indeterminate = false;
-  export let label = '';
-  export let description: string | undefined = undefined;
-  export let error: string | undefined = undefined;
-  export let required = false;
-  export let disabled = false;
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let size: CheckboxSize = 'md';
-  export let theme: ThemeContract = DEFAULT_CHECKBOX_THEME;
-  export let onChange:
+  interface Props {
+    checked?: boolean;
+    indeterminate?: boolean;
+    label?: string;
+    description?: string | undefined;
+    error?: string | undefined;
+    required?: boolean;
+    disabled?: boolean;
+    name?: string | undefined;
+    id?: string | undefined;
+    size?: CheckboxSize;
+    theme?: ThemeContract;
+    onChange?:
     | ((detail: { checked: boolean; indeterminate: boolean }) => void)
-    | undefined = undefined;
+    | undefined;
+  }
+
+  let {
+    checked = $bindable(false),
+    indeterminate = $bindable(false),
+    label = $bindable(''),
+    description = $bindable(undefined),
+    error = $bindable(undefined),
+    required = $bindable(false),
+    disabled = $bindable(false),
+    name = $bindable(undefined),
+    id = $bindable(undefined),
+    size = $bindable('md'),
+    theme = $bindable(DEFAULT_CHECKBOX_THEME),
+    onChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createCheckboxRegistration(DEFAULT_CHECKBOX_THEME);
-  const localId = `dk-checkbox-${++nextId}`;
+  const localId = `dk-checkbox-${uid}`;
 
-  let registration = defaultRegistration;
-  let inputEl: HTMLInputElement | null = null;
-  let fieldId = id ?? localId;
-  let invalid = Boolean(error);
-  let compiledCase = getCheckboxRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeCheckboxSlotStyles(compiledCase);
+  let inputEl: HTMLInputElement | null = $state(null);
 
-  $: registration = theme.name === DEFAULT_CHECKBOX_THEME.name ? defaultRegistration : createCheckboxRegistration(theme);
-  $: fieldId = id ?? localId;
-  $: invalid = Boolean(error);
-  $: compiledCase = getCheckboxRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeCheckboxSlotStyles(compiledCase);
-  $: if (inputEl) {
-    inputEl.indeterminate = indeterminate;
-  }
-  $: describedBy = error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined;
+  let registration = $derived(theme.name === DEFAULT_CHECKBOX_THEME.name ? defaultRegistration : createCheckboxRegistration(theme));
+  let fieldId = $derived(id ?? localId);
+  let invalid = $derived(Boolean(error));
+  let compiledCase = $derived(getCheckboxRecipeCase(registration.recipe, { size }));
+  let slotStyles = $derived(serializeCheckboxSlotStyles(compiledCase));
+  run(() => {
+    if (inputEl) {
+      inputEl.indeterminate = indeterminate;
+    }
+  });
+  let describedBy = $derived(error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined);
 
   function handleChange(event: Event): void {
     checked = (event.currentTarget as HTMLInputElement).checked;

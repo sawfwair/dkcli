@@ -170,7 +170,7 @@ function getStringFlag(flags: FlagMap, name: string): string | undefined {
     return undefined;
   }
   if (typeof value === 'boolean') {
-    fail(`Flag --${name} requires a value.`);
+    fail(`Option --${name} requires a value.`);
   }
   return value;
 }
@@ -183,7 +183,7 @@ function getIntegerFlag(flags: FlagMap, name: string, fallback: number): number 
 
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) {
-    fail(`Flag --${name} must be a number. Received "${value}".`);
+    fail(`Option --${name} requires a finite number. Received "${value}".`);
   }
 
   return Math.round(parsed);
@@ -197,7 +197,7 @@ function resolveOutputFormat(flags: FlagMap): CmsOutputFormat {
   if (format === 'json') {
     return 'json';
   }
-  fail('dk cms supports only text output by default, or JSON with --json.');
+  fail('For CMS output, use text or --json.');
 }
 
 function resolveArtifactFormat(flags: FlagMap): CmsArtifactFormat {
@@ -295,7 +295,7 @@ async function parseResponse<T>(response: Response, guard: JsonGuard<T>): Promis
   if (guard(text)) {
     return text;
   }
-  throw new Error('CMS response returned an unexpected text shape.');
+  throw new Error('The CMS response has an unexpected text format.');
 }
 
 function extractResponseError(payload: unknown, status: number): string {
@@ -579,19 +579,19 @@ function formatPayload(text: string, payload: unknown, format: CmsOutputFormat):
 
 function formatSites(sites: CmsSite[]): string {
   if (sites.length === 0) {
-    return 'No CMS sites yet.';
+    return 'No CMS sites found.';
   }
 
-  return ['dk cms sites', ...sites.map((site) => `${site.id}  ${site.slug}  ${site.name}`)].join('\n');
+  return sites.map((site) => `${site.id}  ${site.slug}  ${site.name}`).join('\n');
 }
 
 function formatPages(site: CmsSite, pages: CmsPage[]): string {
   if (pages.length === 0) {
-    return `No pages yet for ${site.name}.`;
+    return `No pages found for ${site.name}.`;
   }
 
   return [
-    `dk cms pages (${site.slug})`,
+    `Site: ${site.slug}`,
     ...pages.map((page) =>
       `${page.id}  ${page.slug}  ${page.title}${page.publishedBuildId ? `  published=${page.publishedBuildId}` : ''}`
     )
@@ -686,7 +686,7 @@ async function waitForAuthCode(io: CliIO, approvalUrl: string, port: number): Pr
       clearTimeout(timeoutId);
       response.setHeader('content-type', 'text/html; charset=utf-8');
       response.end(
-        '<!doctype html><html><body style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; padding: 24px;"><h1>DesignKit CLI connected</h1><p>You can return to the terminal.</p></body></html>'
+        '<!doctype html><html><body style="font-family: ui-monospace, SFMono-Regular, Menlo, monospace; padding: 24px;"><h1>Authorization received</h1><p>Return to the terminal to complete sign-in.</p></body></html>'
       );
       server.close(() => {
         resolve(code);
@@ -702,7 +702,7 @@ async function waitForAuthCode(io: CliIO, approvalUrl: string, port: number): Pr
       io.stdout(`Approval URL: ${approvalUrl}`);
       const shouldOpenBrowser = (io.getEnv?.('DKCMS_CLI_NO_OPEN') ?? process.env.DKCMS_CLI_NO_OPEN) !== '1';
       if (shouldOpenBrowser && !launchBrowser(approvalUrl)) {
-        io.stdout('Browser launch failed. Open the approval URL manually.');
+        io.stdout('Could not open the browser. Open the approval URL to continue.');
       }
     });
   });
@@ -775,13 +775,13 @@ async function loginWithOidcDevice(io: CliIO, flags: FlagMap, baseUrl: string): 
   }
 
   const approvalUrl = device.verification_uri_complete ?? device.verification_uri;
-  io.stdout('Waiting for OIDC device approval...');
+  io.stdout('Approve device sign-in in your browser.');
   io.stdout(`Device code: ${device.user_code}`);
   io.stdout(`Approval URL: ${approvalUrl}`);
 
   const shouldOpenBrowser = (io.getEnv?.('DKCMS_CLI_NO_OPEN') ?? process.env.DKCMS_CLI_NO_OPEN) !== '1';
   if (shouldOpenBrowser && !launchBrowser(approvalUrl)) {
-    io.stdout('Browser launch failed. Open the approval URL manually.');
+    io.stdout('Could not open the browser. Open the approval URL to continue.');
   }
 
   const token = await pollDeviceToken(io, metadata.token_endpoint, device, scope);
@@ -815,7 +815,7 @@ async function loginWithLegacyBrowserFlow(io: CliIO, flags: FlagMap, baseUrl: st
     baseUrl
   ).toString();
 
-  io.stdout('Waiting for browser approval...');
+  io.stdout('Approve sign-in in your browser.');
   const code = await waitForAuthCode(io, approvalUrl, port);
   const session = await exchangeSession(io, baseUrl, { code }, '/api/cli/v1/auth/exchange');
   return session;
@@ -831,8 +831,7 @@ async function login(io: CliIO, flags: FlagMap): Promise<string> {
   await writeSession(io, session);
 
   return [
-    'dk cms login',
-    `Logged in as ${session.user.displayName} <${session.user.email}>.`,
+    `Signed in as ${session.user.displayName} <${session.user.email}>.`,
     `Session saved to ${resolveSessionPath(io)}`
   ].join('\n');
 }
@@ -1097,7 +1096,7 @@ async function publishPage(io: CliIO, flags: FlagMap, positional: string[]): Pro
   let session = await loadSession(io, flags);
   const siteRef = maybeSlugOrId(positional[2] ?? getStringFlag(flags, 'site'), 'Site reference');
   const pageRef = maybeSlugOrId(positional[3] ?? getStringFlag(flags, 'page'), 'Page reference');
-  const buildId = maybeSlugOrId(getStringFlag(flags, 'build'), 'Build id');
+  const buildId = maybeSlugOrId(getStringFlag(flags, 'build'), 'Build ID');
   const resolvedSite = await resolveSiteReference(io, session, siteRef);
   const resolvedPage = await resolvePageReference(io, resolvedSite.session, resolvedSite.site.id, pageRef);
   session = resolvedPage.session;
@@ -1133,7 +1132,7 @@ async function exportEmail(io: CliIO, flags: FlagMap, positional: string[]): Pro
     session = resolvedPage.session;
     buildId = resolvedPage.page.publishedBuildId ?? '';
     if (!buildId) {
-      fail(`Page ${resolvedPage.page.slug} does not have a published build yet.`);
+      fail(`Page ${resolvedPage.page.slug} has no published build. Publish a build or specify --build.`);
     }
   }
 

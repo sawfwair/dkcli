@@ -9,8 +9,8 @@
   } from './empty-state.recipe.js';
   import type { EmptyStateSize, EmptyStateTone } from './empty-state.spec.js';
 
-  export let title = 'Nothing here yet';
-  export let description = 'When there is data to show, it will appear here.';
+  export let title = 'No items';
+  export let description = '';
   export let tone: EmptyStateTone = 'neutral';
   export let size: EmptyStateSize = 'md';
   export let theme: ThemeContract = DEFAULT_EMPTY_STATE_THEME;
@@ -35,7 +35,9 @@
 
   <div class="empty-copy">
     <h2 class="empty-title" style={slotStyles.title}>{title}</h2>
-    <p class="empty-description" style={slotStyles.description}>{description}</p>
+    {#if description}
+      <p class="empty-description" style={slotStyles.description}>{description}</p>
+    {/if}
   </div>
 
   {#if $$slots.actions}

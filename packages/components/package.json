@@ -1,6 +1,6 @@
 {
   "name": "@dkcli/components",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Svelte 5 DesignKit components with proof-backed recipes and theme-driven styling.",
   "type": "module",
   "license": "MIT",
@@ -250,10 +250,10 @@
     "publint": "publint"
   },
   "dependencies": {
-    "@dkcli/core": "0.2.2",
-    "@dkcli/tokens": "0.2.2"
+    "@dkcli/core": "0.3.0",
+    "@dkcli/tokens": "0.3.0"
   },
   "peerDependencies": {
-    "svelte": "^5.0.0"
+    "svelte": "^5.20.0"
   }
 }

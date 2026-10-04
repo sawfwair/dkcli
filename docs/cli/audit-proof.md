@@ -1,28 +1,40 @@
-# Audit & Proofs
+# Audits and mathematical evidence
 
-DesignKit helps you ask better design questions before a reviewer has to squint at a screenshot.
+Use these commands to inspect source CSS, generated design results, and interaction-target estimates.
 
-## CSS Audit
+## Audit source CSS
+
+To audit the `app.css` file, run:
 
 ```bash
 dk audit --css app.css
-cat app.css | dk audit --stdin --json
 ```
 
-Source CSS audits score heuristics that are cheap to run in CI and useful during component review.
-
-## Perfect Proof
+To read CSS from standard input and emit JSON, run:
 
 ```bash
-dk perfect --seed "#D96F32" --ratio perfect-fourth --motion snappy --mode light --json
+dk audit --stdin --json < app.css
 ```
 
-The generated proof includes tokens, APCA proof cards, fluid scale data, layout rails, composition results, typography recommendations, target estimates, and line breaking output.
+Source CSS audits apply heuristics with assumptions about inheritance, units, and backgrounds. They do not collect rendered browser behavior.
 
-## Interaction Targets
+## Generate a combined result
+
+To generate palette, contrast, scale, layout, typography, motion, and interaction estimates, run:
+
+```bash
+dk perfect --seed "#D96F32" --ratio perfect-fourth \
+    --motion snappy --mode light --json
+```
+
+For strict exit codes and evidence limits, see [Design with mathematical evidence](/guides/proof-driven-design).
+
+## Estimate interaction targets
+
+To estimate a touch interaction from distance, target width, and choice count, run:
 
 ```bash
 dk target --distance 280 --width 44 --choices 6 --modality touch --json
 ```
 
-Use target estimates for touch-heavy navigation, dense toolbars, menus, and high-frequency actions.
+Use the estimate when comparing navigation controls, toolbars, or menus. Validate the rendered controls separately.

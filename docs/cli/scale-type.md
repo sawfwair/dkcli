@@ -1,14 +1,16 @@
-# Scale & Type
+# Scale and typography
 
-DesignKit treats spacing, type size, measure, and line flow as connected systems.
+Use these commands to generate spacing and type scales, estimate readable measure, and balance lines.
 
-## Fluid Scale
+## Generate a fluid scale
+
+To interpolate between 15-pixel and 19-pixel base sizes, run:
 
 ```bash
 dk scale --fluid --ratio perfect-fourth --base-min 15 --base-max 19
 ```
 
-The docs theme imports the generated variables from `docs/.vitepress/theme/generated/dk-tokens.css`:
+The documentation theme imports the generated variables from the `docs/.vitepress/theme/generated/dk-tokens.css` file. To apply spacing variables, use:
 
 ```css
 .component {
@@ -18,18 +20,23 @@ The docs theme imports the generated variables from `docs/.vitepress/theme/gener
 }
 ```
 
-## Text Recommendations
+## Estimate text spacing
+
+To generate recommendations for an 18-pixel font and a 680-pixel measure, run:
 
 ```bash
 dk text --font 18 --measure 680 --contrast 72 --profile default
 ```
 
-The command recommends line height, word spacing, paragraph spacing, crowding risk, and advanced typesetting data.
+The result includes line height, word spacing, paragraph spacing, crowding risk, and typesetting data.
 
-## Balance Lines
+## Balance lines
+
+To compare line breaks for a heading, run:
 
 ```bash
-dk linebreak --text "Mathematical interfaces deserve intentional line breaks." --chars 24 --lines 3
+dk linebreak --text "Theme colors and spacing follow a scale." \
+    --chars 24 --lines 3
 ```
 
-Use this for headlines, marketing copy, command descriptions, and docs hero text where ragged lines are visible.
+Line-breaking results use text and width estimates. Inspect the rendered text with the font used by your app.

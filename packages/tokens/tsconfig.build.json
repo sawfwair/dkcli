@@ -1,0 +1,26 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "outDir": "./.types",
+    "rootDir": "./src",
+    "rewriteRelativeImportExtensions": true,
+    "paths": {
+      "@dkcli/core": [
+        "packages/core/dist/index.d.ts"
+      ],
+      "@dkcli/core/*": [
+        "packages/core/dist/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.d.ts"
+  ]
+}

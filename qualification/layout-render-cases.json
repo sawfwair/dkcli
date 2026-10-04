@@ -1,0 +1,376 @@
+{
+  "schemaVersion": 1,
+  "projectIdentity": "336ee2707a33d648d9ff9a754a6712062034e2ba55443c5c00235e8723376050",
+  "cases": [
+    {
+      "componentId": "accordion",
+      "id": "size=md__open",
+      "name": "accordion-md-open",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "open"
+      ],
+      "props": {},
+      "sampleText": "Deployment timeline and stakeholder notes",
+      "caseId": "math-layout-83c92fd5d5f8",
+      "target": "panel",
+      "containerWidths": [
+        320
+      ],
+      "requiredBlockPx": 128,
+      "estimatedInlinePx": 399.36
+    },
+    {
+      "componentId": "badge",
+      "id": "emphasis=soft|size=md|tone=success__rest",
+      "name": "success-soft",
+      "caseKey": "emphasis=soft|size=md|tone=success",
+      "axes": {
+        "tone": "success",
+        "emphasis": "soft",
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Healthy",
+      "caseId": "math-layout-c0f93af39b5f",
+      "target": "root",
+      "containerWidths": [
+        120
+      ],
+      "requiredBlockPx": 30,
+      "estimatedInlinePx": 134.57
+    },
+    {
+      "componentId": "badge",
+      "id": "emphasis=solid|size=md|tone=success__rest",
+      "name": "success-solid",
+      "caseKey": "emphasis=solid|size=md|tone=success",
+      "axes": {
+        "tone": "success",
+        "emphasis": "solid",
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Healthy",
+      "caseId": "math-layout-4ac2c2a26ff7",
+      "target": "root",
+      "containerWidths": [
+        120
+      ],
+      "requiredBlockPx": 30,
+      "estimatedInlinePx": 134.57
+    },
+    {
+      "componentId": "badge",
+      "id": "emphasis=outline|size=md|tone=success__rest",
+      "name": "success-outline",
+      "caseKey": "emphasis=outline|size=md|tone=success",
+      "axes": {
+        "tone": "success",
+        "emphasis": "outline",
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Healthy",
+      "caseId": "math-layout-77db2c684d7c",
+      "target": "root",
+      "containerWidths": [
+        120
+      ],
+      "requiredBlockPx": 30,
+      "estimatedInlinePx": 134.57
+    },
+    {
+      "componentId": "breadcrumbs",
+      "id": "size=md__rest",
+      "name": "breadcrumbs-md",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Workspace / Release / Production",
+      "caseId": "math-layout-90cee942fec8",
+      "target": "root",
+      "containerWidths": [
+        220
+      ],
+      "requiredBlockPx": 44,
+      "estimatedInlinePx": 266.88
+    },
+    {
+      "componentId": "button",
+      "id": "content=label|size=lg|variant=solid__rest",
+      "name": "solid-sizes (content=label|size=lg|variant=solid)",
+      "caseKey": "content=label|size=lg|variant=solid",
+      "axes": {
+        "variant": "solid",
+        "size": "lg",
+        "content": "label"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Continue",
+      "caseId": "math-layout-89ad1aa09400",
+      "target": "root",
+      "containerWidths": [
+        180
+      ],
+      "requiredBlockPx": 52,
+      "estimatedInlinePx": 230.36
+    },
+    {
+      "componentId": "button",
+      "id": "content=label|size=md|variant=link__rest__as=a|href=#",
+      "name": "link-anchor",
+      "caseKey": "content=label|size=md|variant=link",
+      "axes": {
+        "variant": "link",
+        "size": "md",
+        "content": "label"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {
+        "as": "a",
+        "href": "#"
+      },
+      "sampleText": "Open details",
+      "caseId": "math-layout-774eabe97656",
+      "target": "root",
+      "containerWidths": [
+        180
+      ],
+      "requiredBlockPx": 48,
+      "estimatedInlinePx": 232.56
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=sm__rest",
+      "name": "default (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "caseId": "math-layout-4bd739c3a5ff",
+      "target": "root",
+      "containerWidths": [
+        240
+      ],
+      "requiredBlockPx": 44,
+      "estimatedInlinePx": 268.83
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=md__rest",
+      "name": "default (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "caseId": "math-layout-0fc7b64e70fa",
+      "target": "root",
+      "containerWidths": [
+        240
+      ],
+      "requiredBlockPx": 44,
+      "estimatedInlinePx": 268.83
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=lg__rest",
+      "name": "default (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "caseId": "math-layout-9058d4407399",
+      "target": "root",
+      "containerWidths": [
+        240
+      ],
+      "requiredBlockPx": 44,
+      "estimatedInlinePx": 268.83
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=sm__checked",
+      "name": "checked (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "checked"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "caseId": "math-layout-e81f4e796484",
+      "target": "root",
+      "containerWidths": [
+        240
+      ],
+      "requiredBlockPx": 44,
+      "estimatedInlinePx": 268.83
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=md__checked",
+      "name": "checked (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "checked"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "caseId": "math-layout-ff84c4687b9a",
+      "target": "root",
+      "containerWidths": [
+        240
+      ],
+      "requiredBlockPx": 44,
+      "estimatedInlinePx": 268.83
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=lg__checked",
+      "name": "checked (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "checked"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "caseId": "math-layout-c9db17d4d515",
+      "target": "root",
+      "containerWidths": [
+        240
+      ],
+      "requiredBlockPx": 44,
+      "estimatedInlinePx": 268.83
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=sm__indeterminate",
+      "name": "indeterminate (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "indeterminate"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "caseId": "math-layout-f747c7fc89e8",
+      "target": "root",
+      "containerWidths": [
+        240
+      ],
+      "requiredBlockPx": 44,
+      "estimatedInlinePx": 268.83
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=md__indeterminate",
+      "name": "indeterminate (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "indeterminate"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "caseId": "math-layout-1de68ca574f7",
+      "target": "root",
+      "containerWidths": [
+        240
+      ],
+      "requiredBlockPx": 44,
+      "estimatedInlinePx": 268.83
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=lg__indeterminate",
+      "name": "indeterminate (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "indeterminate"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "caseId": "math-layout-9fdc89d597c1",
+      "target": "root",
+      "containerWidths": [
+        240
+      ],
+      "requiredBlockPx": 44,
+      "estimatedInlinePx": 268.83
+    },
+    {
+      "componentId": "text-field",
+      "id": "size=lg__rest",
+      "name": "sizes (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Project name",
+      "caseId": "math-layout-e8da4199736d",
+      "target": "field",
+      "containerWidths": [
+        240
+      ],
+      "requiredBlockPx": 52,
+      "estimatedInlinePx": 310
+    }
+  ]
+}

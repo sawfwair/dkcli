@@ -1,14 +1,18 @@
 # Palette
 
-`dk palette` generates OKLCH tonal scales, semantic tokens, and harmony sets from a seed color.
+For token authors, `dk palette` generates OKLCH tonal scales, semantic tokens, and harmony sets from a seed color.
 
-## Generate A Split Complement
+## Generate a split-complementary palette
+
+To generate a palette from `#D96F32`, run:
 
 ```bash
 dk palette "#D96F32" --harmony split-complementary
 ```
 
-<div class="dk-swatch-row">
+The swatches illustrate primary tones, the seed, harmony accents, and the text color:
+
+<div class="dk-swatch-row" role="img" aria-label="Primary tones 100 and 200, the seed color, two harmony accents, and the text color.">
   <div class="dk-swatch" style="background: var(--dk-tone-primary-100)"></div>
   <div class="dk-swatch" style="background: var(--dk-tone-primary-200)"></div>
   <div class="dk-swatch" style="background: var(--dk-seed)"></div>
@@ -17,18 +21,18 @@ dk palette "#D96F32" --harmony split-complementary
   <div class="dk-swatch" style="background: var(--dk-ink)"></div>
 </div>
 
-## JSON For Tooling
+## Emit JSON
+
+To use the palette in a token pipeline or test fixture, emit JSON:
 
 ```bash
 dk palette "#D96F32" --harmony split-complementary --json
 ```
 
-Use the JSON output to feed token pipelines, documentation examples, contrast tests, or visual regression fixtures.
+## Check distinctness
 
-## Stress Test Distinctness
+Before assigning colors to charts or statuses, inspect their perceptual separation:
 
 ```bash
 dk distinct --colors "#D96F32,#00A8AD,#5190EC" --threshold 10 --json
 ```
-
-This is useful before assigning colors to charts, statuses, or segmented controls.

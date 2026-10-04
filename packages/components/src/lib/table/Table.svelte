@@ -47,8 +47,8 @@
   export let sortBy: string | undefined = undefined;
   export let sortDirection: TableSortDirection = 'asc';
   export let selectedRowIds: string[] = [];
-  export let emptyTitle = 'No rows yet';
-  export let emptyDescription = 'Add data to see this table populate.';
+  export let emptyTitle = 'No rows';
+  export let emptyDescription = '';
   export let theme: ThemeContract = DEFAULT_TABLE_THEME;
   export let onSortChange:
     | ((detail: { sortBy: string; sortDirection: TableSortDirection }) => void)
@@ -242,7 +242,9 @@
             >
               <div class="table-empty">
                 <strong>{emptyTitle}</strong>
-                <p>{emptyDescription}</p>
+                {#if emptyDescription}
+                  <p>{emptyDescription}</p>
+                {/if}
               </div>
             </td>
           </tr>
@@ -390,6 +392,7 @@
     font: inherit;
     gap: 0.45rem;
     min-block-size: var(--dk-table-sort-target);
+    min-inline-size: var(--dk-table-sort-target);
     padding: 0;
   }
 

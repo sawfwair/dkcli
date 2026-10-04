@@ -29,6 +29,7 @@
   let previousOpen = open;
   let triggerEl: HTMLElement | null = null;
   let surfaceEl: HTMLElement | null = null;
+  let viewportInlineSize = '100vw';
   let position = { left: 0, top: 0, placement };
   let compiledCase = getPopoverRecipeCase(defaultRegistration.recipe, { size });
   let slotStyles = serializePopoverSlotStyles(compiledCase);
@@ -50,6 +51,11 @@
     if (!triggerEl || !surfaceEl || typeof window === 'undefined') {
       return;
     }
+    const rootZoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom);
+    const coordinateScale = Number.isFinite(rootZoom) && rootZoom > 0 ? rootZoom : 1;
+    viewportInlineSize = `${window.innerWidth / coordinateScale}px`;
+    await tick();
+    if (!internalOpen || !triggerEl || !surfaceEl) return;
     const anchor = triggerEl.getBoundingClientRect();
     const surface = surfaceEl.getBoundingClientRect();
     position = computeAnchoredPosition({
@@ -58,9 +64,10 @@
       placement,
       offset,
       viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight
+      viewportHeight: window.innerHeight,
+      coordinateScale
     });
-    getFocusableElements(surfaceEl)[0]?.focus();
+    (getFocusableElements(surfaceEl)[0] ?? surfaceEl).focus();
   }
 
   function setOpen(nextOpen: boolean): void {
@@ -121,7 +128,7 @@
   <section
     bind:this={surfaceEl}
     class="popover-surface"
-    style={`${slotStyles.surface}; left:${position.left}px; top:${position.top}px;`}
+    style={`${slotStyles.surface}; --dk-viewport-inline-size:${viewportInlineSize}; left:${position.left}px; top:${position.top}px;`}
     tabindex="-1"
     role="dialog"
   >
@@ -135,16 +142,20 @@
   .popover-trigger {
     background: transparent;
     border: 0;
-    padding: 0;
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    padding: 0 .75rem;
   }
 
   .popover-surface {
+    box-sizing: border-box;
+    max-inline-size: calc(var(--dk-viewport-inline-size, 100vw) - 2rem);
     background: var(--dk-popover-surface-bg);
     border: 1px solid var(--dk-popover-surface-border);
     border-radius: var(--dk-popover-surface-radius);
     box-shadow: var(--dk-popover-surface-shadow);
     color: var(--dk-popover-surface-fg);
-    inline-size: min(var(--dk-popover-surface-width), calc(100vw - 2rem));
+    inline-size: min(var(--dk-popover-surface-width), calc(var(--dk-viewport-inline-size, 100vw) - 2rem));
     padding: var(--dk-popover-surface-padding);
     position: fixed;
     z-index: 40;

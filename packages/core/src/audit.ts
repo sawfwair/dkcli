@@ -1,9 +1,9 @@
-// Audit — CSS analysis engine. Extracts design values and scores them against dk math.
+// Extracts CSS values and scores source heuristics without browser rendering.
 
 import { hexToOklch, apcaContrast, apcaCheck, oklchToHex } from './color.ts';
 import { RATIOS } from './scale.ts';
 
-// ── Types ───────────────────────────────────────────────────────────────────
+// Types
 
 export type ExtractedColor = { hex: string; selector: string };
 export type ExtractedSize = { px: number; selector: string };
@@ -55,7 +55,7 @@ export type RenderedAuditReport = AuditReport & {
   selectorCount: number;
 };
 
-// ── CSS Value Extraction ────────────────────────────────────────────────────
+// CSS value extraction
 
 function hslToHex(h: number, s: number, l: number): string {
   s /= 100; l /= 100;
@@ -111,6 +111,7 @@ function resolveWeight(w: string): number {
   return map[w.toLowerCase()] ?? (Number(w) || 400);
 }
 
+/** Extracts supported declaration values from source CSS without resolving the cascade. */
 export function extractCssValues(css: string): ExtractedValues {
   // Strip @keyframes and @font-face blocks
   const cleaned = css
@@ -139,7 +140,7 @@ export function extractCssValues(css: string): ExtractedValues {
     let fWeight = 400;
 
     // Text color
-    const colorM = body.match(/(?:^|;\s*)color\s*:\s*([^;]+)/i);
+    const colorM = body.match(/(?:^|;)\s*color\s*:\s*([^;]+)/i);
     if (colorM) {
       const hex = colorToHex(colorM[1]);
       if (hex) { textColors.push({ hex, selector }); textHex = hex; }
@@ -198,8 +199,9 @@ export function extractCssValues(css: string): ExtractedValues {
   return { textColors, bgColors, fontSizes, fontWeights, fontFamilies, spacings, borderRadii, colorPairs };
 }
 
-// ── Scale Fitting ───────────────────────────────────────────────────────────
+// Scale fitting
 
+/** Finds the named ratio and base size with the lowest scale-fitting error. */
 export function fitScale(values: number[]): ScaleFit {
   const sorted = [...new Set(values.map(v => Math.round(v * 2) / 2))].sort((a, b) => a - b).filter(v => v > 0);
   if (sorted.length < 2) return { ratioName: 'none', ratio: 1, base: sorted[0] || 16, rmse: 0, values: [] };
@@ -236,7 +238,7 @@ export function fitScale(values: number[]): ScaleFit {
   return best;
 }
 
-// ── Scoring Functions ───────────────────────────────────────────────────────
+// Scoring functions
 
 export function scoreColorCoherence(values: ExtractedValues): CategoryScore {
   const allHexes = [...new Set([...values.textColors.map(c => c.hex), ...values.bgColors.map(c => c.hex)])];
@@ -306,8 +308,9 @@ export function scoreColorCoherence(values: ExtractedValues): CategoryScore {
   };
 }
 
+/** Scores APCA checks for color pairs extracted from individual source rules. */
 export function scoreContrast(values: ExtractedValues): CategoryScore {
-  if (values.colorPairs.length === 0) return { score: 5, label: 'Contrast', summary: 'No text/bg pairs detected', issues: [] };
+  if (values.colorPairs.length === 0) return { score: 5, label: 'Contrast', summary: 'No text and background pairs detected', issues: [] };
 
   let passing = 0;
   const issues: Issue[] = [];
@@ -320,7 +323,7 @@ export function scoreContrast(values: ExtractedValues): CategoryScore {
     } else {
       issues.push({
         severity: 'fail',
-        message: `${pair.text} on ${pair.bg} at ${pair.fontSize}px/${pair.fontWeight} — Lc ${result.abs} < ${check.minLc}`,
+        message: `${pair.text} on ${pair.bg}, ${pair.fontSize} px, weight ${pair.fontWeight}: Lc ${result.abs} < ${check.minLc}`,
       });
     }
   }
@@ -336,35 +339,35 @@ export function scoreContrast(values: ExtractedValues): CategoryScore {
 
 export function scoreSpacing(values: ExtractedValues): CategoryScore {
   const unique = [...new Set(values.spacings.map(s => Math.round(s.px * 2) / 2))].filter(v => v > 0);
-  if (unique.length < 3) return { score: 5, label: 'Spacing', summary: `${unique.length} spacing values — insufficient data`, issues: [] };
+  if (unique.length < 3) return { score: 5, label: 'Spacing', summary: `${unique.length} spacing values; at least 3 required`, issues: [] };
 
   const fit = fitScale(unique);
   const score = parseFloat(Math.max(0, Math.min(10, 10 * (1 - fit.rmse / 8))).toFixed(1));
   const issues: Issue[] = fit.values
     .filter(v => v.deviation > 2)
-    .map(v => ({ severity: 'warn' as const, message: `${v.actual}px off scale (expected ${v.expected}px, Δ${v.deviation}px)` }));
+    .map(v => ({ severity: 'warn' as const, message: `${v.actual} px off scale (expected ${v.expected} px, deviation ${v.deviation} px)` }));
 
   return {
     score,
     label: 'Spacing',
-    summary: `best fit: ${fit.ratioName}(${fit.base}px), avg Δ${fit.rmse}px`,
+    summary: `Best fit: ${fit.ratioName}, ${fit.base} px base, root mean square error ${fit.rmse} px`,
     issues,
   };
 }
 
 export function scoreTypography(values: ExtractedValues): CategoryScore {
   const unique = [...new Set(values.fontSizes.map(s => Math.round(s.px * 2) / 2))].filter(v => v > 0).sort((a, b) => a - b);
-  if (unique.length < 2) return { score: 5, label: 'Typography', summary: `${unique.length} font size — insufficient data`, issues: [] };
+  if (unique.length < 2) return { score: 5, label: 'Typography', summary: `${unique.length} font sizes; at least 2 required`, issues: [] };
 
   const fit = fitScale(unique);
   let score = Math.max(0, Math.min(10, 10 * (1 - fit.rmse / 6)));
 
-  // Check for muddy sizes (ratio < 1.1 between adjacent)
+  // Check for adjacent font sizes with a ratio below 1.1.
   const issues: Issue[] = [];
   for (let i = 0; i < unique.length - 1; i++) {
     const ratio = unique[i + 1] / unique[i];
     if (ratio < 1.1) {
-      issues.push({ severity: 'warn', message: `${unique[i]}px and ${unique[i + 1]}px too close (ratio ${ratio.toFixed(2)})` });
+      issues.push({ severity: 'warn', message: `${unique[i]} px and ${unique[i + 1]} px: ratio ${ratio.toFixed(2)} is below 1.1` });
       score = Math.max(0, score - 1);
     }
   }
@@ -372,7 +375,7 @@ export function scoreTypography(values: ExtractedValues): CategoryScore {
   return {
     score: parseFloat(score.toFixed(1)),
     label: 'Typography',
-    summary: `${unique.length} sizes, best fit: ${fit.ratioName}(${fit.base}px)`,
+    summary: `${unique.length} sizes, best fit: ${fit.ratioName}, ${fit.base} px base`,
     issues,
   };
 }
@@ -418,7 +421,7 @@ export function scoreConsistency(values: ExtractedValues): CategoryScore {
   return {
     score: parseFloat(Math.max(0, Math.min(10, score)).toFixed(1)),
     label: 'Consistency',
-    summary: `${uniqueColors.length} colors${nearDupeColors > 0 ? ` (${nearDupeColors} near-dupes)` : ''}, ${uniqueSpacings.length} spacings, ${uniqueSizes.length} font sizes, ${uniqueRadii.length} radii`,
+    summary: `${uniqueColors.length} colors${nearDupeColors > 0 ? ` (${nearDupeColors} near duplicates)` : ''}, ${uniqueSpacings.length} spacing values, ${uniqueSizes.length} font sizes, ${uniqueRadii.length} radii`,
     issues,
   };
 }
@@ -429,7 +432,7 @@ export function scoreGridAlignment(values: ExtractedValues): CategoryScore {
     ...values.borderRadii.map(r => r.px),
   ].filter(v => v > 0);
 
-  if (allPx.length < 3) return { score: 5, label: 'Grid', summary: 'Insufficient data', issues: [] };
+  if (allPx.length < 3) return { score: 5, label: 'Grid', summary: 'At least 3 spacing or radius values required', issues: [] };
 
   let bestBase = 4;
   let bestPct = 0;
@@ -445,19 +448,20 @@ export function scoreGridAlignment(values: ExtractedValues): CategoryScore {
   if (bestPct < 0.8) {
     const offGrid = allPx.filter(v => Math.abs(v % bestBase) >= 0.5 && Math.abs(v % bestBase - bestBase) >= 0.5);
     const unique = [...new Set(offGrid.map(v => Math.round(v * 10) / 10))].slice(0, 5);
-    issues.push({ severity: 'warn', message: `Off-grid values: ${unique.join(', ')}px` });
+    issues.push({ severity: 'warn', message: `Off-grid values: ${unique.map(value => `${value} px`).join(', ')}` });
   }
 
   return {
     score,
     label: 'Grid',
-    summary: `${Math.round(bestPct * 100)}% on ${bestBase}px grid`,
+    summary: `${Math.round(bestPct * 100)}% on a ${bestBase} px grid`,
     issues,
   };
 }
 
-// ── Main Audit Function ────────────────────────────────────────────────────
+// Source audit
 
+/** Scores source CSS heuristics without resolving the cascade or rendering elements. */
 export function audit(css: string): AuditReport {
   const extracted = extractCssValues(css);
 
@@ -485,10 +489,11 @@ export function audit(css: string): AuditReport {
   };
 }
 
-// ── Formatters ──────────────────────────────────────────────────────────────
+// Formatters
 
+/** Formats heuristic scores and up to 10 issues as CSS comments. */
 export function formatAuditCss(report: AuditReport): string {
-  const lines = [`/* dk audit — Design Analysis */`, `/* Overall: ${report.overall}/100 */`, `/*`];
+  const lines = [`/* Source heuristic score: ${report.overall}/100 */`, `/*`];
   for (const cat of report.categories) {
     lines.push(` * ${cat.label.padEnd(14)} ${cat.score.toFixed(1)}/10  ${cat.summary}`);
   }
@@ -497,18 +502,20 @@ export function formatAuditCss(report: AuditReport): string {
     lines.push(` *`);
     lines.push(` * Issues:`);
     allIssues.slice(0, 10).forEach((issue, i) => {
-      lines.push(` * ${i + 1}. ${issue.severity.toUpperCase()}: ${issue.message}`);
+      lines.push(` * ${i + 1}. ${issue.severity}: ${issue.message}`);
     });
-    if (allIssues.length > 10) lines.push(` * ... and ${allIssues.length - 10} more`);
+    if (allIssues.length > 10) lines.push(` * ${allIssues.length - 10} additional issues omitted`);
   }
   lines.push(` */`);
   return lines.join('\n');
 }
 
+/** Serializes the audit report as JSON. */
 export function formatAuditJson(report: AuditReport): string {
   return JSON.stringify(report, null, 2);
 }
 
+/** Scores supplied CSS and adds rule counts under the rendered mode label. Does not collect browser evidence. */
 export function auditRenderedCss(css: string): RenderedAuditReport {
   const report = audit(css);
   const ruleCount = (css.match(/\{/g) ?? []).length;

@@ -1,1 +1,2 @@
-export * from '@dkcli/core/audit';
+export { extractCssValues, fitScale, scoreColorCoherence, scoreContrast, scoreSpacing, scoreTypography, scoreConsistency, scoreGridAlignment, audit, formatAuditCss, formatAuditJson, auditRenderedCss } from '@dkcli/core';
+export type { ExtractedColor, ExtractedSize, ExtractedSpacing, ColorPair, ExtractedValues, Issue, CategoryScore, ScaleFit, AuditReport, RenderedAuditInput, RenderedAuditReport } from '@dkcli/core';

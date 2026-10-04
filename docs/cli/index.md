@@ -1,31 +1,37 @@
-# CLI Command Map
+# CLI command reference
 
-`dk` is a command line design workbench. Each command solves a narrow design-system problem and can emit human-readable text, CSS, Tailwind fragments, or JSON where supported.
+Use this reference to choose a DesignKit command for your task. Commands emit text, CSS, Tailwind fragments, or JSON where supported.
 
-## Core Commands
+The examples use `dk`. From the source repository, use `pnpm dk` to run the checkout's implementation.
 
-| Command | Use it for |
+## Commands
+
+The CLI includes the following command groups:
+
+| Command | Purpose |
 | --- | --- |
-| `perfect` | One combined proof state across palette, scale, contrast, motion, layout, and analysis. |
-| `palette` | OKLCH tonal scales, semantic tokens, and harmony generation. |
-| `distinct` | Perceptual distinctness and color-vision-deficiency collision checks. |
-| `contrast` | APCA readability checks for foreground/background pairs. |
-| `scale` | Modular, fibonacci, and fluid spacing/type scales. |
-| `text` | Typography spacing and readable measure recommendations. |
-| `typeset` | Width-aware paragraph shaping, balancing, and hyphenation. |
-| `linebreak` | Balanced versus greedy line break comparisons. |
-| `ease` | Spring physics to CSS `linear()` easing curves. |
-| `jerk` | Minimum-jerk timing curves. |
-| `layout` | Stable rails for stack layout constraints. |
-| `compose` | Balance, symmetry, alignment, rhythm, and density scoring. |
-| `audit` | CSS scoring against DesignKit heuristics. |
-| `target` | Fitts, Hick-Hyman, and steering interaction-burden estimates. |
-| `saliency` | Visual importance scoring from a `DesignDocument`. |
-| `future` | Experimental content topology and layout CSS generation. |
-| `components` | Shipped component proof verification. |
-| `cms` | Hosted DKCMS sites, pages, builds, and email exports. |
+| `perfect` | Combined palette, scale, contrast, motion, layout, and analysis results |
+| `palette` | OKLCH tonal scales, semantic tokens, and color harmonies |
+| `distinct` | Perceptual distinctness and color-vision-deficiency checks |
+| `contrast` | APCA readability checks for foreground and background pairs |
+| `scale` | Modular, Fibonacci, and fluid spacing and type scales |
+| `text` | Typography spacing and measure recommendations |
+| `typeset` | Paragraph shaping, balancing, and hyphenation |
+| `linebreak` | Balanced and greedy line-breaking comparisons |
+| `ease` | Spring-based CSS `linear()` easing curves |
+| `jerk` | Minimum-jerk timing curves |
+| `layout` | Layout constraints and coordinates |
+| `compose` | Balance, symmetry, alignment, rhythm, and density scores |
+| `audit` | CSS analysis using DesignKit heuristics |
+| `target` | Fitts, Hick-Hyman, and steering estimates |
+| `saliency` | Importance scores from a `DesignDocument` |
+| `future` | Experimental content topology and layout CSS |
+| `components` | Component fixture verification |
+| `cms` | Hosted DKCMS sites, pages, builds, and email exports |
 
-## Output Modes
+## Output formats
+
+For automation, use `--json`. For CSS or Tailwind output, select the format supported by the command:
 
 ```bash
 dk palette "#3b82f6" --json
@@ -34,11 +40,12 @@ dk perfect --seed "#295dff" --format=css
 dk audit --css app.css --format=text
 ```
 
-Prefer `--json` for automation and default text/CSS output for copy-ready snippets.
+## Command help
 
-## Source Development
+To inspect a command's options in the source checkout, run:
 
 ```bash
-pnpm dk --help
-pnpm dk <command> --help
+pnpm dk COMMAND --help
 ```
+
+Replace *`COMMAND`* with a command name, such as `palette`.

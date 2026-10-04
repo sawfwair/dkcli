@@ -1,37 +1,40 @@
-# Getting Started
+# Get started
 
-DesignKit is easiest to understand as a loop: choose a seed, generate evidence, wire the useful bits into your app, then keep the proof output close to your components.
+Use this guide to run DesignKit from source and generate mathematical design artifacts. Repository development uses Node.js 22 and pnpm 10.33.0.
 
-## Install
+This documentation describes the source checkout. npm releases can differ from local changes. To qualify those changes before publication, use the repository commands.
+
+## Set up the repository
+
+From the repository root, install the pinned dependencies:
 
 ```bash
-npm install -g @dkcli/cli
-# or run one-off
-npx @dkcli/cli --help
+pnpm install --frozen-lockfile
 ```
 
-Inside this repository, use the source-owned wrapper:
+To list the source CLI commands, run:
 
 ```bash
-pnpm install
 pnpm dk --help
 ```
 
-## Generate A Proof State
+## Generate a combined result
 
-`dk perfect` composes multiple systems into one proof state: palette, contrast, fluid scale, motion, layout, typography, target burden, and line breaking.
+The `perfect` command combines palette, contrast, fluid scale, motion, layout, typography, interaction-target estimates, and line-breaking results:
 
 ```bash
 pnpm dk perfect --seed "#295dff" --ratio perfect-fourth --motion snappy
 ```
 
-Use JSON when you want to pipe the result into another tool:
+For machine-readable output, add `--json`:
 
 ```bash
 pnpm dk perfect --seed "#295dff" --ratio perfect-fourth --motion snappy --json
 ```
 
-## Generate A Theme
+## Generate individual artifacts
+
+To generate a palette, fluid scale, and typography recommendation, run:
 
 ```bash
 pnpm dk palette "#D96F32" --harmony split-complementary
@@ -39,23 +42,28 @@ pnpm dk scale --fluid --ratio perfect-fourth --base-min 15 --base-max 19
 pnpm dk text --font 18 --measure 680 --contrast 72
 ```
 
-This docs site uses exactly that pattern in `scripts/generate-docs-design.mjs`.
+The `scripts/generate-docs-design.mjs` file uses these commands to generate the documentation theme.
 
-## Verify Before Release
+## Verify local package changes
 
-```bash
-pnpm lint
-pnpm check:strict
-pnpm test
-pnpm build
-pnpm build:packages
-pnpm publint
-pnpm pack:packages:dry
-pnpm example:verify
-```
-
-For the full package gate, run:
+To run linting, type checks, tests, builds, package checks, and isolated consumer checks, run:
 
 ```bash
 pnpm release:verify
+```
+
+For the individual checks and browser setup, see [Release workflow](/guides/release-workflow). A passing local gate does not publish packages.
+
+## Run an npm release
+
+To install a registry release, run:
+
+```bash
+npm install -g @dkcli/cli
+```
+
+To inspect a registry release without a global installation, run:
+
+```bash
+npx @dkcli/cli --help
 ```

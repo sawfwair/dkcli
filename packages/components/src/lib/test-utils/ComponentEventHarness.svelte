@@ -1,11 +1,7 @@
 <script lang="ts">
-  import type { ComponentType, SvelteComponent } from 'svelte';
+  import type { ComponentType } from 'svelte';
 
-  type HarnessComponent = ComponentType<
-    SvelteComponent<Record<string, unknown>, Record<string, CustomEvent<unknown>>>
-  >;
-
-  export let component: HarnessComponent;
+  export let component: ComponentType;
   export let componentProps: Record<string, unknown> = {};
   export let onChangeEvent: ((detail: unknown) => void) | undefined = undefined;
   export let onDismissEvent: ((detail: unknown) => void) | undefined = undefined;
@@ -19,11 +15,11 @@
 <svelte:component
   this={component}
   {...componentProps}
-  on:change={(event: CustomEvent) => onChangeEvent?.(event.detail)}
-  on:dismiss={(event: CustomEvent) => onDismissEvent?.(event.detail)}
-  on:action={(event: CustomEvent) => onActionEvent?.(event.detail)}
-  on:openchange={(event: CustomEvent) => onOpenChangeEvent?.(event.detail)}
-  on:sortchange={(event: CustomEvent) => onSortChangeEvent?.(event.detail)}
-  on:selectionchange={(event: CustomEvent) => onSelectionChangeEvent?.(event.detail)}
-  on:activecellchange={(event: CustomEvent) => onActiveCellChangeEvent?.(event.detail)}
+  on:change={(event: CustomEvent<unknown>) => onChangeEvent?.(event.detail)}
+  on:dismiss={(event: CustomEvent<unknown>) => onDismissEvent?.(event.detail)}
+  on:action={(event: CustomEvent<unknown>) => onActionEvent?.(event.detail)}
+  on:openchange={(event: CustomEvent<unknown>) => onOpenChangeEvent?.(event.detail)}
+  on:sortchange={(event: CustomEvent<unknown>) => onSortChangeEvent?.(event.detail)}
+  on:selectionchange={(event: CustomEvent<unknown>) => onSelectionChangeEvent?.(event.detail)}
+  on:activecellchange={(event: CustomEvent<unknown>) => onActiveCellChangeEvent?.(event.detail)}
 />

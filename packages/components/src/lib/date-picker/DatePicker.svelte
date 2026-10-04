@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { createEventDispatcher, tick } from 'svelte';
+  import { run } from 'svelte/legacy';
+  import { createEventDispatcher, tick, untrack } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import {
@@ -23,74 +24,62 @@
   } from './date-picker.recipe.js';
   import type { DatePickerSize } from './date-picker.spec.js';
 
+  const uid = $props.id();
+
   const dispatch = createEventDispatcher<{ change: { value: string | undefined } }>();
 
-  let nextId = 0;
+  interface Props {
+    value?: string | undefined;
+    label?: string | undefined;
+    description?: string | undefined;
+    error?: string | undefined;
+    placeholder?: string;
+    required?: boolean;
+    disabled?: boolean;
+    name?: string | undefined;
+    id?: string | undefined;
+    size?: DatePickerSize;
+    min?: string | undefined;
+    max?: string | undefined;
+    disabledDates?: string[];
+    weekStartsOn?: 0 | 1;
+    theme?: ThemeContract;
+    onChange?: ((detail: { value: string | undefined }) => void) | undefined;
+  }
 
-  export let value: string | undefined = undefined;
-  export let label: string | undefined = undefined;
-  export let description: string | undefined = undefined;
-  export let error: string | undefined = undefined;
-  export let placeholder = 'Select a date';
-  export let required = false;
-  export let disabled = false;
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let size: DatePickerSize = 'md';
-  export let min: string | undefined = undefined;
-  export let max: string | undefined = undefined;
-  export let disabledDates: string[] = [];
-  export let weekStartsOn: 0 | 1 = 0;
-  export let theme: ThemeContract = DEFAULT_DATE_PICKER_THEME;
-  export let onChange: ((detail: { value: string | undefined }) => void) | undefined = undefined;
+  let {
+    value = $bindable(undefined),
+    label = $bindable(undefined),
+    description = $bindable(undefined),
+    error = $bindable(undefined),
+    placeholder = $bindable('Select a date'),
+    required = $bindable(false),
+    disabled = $bindable(false),
+    name = $bindable(undefined),
+    id = $bindable(undefined),
+    size = $bindable('md'),
+    min = $bindable(undefined),
+    max = $bindable(undefined),
+    disabledDates = $bindable([]),
+    weekStartsOn = $bindable(0),
+    theme = $bindable(DEFAULT_DATE_PICKER_THEME),
+    onChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createDatePickerRegistration(DEFAULT_DATE_PICKER_THEME);
-  const localId = `dk-date-picker-${++nextId}`;
+  const localId = `dk-date-picker-${uid}`;
 
-  let registration = defaultRegistration;
-  let fieldId = id ?? localId;
-  let currentValue = value;
-  let previousValue = value;
-  let invalid = Boolean(error);
-  let internalOpen = false;
-  let visibleMonth = monthStartIso(value);
-  let focusedDate = value ?? todayIso();
-  let triggerEl: HTMLButtonElement | null = null;
-  let surfaceEl: HTMLDivElement | null = null;
+  let currentValue = $state(untrack(() => value));
+  let previousValue = $state(untrack(() => value));
+
+  let internalOpen = $state(false);
+  let visibleMonth = $state(untrack(() => monthStartIso(value)));
+  let focusedDate = $state(untrack(() => value ?? todayIso()));
+  let triggerEl: HTMLButtonElement | null = $state(null);
+  let surfaceEl: HTMLDivElement | null = $state(null);
   let dayRefs: Record<string, HTMLButtonElement | undefined> = {};
-  let position = { left: 0, top: 0, placement: 'bottom' as Placement };
-  let compiledCase = getDatePickerRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeDatePickerSlotStyles(compiledCase);
-
-  $: registration =
-    theme.name === DEFAULT_DATE_PICKER_THEME.name
-      ? defaultRegistration
-      : createDatePickerRegistration(theme);
-  $: fieldId = id ?? localId;
-  $: if (value !== previousValue) {
-    currentValue = value;
-    previousValue = value;
-    if (value) {
-      visibleMonth = monthStartIso(value);
-      focusedDate = value;
-    }
-  }
-  $: invalid = Boolean(error);
-  $: compiledCase = getDatePickerRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeDatePickerSlotStyles(compiledCase);
-  $: describedBy = error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined;
-  $: calendar = buildCalendarMonth({
-    visibleMonth,
-    value: currentValue,
-    min,
-    max,
-    disabledDates,
-    focusedDate,
-    weekStartsOn
-  });
-  $: if (internalOpen) {
-    void syncPositionAndFocus();
-  }
+  let viewportInlineSize = $state('100vw');
+  let position = $state({ left: 0, top: 0, placement: 'bottom' as Placement });
 
   function registerDay(node: HTMLButtonElement, iso: string) {
     dayRefs[iso] = node;
@@ -107,6 +96,11 @@
       return;
     }
 
+    const rootZoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom);
+    const coordinateScale = Number.isFinite(rootZoom) && rootZoom > 0 ? rootZoom : 1;
+    viewportInlineSize = `${window.innerWidth / coordinateScale}px`;
+    await tick();
+    if (!internalOpen || !triggerEl || !surfaceEl) return;
     const anchor = triggerEl.getBoundingClientRect();
     const surface = surfaceEl.getBoundingClientRect();
     position = computeAnchoredPosition({
@@ -115,7 +109,8 @@
       placement: 'bottom',
       offset: 8,
       viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight
+      viewportHeight: window.innerHeight,
+      coordinateScale
     });
     dayRefs[focusedDate]?.focus();
   }
@@ -216,6 +211,38 @@
       void syncPositionAndFocus();
     }
   }
+  let registration = $derived(theme.name === DEFAULT_DATE_PICKER_THEME.name
+        ? defaultRegistration
+        : createDatePickerRegistration(theme));
+  let fieldId = $derived(id ?? localId);
+  run(() => {
+    if (value !== previousValue) {
+      currentValue = value;
+      previousValue = value;
+      if (value) {
+        visibleMonth = monthStartIso(value);
+        focusedDate = value;
+      }
+    }
+  });
+  let invalid = $derived(Boolean(error));
+  let compiledCase = $derived(getDatePickerRecipeCase(registration.recipe, { size }));
+  let slotStyles = $derived(serializeDatePickerSlotStyles(compiledCase));
+  let describedBy = $derived(error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined);
+  let calendar = $derived(buildCalendarMonth({
+    visibleMonth,
+    value: currentValue,
+    min,
+    max,
+    disabledDates,
+    focusedDate,
+    weekStartsOn
+  }));
+  run(() => {
+    if (internalOpen) {
+      void syncPositionAndFocus();
+    }
+  });
 </script>
 
 <svelte:window onclick={handleWindowClick} />
@@ -237,6 +264,7 @@
 
   <button
     bind:this={triggerEl}
+    id={fieldId}
     class="date-picker-trigger"
     style={`${slotStyles.trigger} ${slotStyles.icon}`}
     type="button"
@@ -260,7 +288,7 @@
   <div
     bind:this={surfaceEl}
     class="date-picker-surface"
-    style={`${slotStyles.surface}; left:${position.left}px; top:${position.top}px;`}
+    style={`${slotStyles.surface}; --dk-viewport-inline-size:${viewportInlineSize}; left:${position.left}px; top:${position.top}px;`}
     id={`${fieldId}-dialog`}
     role="dialog"
     aria-label="Choose date"
@@ -350,12 +378,13 @@
   }
 
   .date-picker-surface {
+    box-sizing: border-box;
     background: var(--dk-date-picker-surface-bg);
     border: 1px solid var(--dk-date-picker-surface-border);
     border-radius: var(--dk-date-picker-surface-radius);
     box-shadow: var(--dk-date-picker-surface-shadow);
     color: var(--dk-date-picker-surface-fg);
-    inline-size: min(var(--dk-date-picker-surface-width), calc(100vw - 2rem));
+    inline-size: min(var(--dk-date-picker-surface-width), calc(var(--dk-viewport-inline-size, 100vw) - 2rem));
     padding: var(--dk-date-picker-surface-padding);
     position: fixed;
     z-index: 45;
@@ -385,9 +414,9 @@
     cursor: pointer;
     display: inline-flex;
     font-size: 1.1rem;
-    inline-size: var(--dk-date-picker-nav-size);
+    inline-size: max(44px, var(--dk-date-picker-nav-size));
     justify-content: center;
-    min-block-size: var(--dk-date-picker-nav-size);
+    min-block-size: max(44px, var(--dk-date-picker-nav-size));
     padding: 0;
   }
 
@@ -405,6 +434,8 @@
   .weekday {
     color: var(--dk-date-picker-weekday-color);
     font-size: var(--dk-date-picker-weekday-size);
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     padding-block: 0.2rem 0.35rem;
     text-align: center;
   }
@@ -420,7 +451,7 @@
     font-size: var(--dk-date-picker-day-size);
     justify-content: center;
     min-block-size: var(--dk-date-picker-day-target);
-    min-inline-size: var(--dk-date-picker-day-target);
+    min-inline-size: 0;
     padding: 0;
   }
 

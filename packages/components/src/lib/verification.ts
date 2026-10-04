@@ -40,18 +40,21 @@ import { createToastRegistration } from './toast/toast.recipe.js';
 import { createTooltipRegistration } from './tooltip/tooltip.recipe.js';
 import { createTreeViewRegistration } from './tree-view/tree-view.recipe.js';
 
+/** Defines a named theme seed for component verification. */
 export type ComponentThemePreset = {
   id: string;
   name: string;
   seed: ThemeSeed;
 };
 
+/** Identifies a public component and its recipe registration function. */
 export type ComponentVerificationEntry = {
   slug: string;
   name: string;
   createRegistration: (theme: ThemeContract) => ComponentRegistration;
 };
 
+/** Supplies the theme presets used by the component proof matrix. */
 export const DK_COMPONENT_THEME_PRESETS: readonly ComponentThemePreset[] = [
   {
     id: 'cobalt',
@@ -99,6 +102,7 @@ export const DK_COMPONENT_THEME_PRESETS: readonly ComponentThemePreset[] = [
   }
 ] as const;
 
+/** Lists public components whose mathematical fixtures the CLI can evaluate. */
 export const COMPONENT_VERIFICATION_REGISTRY: readonly ComponentVerificationEntry[] = [
   { slug: 'accordion', name: 'Accordion', createRegistration: createAccordionRegistration },
   { slug: 'alert', name: 'Alert', createRegistration: createAlertRegistration },
@@ -140,10 +144,12 @@ export const COMPONENT_VERIFICATION_REGISTRY: readonly ComponentVerificationEntr
   { slug: 'tree-view', name: 'TreeView', createRegistration: createTreeViewRegistration }
 ] as const;
 
+/** Finds a verification theme by its ID. */
 export function getComponentThemePreset(themeId: string): ComponentThemePreset | undefined {
   return DK_COMPONENT_THEME_PRESETS.find((preset) => preset.id === themeId);
 }
 
+/** Finds a public component by its name or slug, ignoring case. */
 export function findComponentVerificationEntry(nameOrSlug: string): ComponentVerificationEntry | undefined {
   const normalized = nameOrSlug.trim().toLowerCase();
   return COMPONENT_VERIFICATION_REGISTRY.find(

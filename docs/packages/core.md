@@ -1,22 +1,22 @@
-# @dkcli/core
+# Core package
 
-`@dkcli/core` is the framework-agnostic engine room.
+For library developers, `@dkcli/core` provides framework-independent design calculations and recipe compilation.
 
-## Responsibilities
+## Package responsibilities
 
-- Color conversion, gamut clipping, APCA, and perceptual distinctness.
-- Modular, fibonacci, and fluid scales.
-- Motion curves, optical corrections, target analysis, layout, composition, typography, and line breaking.
-- Design-system schemas, recipe contracts, proof runners, and audit helpers.
+The package contains the following modules:
 
-## Rules
+- Color conversion, gamut clipping, APCA, and perceptual distinctness
+- Modular, Fibonacci, and fluid scales
+- Motion curves, optical corrections, interaction targets, layout, composition, typography, and line breaking
+- Design schemas, recipe contracts, mathematical checks, and audit helpers
 
-- No DOM access.
-- No network access.
-- Deterministic output for the same input.
-- Public APIs typed explicitly.
-- Matching tests for behavior changes.
+## Contributor requirements
 
-## Source Map
+Keep core functions deterministic and free of DOM or network access. Type public APIs explicitly and test behavior changes.
 
-Most CLI-facing core logic currently lives in `src/lib/dk`, with package outputs in `packages/core`.
+Mathematical and heuristic results do not establish rendered browser behavior or accessibility compliance.
+
+## Source locations
+
+Reusable modules live in `packages/core/src`. CLI commands and adapters live in `src/lib/dk`.

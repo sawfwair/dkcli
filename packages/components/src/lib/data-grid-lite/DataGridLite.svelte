@@ -55,8 +55,8 @@
   export let sortBy: string | undefined = undefined;
   export let sortDirection: TableSortDirection = 'asc';
   export let selectedRowIds: string[] = [];
-  export let emptyTitle = 'No grid rows yet';
-  export let emptyDescription = 'Add structured data to see the grid.';
+  export let emptyTitle = 'No rows';
+  export let emptyDescription = '';
   export let theme: ThemeContract = DEFAULT_DATA_GRID_LITE_THEME;
   export let onSortChange:
     | ((detail: { sortBy: string; sortDirection: TableSortDirection }) => void)
@@ -297,7 +297,9 @@
             <td class="grid-empty-cell" style={slotStyles.empty} colspan={columns.length + (selectable ? 1 : 0)}>
               <div class="grid-empty">
                 <strong>{emptyTitle}</strong>
-                <p>{emptyDescription}</p>
+                {#if emptyDescription}
+                  <p>{emptyDescription}</p>
+                {/if}
               </div>
             </td>
           </tr>
@@ -434,6 +436,7 @@
     display: inline-flex;
     gap: 0.35rem;
     min-block-size: var(--dk-grid-sort-target);
+    min-inline-size: 44px;
     padding: 0;
   }
 

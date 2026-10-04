@@ -56,6 +56,15 @@ export default defineConfig(
 		files: ['**/*.{js,mjs,cjs}']
 	},
 	{
+		// Compiler-generated declarations contain no executable imports.
+		files: ['packages/*/src/**/*.d.ts'],
+		rules: { '@typescript-eslint/consistent-type-imports': 'off' }
+	},
+	{
+		files: ['examples/sveltekit-starter/**/*.{js,mjs}'],
+		rules: { '@typescript-eslint/explicit-function-return-type': 'off' }
+	},
+	{
 		...ts.configs.disableTypeChecked,
 		files: ['packages/**/*.ts', 'packages/**/*.mts', 'packages/**/*.cts'],
 		rules: {

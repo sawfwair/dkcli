@@ -1,6 +1,6 @@
 {
   "name": "@dkcli/cli",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "description": "Mathematical design CLI for palettes, scales, contrast, layout, motion, and CSS analysis.",
   "license": "MIT",
   "repository": {
@@ -63,6 +63,7 @@
     "pack:packages:dry": "pnpm pack:core:dry && pnpm pack:tokens:dry && pnpm pack:components:dry && pnpm pack:dry",
     "pack:dry": "env -u npm_config_link_workspace_packages npm_config_cache=.npm-cache npm pack --dry-run",
     "check:package-contents": "node ./scripts/check-package-contents.mjs",
+    "check:cli:tarball": "node ./scripts/smoke-cli-tarball.mjs",
     "prepack": "pnpm build:cli",
     "prepublishOnly": "node ./scripts/check-package-contents.mjs cli",
     "prepare": "node ./scripts/prepare.mjs",
@@ -85,10 +86,13 @@
     "example:install:tarballs": "node ./scripts/install-example-tarballs.mjs",
     "example:build": "pnpm --dir examples/svelte-starter build",
     "example:verify": "pnpm example:install:tarballs && pnpm example:build",
-    "release:verify": "pnpm lint && pnpm check:strict && pnpm test && pnpm build && pnpm build:packages && pnpm publint && pnpm pack:packages:dry && pnpm check:package-contents && pnpm example:verify",
+    "example:sveltekit:verify": "node ./scripts/verify-sveltekit-example.mjs",
+    "release:verify": "pnpm lint && pnpm check:strict && pnpm test && pnpm check:component-targets && pnpm build && pnpm build:packages && pnpm check:release:math && pnpm publint && pnpm pack:packages:dry && pnpm check:package-contents && pnpm check:cli:tarball && pnpm example:verify && pnpm example:sveltekit:verify",
     "release:publish": "npm publish ./packages/core --access public && npm publish ./packages/tokens --access public && npm publish ./packages/components --access public && npm publish . --access public",
     "preflight": "pnpm lint && pnpm check:strict && pnpm test && pnpm test:coverage",
-    "verify": "pnpm release:verify"
+    "verify": "pnpm release:verify",
+    "check:component-targets": "node ./scripts/check-component-targets.mjs",
+    "check:release:math": "node ./scripts/assess-release-math.mjs"
   },
   "devDependencies": {
     "@changesets/cli": "^2.29.6",
@@ -97,6 +101,7 @@
     "@dkcli/tokens": "workspace:*",
     "@eslint/compat": "^2.0.3",
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "1.58.2",
     "@sveltejs/package": "^2.4.1",
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@testing-library/svelte": "^5.3.1",

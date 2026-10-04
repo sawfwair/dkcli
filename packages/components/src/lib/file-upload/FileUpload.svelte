@@ -11,45 +11,58 @@
   } from './file-upload.recipe.js';
   import type { FileUploadSize } from './file-upload.spec.js';
 
-  let nextId = 0;
+  const uid = $props.id();
 
   const dispatch = createEventDispatcher<{ change: { files: File[] } }>();
 
-  export let label: string | undefined = undefined;
-  export let description: string | undefined = undefined;
-  export let error: string | undefined = undefined;
-  export let required = false;
-  export let disabled = false;
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let accept: string | undefined = undefined;
-  export let multiple = false;
-  export let buttonLabel = 'Choose files';
-  export let emptyLabel = 'No files selected';
-  export let size: FileUploadSize = 'md';
-  export let theme: ThemeContract = DEFAULT_FILE_UPLOAD_THEME;
-  export let onChange: ((detail: { files: File[] }) => void) | undefined = undefined;
+  interface Props {
+    label?: string | undefined;
+    description?: string | undefined;
+    error?: string | undefined;
+    required?: boolean;
+    disabled?: boolean;
+    name?: string | undefined;
+    id?: string | undefined;
+    accept?: string | undefined;
+    multiple?: boolean;
+    buttonLabel?: string;
+    emptyLabel?: string;
+    size?: FileUploadSize;
+    theme?: ThemeContract;
+    onChange?: ((detail: { files: File[] }) => void) | undefined;
+  }
+
+  let {
+    label = $bindable(undefined),
+    description = $bindable(undefined),
+    error = $bindable(undefined),
+    required = $bindable(false),
+    disabled = $bindable(false),
+    name = $bindable(undefined),
+    id = $bindable(undefined),
+    accept = $bindable(undefined),
+    multiple = $bindable(false),
+    buttonLabel = $bindable('Choose files'),
+    emptyLabel = $bindable('No files selected'),
+    size = $bindable('md'),
+    theme = $bindable(DEFAULT_FILE_UPLOAD_THEME),
+    onChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createFileUploadRegistration(DEFAULT_FILE_UPLOAD_THEME);
-  const localId = `dk-file-upload-${++nextId}`;
+  const localId = `dk-file-upload-${uid}`;
 
-  let registration = defaultRegistration;
-  let fieldId = id ?? localId;
-  let inputEl: HTMLInputElement | null = null;
-  let selectedFiles: File[] = [];
-  let invalid = Boolean(error);
-  let compiledCase = getFileUploadRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeFileUploadSlotStyles(compiledCase);
+  let inputEl: HTMLInputElement | null = $state(null);
+  let selectedFiles: File[] = $state([]);
 
-  $: registration =
-    theme.name === DEFAULT_FILE_UPLOAD_THEME.name
-      ? defaultRegistration
-      : createFileUploadRegistration(theme);
-  $: fieldId = id ?? localId;
-  $: invalid = Boolean(error);
-  $: compiledCase = getFileUploadRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeFileUploadSlotStyles(compiledCase);
-  $: describedBy = error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined;
+  let registration = $derived(theme.name === DEFAULT_FILE_UPLOAD_THEME.name
+        ? defaultRegistration
+        : createFileUploadRegistration(theme));
+  let fieldId = $derived(id ?? localId);
+  let invalid = $derived(Boolean(error));
+  let compiledCase = $derived(getFileUploadRecipeCase(registration.recipe, { size }));
+  let slotStyles = $derived(serializeFileUploadSlotStyles(compiledCase));
+  let describedBy = $derived(error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined);
 
   function handleChange(event: Event): void {
     const input = event.currentTarget as HTMLInputElement;
@@ -68,7 +81,7 @@
   {invalid}
   fieldId={fieldId}
   rootStyle={slotStyles.root}
-  labelStyle={slotStyles.label}
+  labelStyle={`${slotStyles.label}; display: inline-flex; align-items: center; min-block-size: 44px; min-inline-size: 44px;`}
   descriptionStyle={slotStyles.description}
   errorStyle={slotStyles.error}
 >

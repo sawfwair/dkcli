@@ -43,8 +43,8 @@
   export let showGrid = true;
   export let showTooltip = true;
   export let valueFormat: ((value: number) => string) | undefined = undefined;
-  export let emptyTitle = 'No chart data yet';
-  export let emptyDescription = 'Add one or more series to render the chart.';
+  export let emptyTitle = 'No data';
+  export let emptyDescription = '';
   export let theme: ThemeContract = DEFAULT_DATA_CHART_THEME;
 
   const defaultRegistration = createDataChartRegistration(DEFAULT_DATA_CHART_THEME);
@@ -111,7 +111,9 @@
     {#if series.length === 0 || categories.length === 0}
       <div class="chart-empty" style={slotStyles.empty}>
         <strong>{emptyTitle}</strong>
-        <p>{emptyDescription}</p>
+        {#if emptyDescription}
+          <p>{emptyDescription}</p>
+        {/if}
       </div>
     {:else}
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title} class="chart-svg">

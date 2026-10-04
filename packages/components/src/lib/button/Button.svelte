@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { createBubbler } from 'svelte/legacy';
   import type { ThemeContract } from '@dkcli/core';
 
   import {
@@ -9,6 +10,10 @@
   } from './button.recipe.js';
   import { sanitizeHref } from '../shared/url.js';
   import type { ButtonContentMode, ButtonSize, ButtonVariant } from './button.spec.js';
+
+  interface $$Events {
+    click: MouseEvent;
+  }
 
   export let variant: ButtonVariant = 'solid';
   export let size: ButtonSize = 'md';
@@ -22,7 +27,9 @@
   export let target: string | undefined = undefined;
   export let rel: string | undefined = undefined;
   export let theme: ThemeContract = DEFAULT_BUTTON_THEME;
+  export let onClick: ((event: MouseEvent) => void) | undefined = undefined;
 
+  const bubble = createBubbler();
   const defaultRegistration = createButtonRegistration(DEFAULT_BUTTON_THEME);
   let registration = defaultRegistration;
   let elementTag: 'a' | 'button' = 'button';
@@ -75,11 +82,14 @@
     return 'label';
   }
 
-  function handleAnchorClick(event: MouseEvent): void {
-    if (elementTag === 'a' && busy) {
+  function handleClick(event: MouseEvent): void {
+    if (busy) {
       event.preventDefault();
       event.stopPropagation();
+      return;
     }
+    onClick?.(event);
+    bubble('click')(event);
   }
 </script>
 
@@ -98,10 +108,10 @@
     target={target}
     rel={anchorRel}
     tabindex={busy ? -1 : undefined}
-    on:click={handleAnchorClick}
+    onclick={handleClick}
   >
     {#if loading}
-      <span class="slot slot-spinner" style={slotStyles.spinner}>
+      <span class="slot slot-spinner" class:has-fallback-spinner={!$$slots.spinner} style={slotStyles.spinner}>
         <slot name="spinner">
           <span class="spinner-fallback" aria-hidden="true"></span>
         </slot>
@@ -140,9 +150,10 @@
     aria-label={iconOnly ? ariaLabel : undefined}
     type={type}
     disabled={busy}
+    onclick={handleClick}
   >
     {#if loading}
-      <span class="slot slot-spinner" style={slotStyles.spinner}>
+      <span class="slot slot-spinner" class:has-fallback-spinner={!$$slots.spinner} style={slotStyles.spinner}>
         <slot name="spinner">
           <span class="spinner-fallback" aria-hidden="true"></span>
         </slot>
@@ -175,7 +186,7 @@
   .dk-button {
     align-items: center;
     background: var(--dk-button-bg);
-    block-size: var(--dk-button-block-size);
+    box-sizing: border-box;
     border: var(--dk-button-border-width) solid var(--dk-button-border);
     border-radius: var(--dk-button-radius);
     box-shadow: var(--dk-button-shadow);
@@ -185,7 +196,8 @@
     gap: var(--dk-button-gap);
     inline-size: auto;
     justify-content: center;
-    min-block-size: var(--dk-button-min-size);
+    max-inline-size: 100%;
+    min-block-size: max(var(--dk-button-block-size), var(--dk-button-min-size));
     min-inline-size: var(--dk-button-min-size);
     opacity: var(--dk-button-opacity);
     padding-block: 0;
@@ -201,7 +213,7 @@
       opacity var(--dk-button-transition-duration) ease,
       transform var(--dk-button-transition-duration) ease;
     user-select: none;
-    white-space: nowrap;
+    white-space: normal;
   }
 
   .dk-button:hover:not([data-disabled='true']):not([data-loading='true']) {
@@ -252,6 +264,8 @@
     font-size: var(--dk-button-label-font-size);
     font-weight: var(--dk-button-label-font-weight);
     line-height: var(--dk-button-label-line-height);
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     opacity: var(--dk-button-label-opacity);
     text-decoration: var(--dk-button-label-decoration);
     text-decoration-thickness: 0.08em;
@@ -287,9 +301,13 @@
     inline-size: var(--dk-button-spinner-size);
   }
 
-  .spinner-fallback {
+  .has-fallback-spinner {
     animation: dk-button-spin 0.9s linear infinite;
+  }
+
+  .spinner-fallback {
     block-size: var(--dk-button-spinner-size);
+    box-sizing: border-box;
     border: 2px solid currentColor;
     border-inline-end-color: transparent;
     border-radius: 999px;

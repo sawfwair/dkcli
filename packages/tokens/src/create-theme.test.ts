@@ -43,6 +43,26 @@ describe('@dkcli/tokens createTheme', () => {
     expect(css).toContain('--control-radius: var(--radius-md);');
   });
 
+  it('emits alias-to-alias references as CSS variables', () => {
+    const contract = createTheme({
+      name: 'Ocean',
+      seed: {
+        color: '#295dff',
+        ratio: 'perfect-fourth',
+        mode: 'light',
+        density: 'comfortable',
+        motion: 'snappy'
+      }
+    });
+    const css = emitThemeCss(contract);
+
+    expect(css).toContain('--floating-bg: var(--overlay-bg);');
+    expect(css).toContain('--calendar-trigger-bg: var(--field-bg);');
+    expect(css).toContain('--command-query-bg: var(--field-bg);');
+    expect(css).toContain('--overlay-bg: var(--color-surface-bright);');
+    expect(css).toContain('--field-bg: var(--color-surface);');
+  });
+
   it('rejects CSS declaration breakout values in custom theme contracts', () => {
     const contract = createTheme({
       name: 'Night',

@@ -6,21 +6,21 @@
       "optimizedSeed": "#d08c43",
       "primaryHex": "#af6100",
       "onPrimaryHex": "#ffffff",
-      "surfaceHex": "#fdf3ea",
-      "surfaceInk": "#1e1711",
-      "outlineHex": "#9f968e",
-      "accentA": "#00a8ad",
-      "accentB": "#5190ec",
+      "surfaceHex": "#f9f4f0",
+      "surfaceInk": "#1b1815",
+      "outlineHex": "#9c9793",
+      "accentA": "#0eafcc",
+      "accentB": "#8896e8",
       "motionCurve": "linear( 0.000, 0.041, 0.141, 0.272, 0.413, 0.549, 0.672, 0.777, 0.863, 0.929, 0.977, 1.010, 1.031, 1.042, 1.046, 1.045, 1.041, 1.035, 1.029, 1.022, 1.016, 1.011, 1.007, 1.004, 1.002, 1.000, 0.999, 0.998, 0.998, 0.998, 0.998, 0.998, 1.000 )"
     },
     "proofCards": [
       {
         "label": "Body on surface",
-        "fg": "#1e1711",
-        "bg": "#fdf3ea",
-        "lc": 98.3,
+        "fg": "#1b1815",
+        "bg": "#f9f4f0",
+        "lc": 98.4,
         "minLc": 60,
-        "recommendation": "PASS (Lc 98.3 >= 60)",
+        "recommendation": "Pass (Lc 98.4 >= 60)",
         "pass": true
       },
       {
@@ -29,16 +29,16 @@
         "bg": "#af6100",
         "lc": 77.2,
         "minLc": 60,
-        "recommendation": "PASS (Lc 77.2 >= 60)",
+        "recommendation": "Pass (Lc 77.2 >= 60)",
         "pass": true
       },
       {
         "label": "Signal accent",
         "fg": "#ffffff",
-        "bg": "#008b91",
-        "lc": 73.2,
+        "bg": "#0088a4",
+        "lc": 73.5,
         "minLc": 60,
-        "recommendation": "PASS (Lc 73.2 >= 60)",
+        "recommendation": "Pass (Lc 73.5 >= 60)",
         "pass": true
       }
     ],
@@ -123,66 +123,64 @@
         },
         "elements": [
           {
-            "id": "signal",
-            "x": 24,
-            "y": 24,
-            "width": 120,
-            "height": 80,
-            "kind": "shape",
-            "role": "cta",
-            "color": "#1e1711",
-            "background": "#af6100",
-            "fontSize": 16,
-            "fontWeight": 700,
-            "collisions": 0,
-            "importance": 0.3401
-          },
-          {
             "id": "body",
-            "x": 286,
-            "y": 120,
+            "x": 23,
+            "y": 23,
             "width": 264,
             "height": 144,
             "kind": "text",
-            "role": "body",
-            "color": "#1e1711",
-            "background": "#fdf3ea",
-            "fontSize": 22,
-            "fontWeight": 500,
-            "collisions": 0,
-            "importance": 0.3748
+            "role": "title",
+            "color": "#1b1815",
+            "importance": 0.3958,
+            "collisions": 0
+          },
+          {
+            "id": "signal",
+            "x": 240,
+            "y": 24,
+            "width": 120,
+            "height": 80,
+            "kind": "group",
+            "role": "cta",
+            "background": "#af6100",
+            "color": "#ffffff",
+            "importance": 0.3254,
+            "collisions": 1
           },
           {
             "id": "assist",
-            "x": 23,
-            "y": 173,
+            "x": 430,
+            "y": 56,
             "width": 120,
             "height": 104,
             "kind": "text",
             "role": "support",
-            "color": "#1e1711",
-            "background": "#fdf3ea",
-            "fontSize": 16,
-            "fontWeight": 500,
-            "collisions": 0,
-            "importance": 0.2851
+            "color": "#0eafcc",
+            "importance": 0.2789,
+            "collisions": 0
           }
         ],
         "avoidedRegions": [
           {
-            "x": 206.28,
-            "y": 82,
-            "width": 103.14,
-            "height": 104
+            "x": 0,
+            "y": 212,
+            "width": 573,
+            "height": 74
+          },
+          {
+            "x": 367,
+            "y": 34,
+            "width": 126,
+            "height": 144
           }
         ],
         "metrics": {
-          "overlapPenalty": 0,
-          "safeRegionPenalty": 1545.72,
-          "alignment": 0.333,
+          "overlapPenalty": 3760,
+          "safeRegionPenalty": 6552,
+          "alignment": 0,
           "whitespace": 0.65,
-          "hierarchy": 0.965,
-          "total": 71
+          "hierarchy": 1,
+          "total": 37
         }
       },
       "advancedComposition": {
@@ -194,45 +192,51 @@
           "columns": 12
         },
         "metrics": {
-          "balance": 0.89,
+          "balance": 0.742,
           "symmetry": 0.684,
-          "alignment": 0.333,
-          "rhythm": 0.53,
+          "alignment": 1,
+          "rhythm": 0.56,
           "density": 0.636,
           "simplicity": 0.417,
-          "order": 0.582,
-          "weightedBalance": 0.471,
-          "hierarchy": 0.91,
-          "saliencyRespect": 0.985
+          "order": 0.673,
+          "weightedBalance": 0.598,
+          "hierarchy": 0.883,
+          "saliencyRespect": 0.854
         },
-        "total": 68
+        "total": 72
       },
       "saliency": {
         "mode": "heuristic",
         "focusRegions": [
           {
-            "x": 206.28,
-            "y": 82,
-            "width": 103.14,
-            "height": 104
+            "x": 367,
+            "y": 34,
+            "width": 126,
+            "height": 144
+          },
+          {
+            "x": 0,
+            "y": 212,
+            "width": 573,
+            "height": 74
           }
         ],
         "elements": [
           {
             "id": "body",
-            "score": 0.6395,
+            "score": 0.7521,
             "reasons": [
-              "role:body",
+              "role:title",
               "area:0.467",
               "contrast:0.78",
               "spatial:0.953"
             ],
             "relationHints": [],
-            "normalized": 0.3748
+            "normalized": 0.3958
           },
           {
             "id": "signal",
-            "score": 0.5803,
+            "score": 0.6183,
             "reasons": [
               "role:cta",
               "area:0.239",
@@ -240,19 +244,20 @@
               "spatial:0.671"
             ],
             "relationHints": [],
-            "normalized": 0.3401
+            "normalized": 0.3254
           },
           {
             "id": "assist",
-            "score": 0.4864,
+            "score": 0.53,
             "reasons": [
               "role:support",
               "area:0.265",
               "contrast:0.78",
-              "spatial:0.719"
+              "spatial:0.719",
+              "edge-density:0.581"
             ],
             "relationHints": [],
-            "normalized": 0.2851
+            "normalized": 0.2789
           }
         ]
       }
@@ -265,34 +270,7 @@
       "paragraphSpacingPx": 17,
       "crowdingRisk": "low",
       "warnings": [],
-      "engine": "auto",
-      "advanced": {
-        "engine": "advanced",
-        "whiteSpace": "normal",
-        "lines": [
-          {
-            "text": "A proof solver should resolve layout, distinction, movement,",
-            "width": 433.5,
-            "paintWidth": 433.5,
-            "ratio": 1
-          },
-          {
-            "text": "and reading comfort together.",
-            "width": 221.33,
-            "paintWidth": 221.33,
-            "ratio": 0.515
-          }
-        ],
-        "badness": 7867,
-        "averageWidth": 327.42,
-        "variance": 11254.03,
-        "usedHyphenation": false,
-        "lineCount": 2,
-        "maxLineWidth": 433.5,
-        "heightPx": 43.5,
-        "segmentCount": 23,
-        "chunkCount": 1
-      }
+      "engine": "basic"
     }
   },
   "scale": {

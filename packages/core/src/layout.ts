@@ -1,4 +1,4 @@
-// Layout — Constraint-style stack layout solving plus advanced design-document layout.
+// Solves stack constraints and estimates design-document layouts.
 
 import { analyzeImportance, type ImportanceReport } from './saliency.ts';
 import type { DesignDocument, LayoutObjectiveElement, LayoutObjectiveReport } from './design.ts';
@@ -104,6 +104,7 @@ function distributeDeficit(items: SolvedLayoutItem[], deficit: number): number {
   return remaining;
 }
 
+/** Distributes stack space using item size constraints, growth, and shrink weights. */
 export function solveStackLayout(items: LayoutItem[], options: LayoutSolveOptions): LayoutResult {
   const gap = options.gap ?? 0;
   const padding = options.padding ?? 0;
@@ -204,6 +205,7 @@ function shouldPreserveElement(
   return options.preservePositions || element.locked || document.frame.mode === 'app-shell';
 }
 
+/** Computes estimated element rectangles from a design document and layout heuristics. */
 export function solveDesignLayout(
   document: DesignDocument,
   options: {

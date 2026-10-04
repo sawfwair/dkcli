@@ -16,8 +16,5 @@ export default defineConfig({
   splitting: false,
   shims: false,
   noExternal: [/.*/],
-  outDir: 'dist',
-  banner({ name }) {
-    return name === 'bin/dk' ? { js: '#!/usr/bin/env node' } : {};
-  }
+  outDir: 'dist'
 });

@@ -72,7 +72,8 @@ export const popoverSpec: ComponentSpec = createComponentSpec({
         surfaceWidth: slotVar('surface', '--dk-popover-surface-width'),
         surfaceHeight: literal('220px'),
         offset: slotVar('root', '--dk-popover-offset'),
-        viewportPadding: 16
+        viewportPadding: 16,
+        viewportConstrained: true
       }
     ]
   },

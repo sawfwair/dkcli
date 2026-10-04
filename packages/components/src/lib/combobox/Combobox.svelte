@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   export type ComboboxItem = {
     value: string;
     label: string;
@@ -28,71 +28,77 @@
   } from './combobox.recipe.js';
   import type { ComboboxSize } from './combobox.spec.js';
 
-  let nextId = 0;
+  type Props = {
+    value?: string;
+    items?: ComboboxItem[];
+    label?: string;
+    description?: string;
+    error?: string;
+    placeholder?: string;
+    required?: boolean;
+    disabled?: boolean;
+    name?: string;
+    id?: string;
+    size?: ComboboxSize;
+    theme?: ThemeContract;
+    onChange?: (detail: { value: string | undefined }) => void;
+  };
 
-  export let value: string | undefined = undefined;
-  export let items: ComboboxItem[] = [];
-  export let label: string | undefined = undefined;
-  export let description: string | undefined = undefined;
-  export let error: string | undefined = undefined;
-  export let placeholder = 'Search options';
-  export let required = false;
-  export let disabled = false;
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let size: ComboboxSize = 'md';
-  export let theme: ThemeContract = DEFAULT_COMBOBOX_THEME;
-  export let onChange: ((detail: { value: string | undefined }) => void) | undefined = undefined;
+  let {
+    value = $bindable(undefined),
+    items = $bindable([]),
+    label = $bindable(),
+    description = $bindable(),
+    error = $bindable(),
+    placeholder = $bindable('Search options'),
+    required = $bindable(false),
+    disabled = $bindable(false),
+    name = $bindable(),
+    id = $bindable(),
+    size = $bindable('md'),
+    theme = $bindable(DEFAULT_COMBOBOX_THEME),
+    onChange = $bindable()
+  }: Props = $props();
 
+  const uid = $props.id();
   const defaultRegistration = createComboboxRegistration(DEFAULT_COMBOBOX_THEME);
   const dispatch = createEventDispatcher<{ change: { value: string | undefined } }>();
-  const localId = `dk-combobox-${++nextId}`;
+  const fieldId = $derived(id ?? `dk-combobox-${uid}`);
+  const registration = $derived(theme.name === DEFAULT_COMBOBOX_THEME.name ? defaultRegistration : createComboboxRegistration(theme));
+  const invalid = $derived(Boolean(error));
+  const compiledCase = $derived(getComboboxRecipeCase(registration.recipe, { size }));
+  const slotStyles = $derived(serializeComboboxSlotStyles(compiledCase));
+  const selectedItem = $derived(findSelectedItem(items, value));
+  const describedBy = $derived(error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined);
 
-  let registration = defaultRegistration;
-  let internalOpen = false;
-  let inputEl: HTMLInputElement | null = null;
-  let surfaceEl: HTMLDivElement | null = null;
-  let itemRefs: HTMLButtonElement[] = [];
-  let highlightIndex = 0;
-  let fieldId = id ?? localId;
-  let currentValue = value;
-  let query = '';
+  let internalOpen = $state(false);
+  let inputEl = $state<HTMLInputElement | null>(null);
+  let surfaceEl = $state<HTMLDivElement | null>(null);
+  let highlightIndex = $state(-1);
+  let query = $state('');
   let suppressNextFocusOpen = false;
-  let invalid = Boolean(error);
-  let position = { left: 0, top: 0, placement: 'bottom' as Placement };
-  let compiledCase = getComboboxRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeComboboxSlotStyles(compiledCase);
-
-  $: registration =
-    theme.name === DEFAULT_COMBOBOX_THEME.name ? defaultRegistration : createComboboxRegistration(theme);
-  $: fieldId = id ?? localId;
-  $: if (value !== undefined) {
-    currentValue = value;
-  }
-  $: invalid = Boolean(error);
-  $: compiledCase = getComboboxRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeComboboxSlotStyles(compiledCase);
-  $: selectedItem = findSelectedItem(items, currentValue);
-  $: if (!internalOpen) {
-    query = selectedItem?.label ?? '';
-  }
-  $: filteredItems = query.trim()
+  let viewportInlineSize = $state('100vw');
+  let position = $state({ left: 0, top: 0, placement: 'bottom' as Placement });
+  const displayQuery = $derived(internalOpen ? query : selectedItem?.label ?? '');
+  const filteredItems = $derived(query.trim()
     ? items.filter((item) => {
         const haystack = `${item.label} ${item.description ?? ''}`.toLowerCase();
         return haystack.includes(query.trim().toLowerCase());
       })
-    : items;
-  $: describedBy = error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined;
-  $: if (internalOpen) {
-    highlightIndex = Math.max(0, firstEnabledIndex(filteredItems));
-    void syncPosition();
-  }
+    : items);
+
+  $effect(() => {
+    if (disabled) internalOpen = false;
+  });
 
   async function syncPosition(): Promise<void> {
     await tick();
-    if (!inputEl || !surfaceEl || typeof window === 'undefined') {
-      return;
-    }
+    if (!internalOpen || !inputEl || !surfaceEl) return;
+    const rootZoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom);
+    const coordinateScale = Number.isFinite(rootZoom) && rootZoom > 0 ? rootZoom : 1;
+    viewportInlineSize = `${window.innerWidth / coordinateScale}px`;
+    await tick();
+    if (!internalOpen || !inputEl || !surfaceEl) return;
     const anchor = inputEl.getBoundingClientRect();
     const surface = surfaceEl.getBoundingClientRect();
     position = computeAnchoredPosition({
@@ -101,64 +107,56 @@
       placement: 'bottom',
       offset: 8,
       viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight
+      viewportHeight: window.innerHeight,
+      coordinateScale
     });
-    itemRefs[highlightIndex]?.focus();
   }
 
   function restoreInputFocus(): void {
-    suppressNextFocusOpen = true;
     void tick().then(() => {
-      const focusInput = () => {
-        const nextInput = (document.getElementById(fieldId) as HTMLInputElement | null) ?? inputEl;
-        nextInput?.focus();
-      };
-      if (typeof window !== 'undefined') {
-        window.setTimeout(() => {
-          focusInput();
-        }, 0);
-        return;
+      if (inputEl && document.activeElement !== inputEl) {
+        suppressNextFocusOpen = true;
+        inputEl.focus();
       }
-      focusInput();
     });
   }
 
   function openList(): void {
-    if (disabled) {
-      return;
-    }
-    if (!internalOpen && selectedItem && query === selectedItem.label) {
-      query = '';
-    }
+    if (disabled || internalOpen) return;
+    query = '';
+    highlightIndex = firstEnabledIndex(items);
     internalOpen = true;
+    void syncPosition();
   }
 
-  function closeList(): void {
+  function closeList(restoreFocus = true): void {
     internalOpen = false;
-    query = selectedItem?.label ?? '';
-    restoreInputFocus();
+    if (restoreFocus) restoreInputFocus();
   }
 
   function selectItem(item: ComboboxItem): void {
-    currentValue = item.value;
+    if (disabled || item.disabled) return;
     value = item.value;
-    query = item.label;
-    internalOpen = false;
     onChange?.({ value: item.value });
     dispatch('change', { value: item.value });
-    restoreInputFocus();
+    closeList();
   }
 
-  function handleWindowClick(event: MouseEvent): void {
-    if (!internalOpen) {
-      return;
+  function handleOutsideEvent(event: MouseEvent | FocusEvent): void {
+    if (internalOpen && isEventOutside(surfaceEl, event.target) && isEventOutside(inputEl, event.target)) {
+      closeList(false);
     }
-    if (isEventOutside(surfaceEl, event.target) && isEventOutside(inputEl, event.target)) {
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent): void {
+    if (internalOpen && event.key === 'Escape') {
       closeList();
+      event.preventDefault();
     }
   }
 
   function handleKeydown(event: KeyboardEvent): void {
+    if (disabled) return;
     if (!internalOpen) {
       if (event.key === 'ArrowDown' || event.key === 'Enter') {
         openList();
@@ -166,28 +164,27 @@
       }
       return;
     }
-
     if (event.key === 'Escape') {
       closeList();
-      return;
-    }
-
-    const nextIndex = nextListIndex(filteredItems, highlightIndex, event.key, { orientation: 'vertical' });
-    if (nextIndex !== highlightIndex) {
-      highlightIndex = nextIndex;
-      itemRefs[nextIndex]?.focus();
       event.preventDefault();
       return;
     }
+    if (event.key === 'Tab') {
+      closeList(false);
+      return;
+    }
 
-    if (event.key === 'Enter' && filteredItems[highlightIndex] && !filteredItems[highlightIndex].disabled) {
+    if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+      highlightIndex = nextListIndex(filteredItems, highlightIndex, event.key, { orientation: 'vertical' });
+      event.preventDefault();
+    } else if (event.key === 'Enter' && filteredItems[highlightIndex]) {
       selectItem(filteredItems[highlightIndex]);
       event.preventDefault();
     }
   }
 </script>
 
-<svelte:window onclick={handleWindowClick} onkeydown={handleKeydown} />
+<svelte:window onclick={handleOutsideEvent} onfocusin={handleOutsideEvent} onkeydown={handleWindowKeydown} />
 
 <FieldFrame
   {label}
@@ -202,9 +199,9 @@
   descriptionStyle={slotStyles.description}
   errorStyle={slotStyles.error}
 >
-  <input type="hidden" {name} value={currentValue} />
+  <input type="hidden" {name} {value} {disabled} />
 
-  <div class="combobox-trigger" style={slotStyles.icon}>
+  <div class="combobox-trigger" style={`${slotStyles.input}; ${slotStyles.icon}`}>
     <input
       bind:this={inputEl}
       class="combobox-input"
@@ -213,12 +210,13 @@
       role="combobox"
       aria-expanded={internalOpen ? 'true' : 'false'}
       aria-autocomplete="list"
+      aria-activedescendant={internalOpen && filteredItems[highlightIndex] ? `${fieldId}-option-${highlightIndex}` : undefined}
       aria-controls={`${fieldId}-listbox`}
       aria-describedby={describedBy}
       aria-invalid={invalid ? 'true' : 'false'}
       {disabled}
       {placeholder}
-      value={query}
+      value={displayQuery}
       onfocus={() => {
         if (suppressNextFocusOpen) {
           suppressNextFocusOpen = false;
@@ -228,8 +226,11 @@
       }}
       onkeydown={handleKeydown}
       oninput={(event) => {
+        if (disabled) return;
+        openList();
         query = (event.currentTarget as HTMLInputElement).value;
-        internalOpen = true;
+        highlightIndex = firstEnabledIndex(filteredItems);
+        void syncPosition();
       }}
     />
     <span class="combobox-icon" aria-hidden="true">⌄</span>
@@ -240,7 +241,7 @@
   <div
     bind:this={surfaceEl}
     class="combobox-surface"
-    style={`${slotStyles.surface}; left:${position.left}px; top:${position.top}px;`}
+    style={`${slotStyles.surface}; --dk-viewport-inline-size:${viewportInlineSize}; left:${position.left}px; top:${position.top}px;`}
     role="listbox"
     id={`${fieldId}-listbox`}
     tabindex="-1"
@@ -251,27 +252,28 @@
     {:else}
       {#each filteredItems as item, index (item.value)}
         <button
-          bind:this={itemRefs[index]}
           class="combobox-item"
           style={`${slotStyles.item} ${slotStyles.itemLabel} ${slotStyles.itemDescription}`}
           type="button"
           role="option"
-        aria-selected={currentValue === item.value ? 'true' : 'false'}
-        data-selected={currentValue === item.value}
-        data-highlighted={highlightIndex === index}
-        disabled={item.disabled}
-        onmousedown={(event) => {
-          event.preventDefault();
-        }}
-        onclick={() => selectItem(item)}
-      >
+          id={`${fieldId}-option-${index}`}
+          tabindex="-1"
+          aria-selected={value === item.value ? 'true' : 'false'}
+          data-selected={value === item.value}
+          data-highlighted={highlightIndex === index}
+          disabled={item.disabled || disabled}
+          onmousedown={(event) => {
+            event.preventDefault();
+          }}
+          onclick={() => selectItem(item)}
+        >
           <span class="combobox-item-copy">
             <span class="combobox-item-label">{item.label}</span>
             {#if item.description}
               <span class="combobox-item-description">{item.description}</span>
             {/if}
           </span>
-          {#if currentValue === item.value}
+          {#if value === item.value}
             <span aria-hidden="true">✓</span>
           {/if}
         </button>
@@ -282,6 +284,7 @@
 
 <style>
   .combobox-trigger {
+    min-inline-size: 0;
     position: relative;
   }
 
@@ -290,9 +293,12 @@
     background: var(--dk-combobox-input-bg);
     border: 1px solid var(--dk-combobox-input-border);
     border-radius: var(--dk-combobox-input-radius);
+    box-sizing: border-box;
     color: var(--dk-combobox-input-fg);
+    display: block;
     inline-size: 100%;
     min-block-size: var(--dk-combobox-input-block-size);
+    min-inline-size: 0;
     padding: 0 calc(var(--dk-combobox-input-inline-padding) + 1.1rem) 0
       var(--dk-combobox-input-inline-padding);
   }
@@ -320,12 +326,13 @@
   }
 
   .combobox-surface {
+    box-sizing: border-box;
     background: var(--dk-combobox-surface-bg);
     border: 1px solid var(--dk-combobox-surface-border);
     border-radius: var(--dk-combobox-surface-radius);
     box-shadow: var(--dk-combobox-surface-shadow);
     color: var(--dk-combobox-surface-fg);
-    inline-size: min(var(--dk-combobox-surface-width), calc(100vw - 2rem));
+    inline-size: min(var(--dk-combobox-surface-width), calc(var(--dk-viewport-inline-size, 100vw) - 2rem));
     padding: var(--dk-combobox-surface-padding);
     position: fixed;
     z-index: 45;

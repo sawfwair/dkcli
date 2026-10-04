@@ -5,6 +5,23 @@ import { describe, expect, it } from 'vitest';
 import PopoverHarness from './PopoverHarness.svelte';
 
 describe('Popover', () => {
+  it('focuses a static-content surface on open and restores the trigger after Escape', async () => {
+    render(PopoverHarness, { props: { focusableContent: false } });
+
+    const trigger = screen.getByRole('button', { name: 'Open popover' });
+    trigger.focus();
+    await fireEvent.click(trigger);
+    await tick();
+
+    const surface = screen.getByRole('dialog');
+    expect(document.activeElement).toBe(surface);
+    await fireEvent.keyDown(surface, { key: 'Escape' });
+    await tick();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
   it('focuses the first focusable element on open and restores focus after outside click', async () => {
     render(PopoverHarness);
 

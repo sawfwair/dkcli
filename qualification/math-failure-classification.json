@@ -1,0 +1,1923 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "receiptPath": "../dkweb/.tmp/qualification/local-receipt.json",
+    "receiptSha256": "46d9ec773238051a0c230b0dbc6318bf0b1f573761d6a8f9f16cf3dc45a03338",
+    "createdAt": "2026-10-04T16:18:30.561Z",
+    "projectIdentity": "336ee2707a33d648d9ff9a754a6712062034e2ba55443c5c00235e8723376050",
+    "artifactFingerprint": "8fd21a61f3998acdd895c420290735e8ee1ad75ac870c178cf273525d286c2f7",
+    "mathReportSha256": "ff45cef5424a8c9d0d5fd6edbb759efdd8f5360988ae265385d5af12d7b0db61",
+    "projectInputSha256": "f26c9f3b852c7e0a2a764146671a27869296f75f1bfcd13bd2a9049a29aa1fd6",
+    "projectInputPath": "original-project.json"
+  },
+  "summary": {
+    "fixtureCount": 180,
+    "originalFailedCount": 46,
+    "responsiveCapModelDefects": 29,
+    "unresolvedConservativeLayoutFindings": 17,
+    "measuredSceneCount": 114,
+    "originalFailedRenderedTargetChecks": 32,
+    "baseline": {
+      "fixtureCount": 720,
+      "failedFixtureCount": 45,
+      "changed": false
+    }
+  },
+  "limitations": [
+    "Classification uses the original receipt and matching public mathematical artifact; it is not a replacement runtime receipt.",
+    "APCA mathematical checks do not establish WCAG compliance.",
+    "Responsive width containment does not establish internal content fit, focus, target bounds, or placement.",
+    "Original browser cases do not match the seventeen failing recipe samples and narrower declared containers."
+  ],
+  "failures": [
+    {
+      "componentId": "accordion",
+      "id": "size=md__open",
+      "name": "accordion-md-open",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "open"
+      ],
+      "props": {},
+      "sampleText": "Deployment timeline and stakeholder notes",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "panel",
+          "widths": [
+            320,
+            420,
+            768,
+            1280
+          ],
+          "heights": [
+            160
+          ],
+          "estimatedInlinePx": 399.36,
+          "requiredBlockPx": 128,
+          "widthChecks": [
+            {
+              "width": 320,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 420,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "badge",
+      "id": "emphasis=soft|size=md|tone=success__rest",
+      "name": "success-soft",
+      "caseKey": "emphasis=soft|size=md|tone=success",
+      "axes": {
+        "tone": "success",
+        "emphasis": "soft",
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Healthy",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            120,
+            200,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            30
+          ],
+          "estimatedInlinePx": 134.57,
+          "requiredBlockPx": 30,
+          "widthChecks": [
+            {
+              "width": 120,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 200,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "badge",
+      "id": "emphasis=solid|size=md|tone=success__rest",
+      "name": "success-solid",
+      "caseKey": "emphasis=solid|size=md|tone=success",
+      "axes": {
+        "tone": "success",
+        "emphasis": "solid",
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Healthy",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            120,
+            200,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            30
+          ],
+          "estimatedInlinePx": 134.57,
+          "requiredBlockPx": 30,
+          "widthChecks": [
+            {
+              "width": 120,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 200,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "badge",
+      "id": "emphasis=outline|size=md|tone=success__rest",
+      "name": "success-outline",
+      "caseKey": "emphasis=outline|size=md|tone=success",
+      "axes": {
+        "tone": "success",
+        "emphasis": "outline",
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Healthy",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            120,
+            200,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            30
+          ],
+          "estimatedInlinePx": 134.57,
+          "requiredBlockPx": 30,
+          "widthChecks": [
+            {
+              "width": 120,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 200,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "breadcrumbs",
+      "id": "size=md__rest",
+      "name": "breadcrumbs-md",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Workspace / Release / Production",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            220,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            48
+          ],
+          "estimatedInlinePx": 266.88,
+          "requiredBlockPx": 44,
+          "widthChecks": [
+            {
+              "width": 220,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "button",
+      "id": "content=label|size=lg|variant=solid__rest",
+      "name": "solid-sizes (content=label|size=lg|variant=solid)",
+      "caseKey": "content=label|size=lg|variant=solid",
+      "axes": {
+        "variant": "solid",
+        "size": "lg",
+        "content": "label"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Continue",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            180,
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44,
+            48,
+            52
+          ],
+          "estimatedInlinePx": 230.36,
+          "requiredBlockPx": 52,
+          "widthChecks": [
+            {
+              "width": 180,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 240,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "button",
+      "id": "content=label|size=md|variant=link__rest__as=a|href=#",
+      "name": "link-anchor",
+      "caseKey": "content=label|size=md|variant=link",
+      "axes": {
+        "variant": "link",
+        "size": "md",
+        "content": "label"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {
+        "as": "a",
+        "href": "#"
+      },
+      "sampleText": "Open details",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            180,
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44,
+            48,
+            52
+          ],
+          "estimatedInlinePx": 232.56,
+          "requiredBlockPx": 48,
+          "widthChecks": [
+            {
+              "width": 180,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 240,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=sm__rest",
+      "name": "default (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44
+          ],
+          "estimatedInlinePx": 268.83,
+          "requiredBlockPx": 44,
+          "widthChecks": [
+            {
+              "width": 240,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=md__rest",
+      "name": "default (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44
+          ],
+          "estimatedInlinePx": 268.83,
+          "requiredBlockPx": 44,
+          "widthChecks": [
+            {
+              "width": 240,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=lg__rest",
+      "name": "default (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44
+          ],
+          "estimatedInlinePx": 268.83,
+          "requiredBlockPx": 44,
+          "widthChecks": [
+            {
+              "width": 240,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=sm__checked",
+      "name": "checked (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "checked"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44
+          ],
+          "estimatedInlinePx": 268.83,
+          "requiredBlockPx": 44,
+          "widthChecks": [
+            {
+              "width": 240,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=md__checked",
+      "name": "checked (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "checked"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44
+          ],
+          "estimatedInlinePx": 268.83,
+          "requiredBlockPx": 44,
+          "widthChecks": [
+            {
+              "width": 240,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=lg__checked",
+      "name": "checked (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "checked"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44
+          ],
+          "estimatedInlinePx": 268.83,
+          "requiredBlockPx": 44,
+          "widthChecks": [
+            {
+              "width": 240,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=sm__indeterminate",
+      "name": "indeterminate (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "indeterminate"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44
+          ],
+          "estimatedInlinePx": 268.83,
+          "requiredBlockPx": 44,
+          "widthChecks": [
+            {
+              "width": 240,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=md__indeterminate",
+      "name": "indeterminate (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "indeterminate"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44
+          ],
+          "estimatedInlinePx": 268.83,
+          "requiredBlockPx": 44,
+          "widthChecks": [
+            {
+              "width": 240,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "checkbox",
+      "id": "size=lg__indeterminate",
+      "name": "indeterminate (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "indeterminate"
+      ],
+      "props": {},
+      "sampleText": "Send release notes",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "root",
+          "widths": [
+            240,
+            320,
+            768,
+            1280
+          ],
+          "heights": [
+            44
+          ],
+          "estimatedInlinePx": 268.83,
+          "requiredBlockPx": 44,
+          "widthChecks": [
+            {
+              "width": 240,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "combobox",
+      "id": "size=sm__rest",
+      "name": "default (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/combobox/Combobox.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "combobox",
+      "id": "size=md__rest",
+      "name": "default (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/combobox/Combobox.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "combobox",
+      "id": "size=lg__rest",
+      "name": "default (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/combobox/Combobox.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "combobox",
+      "id": "size=sm__selected",
+      "name": "selected (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "selected"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/combobox/Combobox.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "combobox",
+      "id": "size=md__selected",
+      "name": "selected (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "selected"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/combobox/Combobox.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "combobox",
+      "id": "size=lg__selected",
+      "name": "selected (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "selected"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/combobox/Combobox.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "combobox",
+      "id": "size=sm__invalid",
+      "name": "invalid (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "invalid"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/combobox/Combobox.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "combobox",
+      "id": "size=md__invalid",
+      "name": "invalid (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "invalid"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/combobox/Combobox.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "combobox",
+      "id": "size=lg__invalid",
+      "name": "invalid (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "invalid"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/combobox/Combobox.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "command-palette",
+      "id": "rest",
+      "name": "default",
+      "caseKey": "",
+      "axes": {},
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 672,
+          "surfaceHeightPx": 512,
+          "offsetPx": 24,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/command-palette/CommandPalette.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "command-palette",
+      "id": "selected",
+      "name": "selected",
+      "caseKey": "",
+      "axes": {},
+      "states": [
+        "selected"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 672,
+          "surfaceHeightPx": 512,
+          "offsetPx": 24,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/command-palette/CommandPalette.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "date-picker",
+      "id": "size=md__rest",
+      "name": "default-md",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 324,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/date-picker/DatePicker.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "date-picker",
+      "id": "size=lg__selected",
+      "name": "selected-lg",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "selected"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 324,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/date-picker/DatePicker.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "date-picker",
+      "id": "size=sm__disabled",
+      "name": "disabled-sm",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "disabled"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 324,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/date-picker/DatePicker.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "popover",
+      "id": "size=lg__rest",
+      "name": "large",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 220,
+          "offsetPx": 12,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/popover/Popover.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "range-date-picker",
+      "id": "size=sm__rest",
+      "name": "default-md (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 720,
+          "surfaceHeightPx": 360,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/range-date-picker/RangeDatePicker.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "range-date-picker",
+      "id": "size=md__rest",
+      "name": "default-md (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 720,
+          "surfaceHeightPx": 360,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/range-date-picker/RangeDatePicker.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "range-date-picker",
+      "id": "size=lg__rest",
+      "name": "lg",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 720,
+          "surfaceHeightPx": 360,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/range-date-picker/RangeDatePicker.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "select",
+      "id": "size=sm__rest",
+      "name": "default (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 300,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/select/Select.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "select",
+      "id": "size=md__rest",
+      "name": "default (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 300,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/select/Select.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "select",
+      "id": "size=lg__rest",
+      "name": "default (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 300,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/select/Select.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "select",
+      "id": "size=sm__selected",
+      "name": "selected (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "selected"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 300,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/select/Select.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "select",
+      "id": "size=md__selected",
+      "name": "selected (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "selected"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 300,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/select/Select.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "select",
+      "id": "size=lg__selected",
+      "name": "selected (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "selected"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 300,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/select/Select.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "select",
+      "id": "size=sm__invalid",
+      "name": "invalid (size=sm)",
+      "caseKey": "size=sm",
+      "axes": {
+        "size": "sm"
+      },
+      "states": [
+        "invalid"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 300,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/select/Select.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "select",
+      "id": "size=md__invalid",
+      "name": "invalid (size=md)",
+      "caseKey": "size=md",
+      "axes": {
+        "size": "md"
+      },
+      "states": [
+        "invalid"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 300,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/select/Select.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "select",
+      "id": "size=lg__invalid",
+      "name": "invalid (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "invalid"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "surface",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 300,
+          "surfaceHeightPx": 280,
+          "offsetPx": 8,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/select/Select.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "text-field",
+      "id": "size=lg__rest",
+      "name": "sizes (size=lg)",
+      "caseKey": "size=lg",
+      "axes": {
+        "size": "lg"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "sampleText": "Project name",
+      "classification": "conservative-single-line-estimate-needs-matched-rendering",
+      "failedChecks": [
+        {
+          "target": "field",
+          "widths": [
+            240,
+            320,
+            420,
+            768,
+            1280
+          ],
+          "heights": [
+            44,
+            48,
+            52
+          ],
+          "estimatedInlinePx": 310,
+          "requiredBlockPx": 52,
+          "widthChecks": [
+            {
+              "width": 240,
+              "fitsWidth": false,
+              "fitsHeight": true,
+              "pass": false
+            },
+            {
+              "width": 320,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 420,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 768,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            },
+            {
+              "width": 1280,
+              "fitsWidth": true,
+              "fitsHeight": true,
+              "pass": true
+            }
+          ],
+          "pass": false
+        }
+      ],
+      "resolution": "Keep failing estimate until matching content, axes, states, props, font, and declared container width are rendered.",
+      "browserScope": "Current playground-default scenes do not establish equivalence to this recipe case."
+    },
+    {
+      "componentId": "toast",
+      "id": "placement=bottom-right__rest",
+      "name": "toast-bottom-right",
+      "caseKey": "placement=bottom-right",
+      "axes": {
+        "placement": "bottom-right"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "item",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 120,
+          "offsetPx": 16,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/toast/Toast.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    },
+    {
+      "componentId": "toast",
+      "id": "placement=top-left__rest",
+      "name": "toast-top-left",
+      "caseKey": "placement=top-left",
+      "axes": {
+        "placement": "top-left"
+      },
+      "states": [
+        "rest"
+      ],
+      "props": {},
+      "classification": "authored-responsive-cap-missing-in-model",
+      "failedChecks": [
+        {
+          "target": "item",
+          "viewportWidth": 320,
+          "viewportHeight": 720,
+          "surfaceWidthPx": 320,
+          "surfaceHeightPx": 120,
+          "offsetPx": 16,
+          "viewportPadding": 16,
+          "pass": false
+        }
+      ],
+      "source": "packages/components/src/lib/toast/Toast.svelte",
+      "resolution": "Honor only explicitly declared CSS viewport caps; keep nominal/effective widths and mathematical assumptions visible."
+    }
+  ]
+}

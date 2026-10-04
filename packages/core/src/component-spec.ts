@@ -1,3 +1,4 @@
+/** Defines the inputs used to compile a DesignKit theme. */
 export type ThemeSeed = {
   color: `#${string}`;
   ratio: string | number;
@@ -7,6 +8,7 @@ export type ThemeSeed = {
   contrastProfile?: 'default' | 'low-vision';
 };
 
+/** References a theme value, a slot variable, or a literal recipe value. */
 export type TokenExpr =
   | { ref: string }
   | { scale: 'space' | 'type' | 'radius' | 'elevation'; step: string }
@@ -71,14 +73,18 @@ export type TargetProofSpec = {
   modality: 'mouse' | 'touch';
 };
 
+/** Defines minimum color differences for the base model and optional vision simulations. */
 export type DistinctnessProofSpec = {
   tokens: string[];
   minDeltaE: number;
+  /** If true, requires the threshold under protan, deutan, and tritan simulations. */
   cvd: boolean;
 };
 
+/** Defines conservative layout estimates without measuring rendered elements. */
 export type LayoutProofSpec = {
   target: string;
+  /** The positive viewport widths in pixels. Each width receives a verdict. */
   widths: number[];
   heights?: number[];
   noOverflow: boolean;
@@ -118,6 +124,8 @@ export type AnchoredSurfaceProofSpec = {
   surfaceHeight: TokenExpr | number;
   offset: TokenExpr | number;
   viewportPadding: number;
+  /** Set only when authored CSS caps inline size to viewport width minus this padding. */
+  viewportConstrained?: boolean;
 };
 
 export type ComponentProofs = {
@@ -131,12 +139,14 @@ export type ComponentProofs = {
   anchoredSurface?: AnchoredSurfaceProofSpec[];
 };
 
+/** Declares intended semantics and keyboard behavior, without certifying compliance. */
 export type AccessibilityContract = {
   role: string;
   keyboardModel?: string;
   labelling?: 'slot-label' | 'aria-label' | 'external-label';
 };
 
+/** Selects recipe cases, states, props, and sample text for mathematical checks. */
 export type ProofCaseSpec = {
   name: string;
   axes?: Record<string, string>;
@@ -145,6 +155,7 @@ export type ProofCaseSpec = {
   sampleText?: string;
 };
 
+/** Defines component slots, recipe variants, proof requirements, and intended semantics. */
 export type ComponentSpec = {
   id: string;
   slots: SlotSpec[];
@@ -164,6 +175,7 @@ export type ComponentCase = {
 const COMPONENT_STATE_NAME_SET = new Set<string>(COMPONENT_STATE_NAMES);
 const UNSAFE_OBJECT_KEYS = new Set(['__proto__', 'prototype', 'constructor']);
 
+/** Returns true if the value is a supported component state name. */
 export function isComponentStateName(value: unknown): value is ComponentStateName {
   return typeof value === 'string' && COMPONENT_STATE_NAME_SET.has(value);
 }
@@ -174,6 +186,7 @@ function assertSafeObjectKey(value: string, label: string): void {
   }
 }
 
+/** Checks safe keys, supported states, distinctness thresholds, and layout dimensions. */
 export function validateComponentSpec(spec: ComponentSpec): ComponentSpec {
   assertSafeObjectKey(spec.id, 'id');
 
@@ -222,13 +235,32 @@ export function validateComponentSpec(spec: ComponentSpec): ComponentSpec {
     }
   }
 
+  for (const proof of spec.proofs.distinctness ?? []) {
+    if (proof.tokens.length < 2) {
+      throw new Error('Distinctness proofs require at least two token references.');
+    }
+    if (!Number.isFinite(proof.minDeltaE) || proof.minDeltaE < 0) {
+      throw new Error('Distinctness proofs require a finite non-negative minDeltaE.');
+    }
+  }
+
+  const layout = spec.proofs.layout;
+  if (layout && (layout.widths.length === 0 || layout.widths.some((width) => !Number.isFinite(width) || width <= 0))) {
+    throw new Error('Layout proofs require at least one finite positive width.');
+  }
+  if (layout?.heights && (layout.heights.length === 0 || layout.heights.some((height) => !Number.isFinite(height) || height <= 0))) {
+    throw new Error('Layout proof heights must be finite positive values.');
+  }
+
   return spec;
 }
 
+/** Validates and returns the supplied component spec. */
 export function createComponentSpec(spec: ComponentSpec): ComponentSpec {
   return validateComponentSpec(spec);
 }
 
+/** Enumerates every combination of the declared axis values. */
 export function enumerateComponentCases(spec: ComponentSpec): ComponentCase[] {
   const axisEntries = spec.axes.map((axis) => [axis.name, axis.values] as const);
 

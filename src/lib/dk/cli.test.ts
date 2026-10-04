@@ -6,6 +6,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CLI_COMMANDS, HELP, parseArgs, runCli } from './cli.ts';
+import { compilePerfectProof } from './perfect.ts';
+import { isRecord } from '../json-boundary.ts';
 
 type CapturedIo = {
   io: {
@@ -73,11 +75,24 @@ function requestBodyText(init: RequestInit | undefined): string {
   return typeof init?.body === 'string' ? init.body : '';
 }
 
+function jsonRecord(value: unknown): Record<string, unknown> {
+  if (!isRecord(value)) {
+    throw new Error('Expected a JSON object in the CLI artifact.');
+  }
+  return value;
+}
+
+function readArtifact(text: string): Record<string, unknown> {
+  const value: unknown = JSON.parse(text);
+  return jsonRecord(value);
+}
+
 describe('cli', () => {
   it('lists every advertised tool command in help', () => {
     expect(CLI_COMMANDS).toEqual([
       'cms',
       'components',
+      'project',
       'perfect',
       'palette',
       'distinct',
@@ -120,8 +135,31 @@ describe('cli', () => {
     const code = await runCli(['--help'], capture.io);
 
     expect(code).toBe(0);
-    expect(capture.stdout).toContain('dkcli — Design Kit CLI');
+    expect(capture.stdout).toContain('Commands:');
     expect(capture.stdout).toContain('Usage: dkcli <command> [options]');
+  });
+
+  it('emits both optical icon corrections in one CSS transform declaration', async () => {
+    const capture = makeIo();
+
+    const code = await runCli(['optical', 'icon', '--size', '48'], capture.io);
+
+    expect(code).toBe(0);
+    const transforms = [...capture.stdout.matchAll(/transform:\s*([^;]+);/g)].map((match) => match[1]);
+    expect(transforms).toEqual(['translateX(2.4px) translateY(-1px)']);
+  });
+
+  it.each([
+    { min: '480', max: '480' },
+    { min: '480', max: '320' }
+  ])('rejects fluid scale viewport endpoints $min to $max', async ({ min, max }) => {
+    const capture = makeIo();
+
+    const code = await runCli(['scale', '--fluid', '--vw-min', min, '--vw-max', max], capture.io);
+
+    expect(code).toBe(1);
+    expect(capture.stdout).toBe('');
+    expect(capture.stderr).toContain('vw-max');
   });
 
   it('emits pre-wrap whitespace rules for text output', async () => {
@@ -148,8 +186,30 @@ describe('cli', () => {
 
     expect(code).toBe(0);
     expect(capture.stdout).toContain('Flow (');
-    expect(capture.stdout).toContain('lead 180px / 2 lines');
-    expect(capture.stdout).toContain('body 320px');
+    expect(capture.stdout).toContain('lead 180 px, 2 lines');
+    expect(capture.stdout).toContain('body 320 px');
+  });
+
+  it.each(['[]', '{}'])('classifies valid future JSON %s as an item-shape error', async (items) => {
+    const capture = makeIo({ '/virtual/items.json': items });
+
+    const code = await runCli(['future', '--items', 'items.json'], capture.io);
+
+    expect(code).toBe(1);
+    expect(capture.stdout).toBe('');
+    expect(capture.stderr).toContain('Items must be a non-empty JSON array.');
+    expect(capture.stderr).not.toContain('invalid JSON');
+  });
+
+  it('classifies malformed future JSON as a parse error', async () => {
+    const capture = makeIo({ '/virtual/items.json': '{' });
+
+    const code = await runCli(['future', '--items', 'items.json'], capture.io);
+
+    expect(code).toBe(1);
+    expect(capture.stdout).toBe('');
+    expect(capture.stderr).toContain('The items input contains invalid JSON.');
+    expect(capture.stderr).not.toContain('Items must be a non-empty JSON array.');
   });
 
   it('smoke-tests the full command surface', async () => {
@@ -178,15 +238,15 @@ describe('cli', () => {
     };
 
     const cases: Array<{ args: string[]; expected: string }> = [
-      { args: ['components', 'verify', '--name', 'button', '--theme', 'cobalt'], expected: 'dk components verify' },
-      { args: ['components', 'matrix', '--name', 'button', '--theme', 'cobalt'], expected: 'dk components matrix' },
+      { args: ['components', 'verify', '--name', 'button', '--theme', 'cobalt'], expected: 'Fail: Button, Cobalt' },
+      { args: ['components', 'matrix', '--name', 'button', '--theme', 'cobalt'], expected: 'Fail 13' },
       { args: ['perfect', '--seed', '#295dff', '--ratio', 'perfect-fourth', '--motion', 'snappy'], expected: '--perfect-base-color' },
       { args: ['palette', '#3b82f6', '--mode', 'both'], expected: '/* dk palette #3b82f6 --engine=' },
-      { args: ['distinct', '#295dff', '--harmony', 'split-complementary'], expected: 'dk distinct' },
+      { args: ['distinct', '#295dff', '--harmony', 'split-complementary'], expected: 'Minimum color difference:' },
       { args: ['contrast', '#fff', '#2563eb', '--size', '16'], expected: 'APCA Lc' },
       { args: ['glass', '--blur', '16', '--layers', '2', '--mode', 'light'], expected: '.glass {' },
-      { args: ['layout', '--container', '960', '--gap', '24'], expected: 'dk layout' },
-      { args: ['compose', '--frame', '1440x900', '--rects', 'rects.json'], expected: 'dk compose' },
+      { args: ['layout', '--container', '960', '--gap', '24'], expected: 'Layout:' },
+      { args: ['compose', '--frame', '1440x900', '--rects', 'rects.json'], expected: 'Composition score:' },
       { args: ['scale', '--ratio', 'golden', '--base', '16'], expected: '/* dk scale --ratio=golden --base=16 */' },
       { args: ['optical', 'icon', '--size', '48'], expected: 'transform:' },
       { args: ['ease', '--preset', 'snappy'], expected: 'transition-timing-function' },
@@ -194,10 +254,10 @@ describe('cli', () => {
       { args: ['text', '--font', '18', '--measure', '620', '--contrast', '72'], expected: 'line-height' },
       { args: ['typeset', '--font', '18', '--measure', '620', '--contrast', '72'], expected: 'line-height' },
       { args: ['linebreak', '--chars', '22', '--lines', '3'], expected: 'Balanced' },
-      { args: ['audit', '--css', 'app.css'], expected: 'dk audit' },
-      { args: ['target', '--distance', '320', '--width', '44', '--choices', '9', '--modality', 'touch'], expected: 'dk target' },
-      { args: ['saliency', '--input', 'design.json'], expected: 'dk saliency' },
-      { args: ['future', '--items', 'items.json', '--query', 'Design a simple landing page'], expected: 'dk future' }
+      { args: ['audit', '--css', 'app.css'], expected: 'Source heuristic score:' },
+      { args: ['target', '--distance', '320', '--width', '44', '--choices', '9', '--modality', 'touch'], expected: 'movement' },
+      { args: ['saliency', '--input', 'design.json'], expected: 'Importance:' },
+      { args: ['future', '--items', 'items.json', '--query', 'Design a simple landing page'], expected: '.dk-layout {' }
     ];
 
     for (const testCase of cases) {
@@ -235,6 +295,143 @@ describe('cli', () => {
     });
   });
 
+  it.each(['json', 'css'])('strict audit preserves the %s artifact and exits unsuccessfully for a failed check', async (format) => {
+    const capture = makeIo({
+      '/virtual/failing.css': '.label { color: #eeeeee; background: #ffffff; font-size: 16px; }'
+    });
+
+    const code = await runCli(['audit', '--css', 'failing.css', '--format', format, '--strict'], capture.io);
+
+    expect(capture.stdout).not.toBe('');
+    if (format === 'json') {
+      expect(readArtifact(capture.stdout).categories).toEqual(expect.arrayContaining([
+        expect.objectContaining({ label: 'Contrast', issues: expect.arrayContaining([
+          expect.objectContaining({ severity: 'fail' })
+        ]) })
+      ]));
+    } else {
+      expect(capture.stdout).toContain('Source heuristic score:');
+    }
+    expect(code).toBe(1);
+    expect(capture.stderr).toContain('strict');
+  });
+
+  it('keeps non-strict audit artifact generation successful when its checks fail', async () => {
+    const capture = makeIo({ '/virtual/failing.css': '.label { color: #eeeeee; background: #ffffff; }' });
+
+    const code = await runCli(['audit', '--css', 'failing.css', '--json'], capture.io);
+
+    expect(code).toBe(0);
+    expect(readArtifact(capture.stdout).categories).toEqual(expect.arrayContaining([
+      expect.objectContaining({ label: 'Contrast', score: 0 })
+    ]));
+    expect(capture.stderr).toBe('');
+  });
+
+  it('strict source audit reports unresolved contrast evidence instead of passing an empty check', async () => {
+    const capture = makeIo({ '/virtual/tokens.css': '.label { color: var(--ink); background: var(--surface); }' });
+
+    const code = await runCli(['audit', '--css', 'tokens.css', '--json', '--strict'], capture.io);
+
+    expect(JSON.parse(capture.stdout)).toMatchObject({
+      evidence: { kind: 'source-heuristic', rendered: 'not-collected' },
+      verification: { pass: false, unsupported: ['contrast'] }
+    });
+    expect(code).toBe(1);
+    expect(capture.stderr).toContain('contrast');
+  });
+
+  it('strict source audit succeeds when resolved checks pass and records its evidence scope', async () => {
+    const capture = makeIo({ '/virtual/readable.css': '.label { color: #111111; background: #ffffff; font-size: 16px; }' });
+
+    const code = await runCli(['audit', '--css', 'readable.css', '--json', '--strict'], capture.io);
+
+    expect(JSON.parse(capture.stdout)).toMatchObject({
+      evidence: { kind: 'source-heuristic', rendered: 'not-collected' },
+      verification: { pass: true, unsupported: [] }
+    });
+    expect(code).toBe(0);
+    expect(capture.stderr).toBe('');
+  });
+
+  it('adds the authoritative mathematical perfect report without claiming rendered evidence', async () => {
+    const capture = makeIo();
+    const compiled = compilePerfectProof({
+      baseColorInput: '#295dff', ratioName: 'perfect-fourth', mode: 'light', motionPreset: 'snappy'
+    });
+
+    const code = await runCli(['perfect', '--seed', '#295dff', '--json'], capture.io);
+
+    expect(code).toBe(0);
+    const payload = readArtifact(capture.stdout);
+    expect(payload).toMatchObject({
+      report: JSON.parse(JSON.stringify(compiled.report)),
+      evidence: { kind: 'mathematical', rendered: 'not-collected' },
+      proofCards: compiled.outputs.proofCards,
+      fluid: compiled.outputs.fluid
+    });
+    expect(payload.tokens).toBeDefined();
+    expect(payload.layout).toBeDefined();
+  });
+
+  it('uses the canonical perfect compiler for the requested basic palette engine', async () => {
+    const capture = makeIo();
+    const compiled = compilePerfectProof({
+      baseColorInput: '#295dff', ratioName: 'perfect-fourth', mode: 'dark', motionPreset: 'snappy'
+    }, { engine: 'basic' });
+
+    const code = await runCli(['perfect', '--mode', 'dark', '--engine', 'basic', '--json'], capture.io);
+
+    const payload = readArtifact(capture.stdout);
+    expect(code).toBe(0);
+    expect(payload.report).toEqual(JSON.parse(JSON.stringify(compiled.report)));
+    expect(jsonRecord(payload.tokens).optimizedSeed).toBe(compiled.outputs.optimizedPalette.seedHex);
+    expect(jsonRecord(payload.tokens).primaryHex).toBe(compiled.outputs.primaryHex);
+    expect(jsonRecord(payload.input).engine).toBe('basic');
+  });
+
+  it('strict perfect preserves its artifact but fails for the known default CVD proof failure', async () => {
+    const capture = makeIo();
+
+    const code = await runCli(['perfect', '--seed', '#295dff', '--json', '--strict'], capture.io);
+
+    const payload = readArtifact(capture.stdout);
+    expect(payload.tokens).toBeDefined();
+    expect(code).toBe(1);
+    expect(capture.stderr).toContain('strict');
+  });
+
+  it.each(['verify', 'matrix'])('strict component %s reports the narrow layout failure and preserves JSON', async (command) => {
+    const capture = makeIo();
+
+    const code = await runCli(['components', command, '--name', 'button', '--theme', 'cobalt', '--json', '--strict'], capture.io);
+
+    const payload = readArtifact(capture.stdout);
+    expect(payload.mode).toBe(command);
+    expect(code).toBe(1);
+    expect(jsonRecord(payload.summary).pass).toBe(false);
+    expect(payload.runs).toEqual(expect.arrayContaining([
+      expect.objectContaining({ failures: expect.arrayContaining([
+        expect.objectContaining({ reasons: expect.arrayContaining([expect.stringContaining('180')]) })
+      ]) })
+    ]));
+    expect(capture.stderr).toContain('strict');
+  });
+
+  it('strict component verification succeeds for passing mathematical fixtures', async () => {
+    const capture = makeIo();
+
+    const code = await runCli(['components', '--strict', 'verify', '--name', 'table', '--theme', 'ember', '--json'], capture.io);
+
+    expect(JSON.parse(capture.stdout)).toMatchObject({
+      mode: 'verify',
+      evidence: { kind: 'mathematical', rendered: 'not-collected' },
+      summary: { pass: true }
+    });
+    expect(code).toBe(0);
+    expect(capture.stderr).toBe('');
+  });
+
   it('keeps ml saliency local unless a runtime URL is configured', async () => {
     const design = JSON.stringify({
       frame: { width: 960, height: 620, padding: 32, gap: 20, columns: 12 },
@@ -251,8 +448,8 @@ describe('cli', () => {
 
     expect(code).toBe(0);
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(capture.stdout).toContain('dk saliency — requested ml / resolved heuristic');
-    expect(capture.stdout).toContain('runtime local (No runtime URL configured; fell back to local heuristic analysis.)');
+    expect(capture.stdout).toContain('Importance: requested ml, resolved heuristic');
+    expect(capture.stdout).toContain('runtime local (No runtime URL configured. Using local heuristic analysis.)');
     expect(capture.stdout).toContain('hero');
   });
 
@@ -370,7 +567,7 @@ describe('cli', () => {
 
     expect(code).toBe(0);
     expect(capture.stdout).toContain('Device code: ABCD-EFGH');
-    expect(capture.stdout).toContain('Logged in as Orion <oidc@example.com>.');
+    expect(capture.stdout).toContain('Signed in as Orion <oidc@example.com>.');
 
     const session = JSON.parse(await readFile(path.join(configDir, 'dkcms-session.json'), 'utf8')) as {
       accessToken: string;
@@ -438,7 +635,7 @@ describe('cli', () => {
     const code = await loginPromise;
 
     expect(code).toBe(0);
-    expect(capture.stdout).toContain('Logged in as Casey <hello@example.com>.');
+    expect(capture.stdout).toContain('Signed in as Casey <hello@example.com>.');
 
     const sessionPath = path.join(configDir, 'dkcms-session.json');
     const session = JSON.parse(await readFile(sessionPath, 'utf8')) as {

@@ -3,11 +3,11 @@
   --dk-seed: #d96f32;
   --dk-primary: #af6100;
   --dk-primary-ink: #ffffff;
-  --dk-surface: #fdf3ea;
-  --dk-ink: #1e1711;
-  --dk-outline: #9f968e;
-  --dk-accent-a: #00a8ad;
-  --dk-accent-b: #5190ec;
+  --dk-surface: #f9f4f0;
+  --dk-ink: #1b1815;
+  --dk-outline: #9c9793;
+  --dk-accent-a: #0eafcc;
+  --dk-accent-b: #8896e8;
   --dk-motion-curve: linear( 0.000, 0.041, 0.141, 0.272, 0.413, 0.549, 0.672, 0.777, 0.863, 0.929, 0.977, 1.010, 1.031, 1.042, 1.046, 1.045, 1.041, 1.035, 1.029, 1.022, 1.016, 1.011, 1.007, 1.004, 1.002, 1.000, 0.999, 0.998, 0.998, 0.998, 0.998, 0.998, 1.000 );
   --dk-type-line-height: 1.51;
   --dk-type-word-spacing: 0.16em;

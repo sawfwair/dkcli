@@ -1,1 +1,1 @@
-export * from '@dkcli/core/design';
+export type { DesignElementKind, DesignRole, BackgroundAsset, DesignElement, DesignDocument, LayoutObjectiveMetrics, LayoutObjectiveElement, LayoutObjectiveReport } from '@dkcli/core';

@@ -15,6 +15,7 @@ import {
   validateComponentSpec
 } from './component-spec.ts';
 import { assertSafeCssCustomPropertyName, assertSafeCssValue } from './css-safety.ts';
+import { analyzeDistinctness, type DistinctnessReport } from './perception.ts';
 import type { ThemeContract } from './theme-contract.ts';
 
 type ResolvedSlotVars = Record<string, string>;
@@ -30,6 +31,7 @@ export type CompiledComponentCase = {
   slots: Record<string, CompiledSlotRecipe>;
 };
 
+/** Reports an APCA check for resolved colors and font values, without WCAG certification. */
 export type ResolvedContrastProof = {
   target: string;
   foreground: string;
@@ -49,12 +51,41 @@ export type ResolvedTargetProof = {
   pass: boolean;
 };
 
+/** Reports color differences against the declared base and simulation thresholds. */
+export type ResolvedDistinctnessProof = {
+  tokens: string[];
+  colors: string[];
+  requiredMinDeltaE: number;
+  cvd: boolean;
+  report: DistinctnessReport;
+  pass: boolean;
+};
+
+/** Reports estimated fit and the authored overflow verdict for one requested width. */
+export type ResolvedLayoutWidthCheck = {
+  width: number;
+  fitsWidth: boolean;
+  fitsHeight: boolean;
+  pass: boolean;
+};
+
+/** Lists declared, evaluated, and unsupported proof categories. */
+export type ProofCoverage = {
+  declared: string[];
+  evaluated: string[];
+  unsupported: string[];
+  complete: boolean;
+};
+
+/** Reports conservative single-line estimates using maximum token values. */
 export type ResolvedLayoutCheck = {
   target: string;
   widths: number[];
   heights: number[];
   estimatedInlinePx: number;
   requiredBlockPx: number;
+  widthChecks: ResolvedLayoutWidthCheck[];
+  assumptions: string[];
   pass: boolean;
 };
 
@@ -81,9 +112,12 @@ export type ResolvedAnchoredSurfaceCheck = {
   viewportWidth: number;
   viewportHeight: number;
   surfaceWidthPx: number;
+  preferredSurfaceWidthPx: number;
+  effectiveSurfaceWidthPx: number;
   surfaceHeightPx: number;
   offsetPx: number;
   viewportPadding: number;
+  assumptions: string[];
   pass: boolean;
 };
 
@@ -94,6 +128,7 @@ export type ResolvedMotionProof = {
   pass: boolean;
 };
 
+/** Contains mathematical proof results for a recipe case, without rendered evidence. */
 export type ComponentProofFixture = {
   id: string;
   name: string;
@@ -106,12 +141,15 @@ export type ComponentProofFixture = {
   sampleText?: string;
   slots: Record<string, ResolvedSlotVars>;
   contrast: ResolvedContrastProof[];
+  distinctness: ResolvedDistinctnessProof[];
   target: ResolvedTargetProof[];
   layout: ResolvedLayoutCheck[];
   helperText: ResolvedHelperTextProof[];
   optionRow: ResolvedOptionRowProof[];
   anchoredSurface: ResolvedAnchoredSurfaceCheck[];
   motion: ResolvedMotionProof[];
+  evidence: 'mathematical';
+  coverage: ProofCoverage;
   resolved: boolean;
   pass: boolean;
 };
@@ -143,6 +181,7 @@ function canonicalStateName(state: ComponentStateName): string {
   return state.replace(/[^a-z0-9]+/gi, '-');
 }
 
+/** Serializes axis values in name order to form a stable recipe case key. */
 export function componentCaseKey(componentCase: Pick<ComponentCase, 'axes'>): string {
   return Object.entries(componentCase.axes)
     .sort(([left], [right]) => left.localeCompare(right))
@@ -158,15 +197,15 @@ function parseNumberish(value: number | string): { numeric: number; unit: string
   const trimmed = value.trim();
   const clampMatch = trimmed.match(/^clamp\(\s*([-.\d]+)(rem|px|em)\s*,.+,\s*([-.\d]+)(rem|px|em)\s*\)$/i);
   if (clampMatch) {
-    return toPx({ numeric: Number(clampMatch[3]), unit: clampMatch[4] });
+    return toPx({ numeric: Number(clampMatch[3]), unit: clampMatch[4].toLowerCase() });
   }
 
-  const match = trimmed.match(/^(-?\d*\.?\d+)(px|rem|em|ms)?$/i);
+  const match = trimmed.match(/^(-?\d*\.?\d+)(px|rem|em|ms|s)?$/i);
   if (!match) {
     return null;
   }
 
-  return { numeric: Number(match[1]), unit: match[2] ?? '' };
+  return { numeric: Number(match[1]), unit: match[2]?.toLowerCase() ?? '' };
 }
 
 function toPx(value: { numeric: number; unit: string }): { numeric: number; unit: 'px' } {
@@ -273,7 +312,7 @@ function resolveExprToString(
 function resolveExprToPx(theme: ThemeContract, expr: TokenExpr | number, context: ResolveContext = {}): number {
   const resolved = resolveTokenExpr(theme, expr, context);
   const parsed = parseNumberish(resolved);
-  if (!parsed) {
+  if (!parsed || !['', 'px', 'rem', 'em'].includes(parsed.unit)) {
     throw new Error(`Token "${JSON.stringify(expr)}" did not resolve to a numeric length.`);
   }
   return Number(toPx(parsed).numeric.toFixed(2));
@@ -282,10 +321,10 @@ function resolveExprToPx(theme: ThemeContract, expr: TokenExpr | number, context
 function resolveExprToMs(theme: ThemeContract, expr: TokenExpr | number, context: ResolveContext = {}): number {
   const resolved = resolveTokenExpr(theme, expr, context);
   const parsed = parseNumberish(resolved);
-  if (!parsed) {
+  if (!parsed || !['', 'ms', 's'].includes(parsed.unit) || !Number.isFinite(parsed.numeric) || parsed.numeric < 0) {
     throw new Error(`Token "${JSON.stringify(expr)}" did not resolve to a numeric duration.`);
   }
-  return Number(parsed.numeric.toFixed(2));
+  return Number((parsed.numeric * (parsed.unit === 's' ? 1000 : 1)).toFixed(2));
 }
 
 function estimateInlineContentWidth(
@@ -368,6 +407,24 @@ function buildTargetProofs(
   });
 }
 
+function buildDistinctnessProofs(proofs: ComponentProofs, theme: ThemeContract): ResolvedDistinctnessProof[] {
+  return (proofs.distinctness ?? []).map((proof) => {
+    const colors = proof.tokens.map((token) => String(resolveThemeToken(theme, token)));
+    const report = analyzeDistinctness(colors, proof.minDeltaE, { cvdModel: 'machado' });
+    const pass = report.minDeltaE >= proof.minDeltaE &&
+      (!proof.cvd || Object.values(report.cvd).every((result) => result.minDeltaE >= proof.minDeltaE));
+
+    return {
+      tokens: proof.tokens,
+      colors,
+      requiredMinDeltaE: proof.minDeltaE,
+      cvd: proof.cvd,
+      report,
+      pass
+    };
+  });
+}
+
 function buildLayoutProofs(
   componentId: string,
   proofs: ComponentProofs,
@@ -384,9 +441,12 @@ function buildLayoutProofs(
       context
     );
     const heights = proof.heights ?? [requiredBlockPx];
-    const fitsWidth = !proof.noOverflow || proof.widths.some((width) => estimatedInlinePx <= width);
     const fitsHeight = requiredBlockPx <= Math.max(...heights);
-    const pass = fitsWidth && fitsHeight;
+    const widthChecks = proof.widths.map((width) => {
+      const fitsWidth = !proof.noOverflow || estimatedInlinePx <= width;
+      return { width, fitsWidth, fitsHeight, pass: fitsWidth && fitsHeight };
+    });
+    const pass = widthChecks.every((check) => check.pass);
 
     return {
       target: proof.target,
@@ -394,6 +454,11 @@ function buildLayoutProofs(
       heights,
       estimatedInlinePx,
       requiredBlockPx,
+      widthChecks,
+      assumptions: [
+        'Single-line content uses a 0.56em glyph-advance estimate and maximum length token values.',
+        'Font shaping, wrapping, and rendered container geometry are not measured.'
+      ],
       pass
     };
   });
@@ -457,9 +522,14 @@ function buildAnchoredSurfaceProofs(
     const surfaceWidthPx = resolveExprToPx(theme, proof.surfaceWidth, context);
     const surfaceHeightPx = resolveExprToPx(theme, proof.surfaceHeight, context);
     const offsetPx = resolveExprToPx(theme, proof.offset, context);
+    const availableWidthPx = proof.viewportWidth - proof.viewportPadding * 2;
+    const effectiveSurfaceWidthPx = proof.viewportConstrained
+      ? Math.max(0, Math.min(surfaceWidthPx, availableWidthPx))
+      : surfaceWidthPx;
     const pass =
       offsetPx >= 0 &&
-      surfaceWidthPx <= proof.viewportWidth - proof.viewportPadding * 2 &&
+      effectiveSurfaceWidthPx > 0 &&
+      effectiveSurfaceWidthPx <= availableWidthPx &&
       surfaceHeightPx <= proof.viewportHeight - proof.viewportPadding * 2;
 
     return {
@@ -467,9 +537,18 @@ function buildAnchoredSurfaceProofs(
       viewportWidth: proof.viewportWidth,
       viewportHeight: proof.viewportHeight,
       surfaceWidthPx,
+      preferredSurfaceWidthPx: surfaceWidthPx,
+      effectiveSurfaceWidthPx,
       surfaceHeightPx,
       offsetPx,
       viewportPadding: proof.viewportPadding,
+      assumptions: [
+        'Static length tokens use a 16px root and border-box surface dimensions.',
+        proof.viewportConstrained
+          ? 'Authored CSS caps inline size to viewport width minus twice the declared padding.'
+          : 'Inline size uses the preferred width without a responsive cap.',
+        'Containment estimates do not measure rendered placement or internal content.'
+      ],
       pass
     };
   });
@@ -504,6 +583,7 @@ function fixtureId(componentCase: CompiledComponentCase, proofCase: ProofCaseSpe
   return [componentCase.caseKey, stateKey, propsKey].filter(Boolean).join('__');
 }
 
+/** Resolves a token expression against a theme and optional slot variables. */
 export function resolveTokenExpr(
   theme: ThemeContract,
   expr: TokenExpr | number,
@@ -550,6 +630,7 @@ export function resolveTokenExpr(
   throw new Error(`Unsupported token expression: ${JSON.stringify(expr)}.`);
 }
 
+/** Evaluates declared mathematical proofs and reports unsupported categories explicitly. */
 export function buildComponentProofFixtures(
   spec: ComponentSpec,
   compiledRecipe: Omit<CompiledComponentRecipe, 'proofFixtures'>,
@@ -574,13 +655,21 @@ export function buildComponentProofFixtures(
       const slotVars = resolveSlotVars(componentCase, activeStates);
       const context: ResolveContext = { activeStates, slotVars };
       const contrast = buildContrastProofs(spec.proofs, theme, context);
+      const distinctness = buildDistinctnessProofs(spec.proofs, theme);
       const target = buildTargetProofs(spec.proofs, spec.id, theme, context);
       const layout = buildLayoutProofs(spec.id, spec.proofs, proofCase, componentCase, theme, context);
       const helperText = buildHelperTextProofs(spec.proofs.helperText, proofCase, theme, context);
       const optionRow = buildOptionRowProofs(spec.proofs.optionRow, theme, context);
       const anchoredSurface = buildAnchoredSurfaceProofs(spec.proofs.anchoredSurface, theme, context);
       const motion = buildMotionProofs(spec.proofs, theme, context);
-      const pass = [...contrast, ...target, ...layout, ...helperText, ...optionRow, ...anchoredSurface, ...motion].every(
+      const results = { contrast, distinctness, target, layout, helperText, optionRow, anchoredSurface, motion };
+      const declared = Object.entries(spec.proofs)
+        .filter(([, value]) => Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null)
+        .map(([kind]) => kind);
+      const evaluated = declared.filter((kind) => Object.hasOwn(results, kind));
+      const unsupported = declared.filter((kind) => !Object.hasOwn(results, kind));
+      const coverage = { declared, evaluated, unsupported, complete: unsupported.length === 0 };
+      const pass = coverage.complete && [...contrast, ...distinctness, ...target, ...layout, ...helperText, ...optionRow, ...anchoredSurface, ...motion].every(
         (entry) => entry.pass
       );
       const id = fixtureId(componentCase, proofCase);
@@ -597,13 +686,16 @@ export function buildComponentProofFixtures(
         sampleText: proofCase.sampleText,
         slots: slotVars,
         contrast,
+        distinctness,
         target,
         layout,
         helperText,
         optionRow,
         anchoredSurface,
         motion,
-        resolved: true,
+        evidence: 'mathematical',
+        coverage,
+        resolved: coverage.complete,
         pass
       });
     }
@@ -612,6 +704,28 @@ export function buildComponentProofFixtures(
   return [...fixtures.values()];
 }
 
+/** Adds recorded viewport widths without removing declared mathematical checks. */
+export function compileProjectComponentFixtures(
+  spec: ComponentSpec,
+  recipe: Omit<CompiledComponentRecipe, 'proofFixtures'>,
+  theme: ThemeContract,
+  viewports: readonly number[]
+): ComponentProofFixture[] {
+  if (viewports.some((width) => !Number.isFinite(width) || width <= 0)) {
+    throw new Error('Project proof viewports must be positive finite widths.');
+  }
+  const widths = (declared: number[]): number[] => [...new Set([...declared, ...viewports])];
+  const proofs: ComponentProofs = {
+    ...spec.proofs,
+    ...(spec.proofs.layout ? { layout: { ...spec.proofs.layout, widths: widths(spec.proofs.layout.widths) } } : {}),
+    ...(spec.proofs.helperText ? { helperText: spec.proofs.helperText.map((proof) => ({ ...proof, widths: widths(proof.widths) })) } : {}),
+    ...(spec.proofs.anchoredSurface ? { anchoredSurface: spec.proofs.anchoredSurface.flatMap((proof) =>
+      widths([proof.viewportWidth]).map((viewportWidth) => ({ ...proof, viewportWidth }))) } : {})
+  };
+  return buildComponentProofFixtures({ ...spec, proofs }, recipe, theme);
+}
+
+/** Compiles recipe variables for every axis combination and evaluates mathematical fixtures. */
 export function compileComponentRecipe(spec: ComponentSpec, theme: ThemeContract): CompiledComponentRecipe {
   validateComponentSpec(spec);
 
@@ -680,6 +794,7 @@ export function compileComponentRecipe(spec: ComponentSpec, theme: ThemeContract
   };
 }
 
+/** Adds a normalized state suffix to a CSS variable name. */
 export function serializeStateVarName(name: string, state: ComponentStateName): string {
   return `${name}-${canonicalStateName(state)}`;
 }

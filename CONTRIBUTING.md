@@ -1,59 +1,86 @@
 # Contributing
 
-Thanks for helping improve DesignKit.
+This guide describes setup and verification for DesignKit contributors.
 
-## Local Setup
+## Set up the repository
 
-- Use Node 22 or newer. CI runs Node 22, and `.node-version` pins that default.
-- Use pnpm 10.33.0. The root `package.json` declares this with `packageManager`.
-- If pnpm is not available, run `corepack enable` and `corepack prepare pnpm@10.33.0 --activate`.
-- Install dependencies with `pnpm install`.
-- Run the source CLI with `pnpm dk --help`.
+Use Node.js 22 and pnpm 10.33.0.
 
-## Verification
+1. To activate pnpm, run:
 
-Before opening a PR, run the checks that match the change:
+   ```bash
+   corepack enable
+   corepack prepare pnpm@10.33.0 --activate
+   ```
 
-- `pnpm lint`
-- `pnpm check:strict`
-- `pnpm test`
-- `pnpm test:coverage`
-- `pnpm build`
-- `pnpm build:packages`
-- `pnpm publint`
-- `pnpm pack:packages:dry`
-- `pnpm check:package-contents`
-- `pnpm example:verify`
+2. To install the pinned dependencies, run:
 
-For release-oriented changes, run:
+   ```bash
+   pnpm install --frozen-lockfile
+   ```
 
-```bash
-pnpm release:verify
-pnpm dk components verify --all
-pnpm audit --audit-level low
-pnpm licenses list --prod
-```
+3. To inspect CLI commands, run:
 
-The default agent-readiness gate is:
+   ```bash
+   pnpm dk --help
+   ```
+
+## Verify changes
+
+For code changes, run the lint, strict type, unit test, and coverage checks:
 
 ```bash
 pnpm preflight
 ```
 
-This command is intentionally narrower than `pnpm release:verify`: it blocks on lint, strict TypeScript/component checks, unit tests, and coverage.
+For documentation changes, build the site:
 
-## Project Boundaries
+```bash
+pnpm docs:build
+```
 
-- Keep pure design math in `src/lib/dk` deterministic and side-effect free.
-- Keep the website, Cloudflare deploy config, and DKCMS worker in the private `../dkweb` workspace.
-- Do not edit `dist/`, cache folders, generated coverage output, or generated package tarballs.
-- Do not commit access tokens, `.env` files, or `.npmrc` files.
-- If package contents change, update the package README or changelog and run the pack dry-run checks.
+For package or release changes, run the full verification gate:
 
-## Pull Requests
+```bash
+pnpm release:verify
+```
 
-Please include:
+The release gate includes package builds, metadata checks, dry packs, tarball
+checks, and both example apps. To inspect recipe results, run
+`pnpm dk components verify --all`. Some mathematical estimates fail the reviewed
+baseline; the gate checks those results separately from browser behavior.
 
-- What changed and why.
-- The commands you ran.
-- Any follow-up work that should not block the PR.
+## Repository boundaries
+
+- Keep design math deterministic and free of side effects.
+- Keep the website, Cloudflare deployment configuration, and DKCMS worker in
+  the private `../dkweb` workspace.
+- Regenerate build output and package tarballs through their scripts.
+- Exclude access tokens, `.env` files, `.npmrc` files, and private deployment files from
+  commits.
+- For package content changes, update the package documentation and verify
+  tarball contents.
+
+## Documentation and UI text
+
+Use the [Google developer documentation style guide](https://developers.google.com/style).
+Apply these project rules:
+
+- Use sentence case, active voice, and present tense.
+- State the goal or condition before an instruction.
+- Use bold for UI labels and code font for literal names and values.
+- Omit shell prompts from copyable command blocks.
+- Remove slogans, repeated instructions, and descriptions of obvious controls.
+- Retain input formats, error recovery, storage limits, and evidence scope.
+- Describe implemented behavior. Keep dated historical assessments separate
+  from usage instructions.
+
+## Submit a pull request
+
+Include these details in the description:
+
+- The problem and resulting behavior
+- Verification commands and results
+- Remaining work that affects review or release
+
+For sensitive reports, follow the [Security policy](SECURITY.md).

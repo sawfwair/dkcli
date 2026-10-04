@@ -145,7 +145,7 @@ describe('diagnoseFutureTopology with audit', () => {
     const diagnosisLowAudit = diagnoseFutureTopology(report, lowAudit);
 
     expect(diagnosisLowAudit.stable).toBe(false);
-    expect(diagnosisLowAudit.notes.some(n => n.includes('Audit score is low'))).toBe(true);
+    expect(diagnosisLowAudit.notes.some(n => n.includes('below the 60 threshold'))).toBe(true);
   });
 
   it('allows stability when audit score is 60 or above', () => {
@@ -167,7 +167,7 @@ describe('diagnoseFutureTopology with audit', () => {
     const diagnosis = diagnoseFutureTopology(report, goodAudit);
 
     // Stability depends on topology too, but audit alone shouldn't block it
-    expect(diagnosis.notes.every(n => !n.includes('Audit score is low'))).toBe(true);
+    expect(diagnosis.notes.every(n => !n.includes('below the 60 threshold'))).toBe(true);
   });
 });
 

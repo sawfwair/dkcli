@@ -13,7 +13,12 @@ function emitFamily(prefix: string, family: Record<string, string | number>): st
   });
 }
 
-function resolveAlias(value: string): string {
+function resolveAlias(value: string, aliases: ThemeContract['aliases']): string {
+  if (Object.hasOwn(aliases, value)) {
+    const propertyName = assertSafeCssCustomPropertyName(`--${value}`, `alias ${value}`);
+    return `var(${propertyName})`;
+  }
+
   const refMatch = value.match(/^([a-z-]+)\.([a-z0-9-]+)$/i);
   if (!refMatch) {
     return assertSafeCssValue(value, 'theme alias');
@@ -24,6 +29,7 @@ function resolveAlias(value: string): string {
   return `var(--${prefix}-${token})`;
 }
 
+/** Serializes theme families and aliases as CSS custom properties in a `:root` rule. */
 export function emitThemeCss(contract: ThemeContract): string {
   const lines = [
     `/* ${escapeCssComment(contract.name)} */`,
@@ -38,7 +44,7 @@ export function emitThemeCss(contract: ThemeContract): string {
     ...emitFamily('state', contract.families.state),
     ...Object.entries(contract.aliases).map(([name, value]) => {
       const propertyName = assertSafeCssCustomPropertyName(`--${name}`, `alias ${name}`);
-      return `  ${propertyName}: ${resolveAlias(value)};`;
+      return `  ${propertyName}: ${resolveAlias(value, contract.aliases)};`;
     }),
     '}'
   ];

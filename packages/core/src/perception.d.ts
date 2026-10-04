@@ -24,7 +24,9 @@ export declare function hexToLab(hex: string): LabColor;
 export declare function deltaE00Lab(left: LabColor, right: LabColor): number;
 export declare function deltaE00(leftHex: string, rightHex: string): number;
 export declare function deltaEColorSpace(leftHex: string, rightHex: string, space?: ColorSpace): number;
+/** Simulates color vision deficiency with the selected matrix model and severity. */
 export declare function simulateCvd(hex: string, type: CvdType, severity?: number, model?: CvdModel): string;
+/** Reports color differences and collisions for the base model and vision simulations. */
 export declare function analyzeDistinctness(colors: string[], threshold?: number, options?: {
     space?: ColorSpace;
     gamut?: Gamut;

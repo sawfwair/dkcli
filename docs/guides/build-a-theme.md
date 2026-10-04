@@ -1,24 +1,33 @@
-# Build A Theme
+# Build a theme
 
-A DesignKit theme starts with a seed color, but it should not end with one color ramp pasted into CSS.
+For theme authors, this guide generates palette and scale inputs, checks contrast, and applies semantic token names.
 
-## Generate Palette And Scale
+## Generate palette and scale inputs
+
+To save the palette and fluid scale as JSON files, run:
 
 ```bash
 dk palette "#D96F32" --harmony split-complementary --json > palette.json
-dk scale --fluid --ratio perfect-fourth --base-min 15 --base-max 19 --json > scale.json
+dk scale --fluid --ratio perfect-fourth --base-min 15 \
+    --base-max 19 --json > scale.json
 ```
 
-## Check Readability
+## Check readability
+
+To check the foreground and background pairs used by text and actions, run:
 
 ```bash
 dk contrast "#1e1711" "#fdf3ea" --size 18
 dk contrast "#ffffff" "#af6100" --size 16 --weight 700
 ```
 
-## Apply Tokens
+APCA checks provide contrast evidence. They do not establish WCAG compliance.
 
-Use semantic names in app code and keep raw tones in the token compiler or generated CSS.
+## Apply semantic tokens
+
+Use semantic names in app code. Keep raw tones in generated CSS or the token compiler.
+
+The following CSS maps app names to the generated documentation variables:
 
 ```css
 :root {
@@ -28,3 +37,8 @@ Use semantic names in app code and keep raw tones in the token compiler or gener
   --space-field: var(--space-xs);
 }
 ```
+
+For a component theme and CSS export, use the [token package API](/packages/tokens).
+
+To save editable theme inputs, qualify rendered components, and apply reversible
+token patches, use a [theme project](/guides/theme-projects).

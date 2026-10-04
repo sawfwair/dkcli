@@ -1,23 +1,36 @@
 # `@dkcli/components`
 
-Svelte 5 DesignKit components with proof-backed recipes and theme-driven styling.
+Use `@dkcli/components` to add themed components to a Svelte app and inspect
+their compiled recipes and mathematical proof fixtures.
 
-## What it contains
-
-- public DK Svelte components
-- component specs and recipe helpers
-- Svelte-first primitives and behavior helpers
+The package requires Svelte 5.20.0 or later in the Svelte 5 release line.
 
 ## Install
+
+Install the components and token packages:
 
 ```bash
 npm install @dkcli/components @dkcli/tokens
 ```
 
-## Use it for
+## Add a component
 
-- shipping themed DK components in a Svelte 5 app
-- inspecting compiled recipes and cases
-- building on top of the public component contracts rather than forking styles
+Import a component into a Svelte file:
 
-For the full docs and starter setup, see [dkcli.com/components](https://dkcli.com/components).
+```svelte
+<script lang="ts">
+  import { Button } from '@dkcli/components';
+</script>
+
+<Button>Save</Button>
+```
+
+Components use a default theme. To supply your theme, create a `ThemeContract`
+with `@dkcli/tokens` and pass it through the component's `theme` prop.
+
+Proof fixtures evaluate declared mathematical checks. Layout checks use
+conservative single-line estimates and maximum token values. Fixtures do not
+collect rendered evidence or establish accessibility compliance.
+
+For component APIs and starter setup, see the
+[DesignKit component documentation](https://dkcli.com/components).

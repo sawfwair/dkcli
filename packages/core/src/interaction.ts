@@ -1,4 +1,4 @@
-// Interaction — Human-performance models for targeting, choice, steering, and touch occlusion.
+// Estimates targeting, choice, steering, and touch occlusion costs.
 
 import type { TargetModality } from './types.ts';
 

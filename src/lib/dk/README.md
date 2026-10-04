@@ -1,35 +1,41 @@
 # `src/lib/dk`
 
-This directory holds the pure logic behind the DesignKit CLI commands. Functions here should stay deterministic and side-effect free, except where the return value is intentionally a generated CSS/string artifact.
+This directory contains DesignKit CLI orchestration and design calculations.
+Keep calculation functions deterministic. CLI modules handle file, terminal,
+and network operations.
 
-Private website and runtime integrations live outside this public package repo in the sibling `../dkweb` workspace.
+The sibling `../dkweb` workspace contains the website and browser runtime.
 
 ## Modules
 
-- `color.ts`: color conversion, gamut clipping, WCAG/APCA contrast helpers
-- `compose.ts`: composition scoring for balance, symmetry, alignment, rhythm, and density
-- `design.ts`: shared `DesignDocument` / advanced layout-composition schema
-- `layout.ts`: min / preferred / max layout solving for constraint-style stacks
-- `palette.ts`: tonal scales, neutral scales, semantic tokens, color harmony
-- `perception.ts`: CIEDE2000 color distance, color-vision deficiency simulation, palette distinctness
-- `scale.ts`: modular, fibonacci, and fluid spacing/type scales
-- `glass.ts`: glassmorphism CSS generation helpers
-- `interaction.ts`: Fitts, Hick-Hyman, and steering-law interaction cost helpers
-- `optical.ts`: optical correction presets and lookup API
-- `ease.ts`: spring physics and bezier-to-linear conversion
-- `jerk.ts`: minimum-jerk motion sampling and CSS export
-- `linebreak.ts`: balanced line breaking via dynamic programming
-- `typography.ts`: spacing and line-measure recommendations for readable text
-- `audit.ts`: CSS extraction, scoring, and formatter output
-- `saliency.ts`: deterministic importance scoring for `DesignDocument` inputs
-- `typeset.ts`: prepared paragraph shaping, width-aware relayout, and streaming line flow
-- `future.ts`: embedding-topology experiments for semantic clustering, slot planning, and layout priors
-- `future-text.ts`: experimental semantic paragraph setting layered on top of the prepared typesetter
-- `index.ts`: consumer-facing barrel export
+The modules include the following:
+
+- `cli.ts`: Command parsing, help, and output
+- `cms-cli.ts`: CMS authentication and publishing commands
+- `color.ts`: Color conversion, gamut clipping, contrast ratios, and APCA checks
+- `compose.ts`: Composition heuristics for balance, symmetry, alignment, rhythm, and density
+- `design.ts`: The `DesignDocument` schema
+- `layout.ts`: Stack constraints with minimum, preferred, and maximum sizes
+- `palette.ts`: Tonal scales, neutral scales, semantic tokens, and color harmony
+- `perception.ts`: Color differences and color vision deficiency simulation
+- `scale.ts`: Modular, Fibonacci, and fluid spacing and type scales
+- `glass.ts`: CSS generation for layered glass effects
+- `interaction.ts`: Fitts, Hick-Hyman, and steering law estimates
+- `optical.ts`: Optical correction presets
+- `ease.ts`: Spring physics and Bézier-to-linear conversion
+- `jerk.ts`: Minimum-jerk motion sampling and CSS export
+- `linebreak.ts`: Dynamic programming for balanced line breaks
+- `typography.ts`: Text spacing and line length recommendations
+- `audit.ts`: Source CSS extraction, heuristic scores, and output formatting
+- `saliency.ts`: Importance estimates for `DesignDocument` inputs
+- `typeset.ts`: Paragraph width estimates, line wrapping, and streaming line flow
+- `future.ts`: Content clustering and layout estimates from embeddings
+- `future-text.ts`: Semantic paragraph layout experiments
+- `index.ts`: Public exports
 
 ## Rules
 
-- No DOM access or network access here.
+- Keep DOM and network operations outside calculation modules.
 - Keep public functions typed explicitly.
 - Add or update a matching `*.test.ts` file when behavior changes.
-- If a module grows materially beyond its current responsibility, split it instead of turning it into a kitchen-sink utility.
+- Split modules when they gain responsibilities outside their scope.

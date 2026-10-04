@@ -52,4 +52,5 @@ export type HarmonyResult = {
     colors: HarmonyColor[];
 };
 export declare function generateHarmony(hex: string, type: HarmonyType, gamut?: Gamut): HarmonyResult;
+/** Generates a palette and optionally optimizes its seed against weighted color heuristics. */
 export declare function optimizePalette(hex: string, options?: PaletteOptimizeOptions): OptimizedPaletteResult;

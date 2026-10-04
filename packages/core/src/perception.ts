@@ -136,6 +136,7 @@ export function deltaEColorSpace(
   return round(left.deltaE2000(right));
 }
 
+/** Simulates color vision deficiency with the selected matrix model and severity. */
 export function simulateCvd(
   hex: string,
   type: CvdType,
@@ -192,6 +193,7 @@ function pairwiseDistances(
   };
 }
 
+/** Reports color differences and collisions for the base model and vision simulations. */
 export function analyzeDistinctness(
   colors: string[],
   threshold: number = 12,

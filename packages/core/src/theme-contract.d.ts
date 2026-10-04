@@ -1,6 +1,7 @@
 import type { ThemeSeed } from './component-spec.ts';
 export type ThemeTokenValue = number | string;
 export type ThemeFamily = Record<string, ThemeTokenValue>;
+/** Contains DesignKit token families and aliases used by recipe compilation. */
 export type ThemeContract = {
     name: string;
     seed: ThemeSeed;

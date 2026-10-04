@@ -24,7 +24,7 @@ describe('RangeDatePicker', () => {
       }
     });
 
-    await fireEvent.click(screen.getByRole('button', { name: /select a date range/i }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Delivery window' }));
     await fireEvent.click(screen.getByRole('button', { name: /Apr 9, 2026/i }));
     await fireEvent.click(screen.getByRole('button', { name: /Apr 12, 2026/i }));
 
@@ -48,7 +48,7 @@ describe('RangeDatePicker', () => {
       }
     });
 
-    await fireEvent.click(screen.getByRole('button', { name: /select a date range/i }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Freeze window' }));
     const dialog = screen.getByRole('dialog', { name: /choose date range/i });
 
     expect((within(dialog).getByRole('button', { name: /Apr 9, 2026/i }) as HTMLButtonElement).disabled).toBe(true);
@@ -83,7 +83,7 @@ describe('RangeDatePicker', () => {
       }
     });
 
-    await fireEvent.click(screen.getByRole('button', { name: /select a date range/i }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Travel window' }));
     await fireEvent.click(screen.getByRole('button', { name: /Apr 20, 2026/i }));
     expect(screen.getByRole('dialog', { name: /choose date range/i })).toBeTruthy();
     await fireEvent.click(screen.getByRole('button', { name: /Apr 17, 2026/i }));
@@ -92,7 +92,7 @@ describe('RangeDatePicker', () => {
       value: { start: '2026-04-17', end: '2026-04-20' }
     });
     expect(screen.queryByRole('dialog', { name: /choose date range/i })).toBeNull();
-    expect(screen.getByRole('button', { name: /Apr 17, 2026 – Apr 20, 2026/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Travel window' }).textContent).toContain('Apr 17, 2026 – Apr 20, 2026');
   });
 
   it('closes on outside click and restores focus to the trigger', async () => {
@@ -103,7 +103,7 @@ describe('RangeDatePicker', () => {
       }
     });
 
-    const trigger = screen.getByRole('button', { name: /Apr 15, 2026 – Apr 18, 2026/i });
+    const trigger = screen.getByRole('button', { name: 'Launch window' });
     await fireEvent.click(trigger);
     expect(screen.getByRole('dialog', { name: /choose date range/i })).toBeTruthy();
 

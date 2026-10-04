@@ -48,12 +48,14 @@
     background: var(--dk-badge-bg);
     border: var(--dk-badge-border-width) solid var(--dk-badge-border);
     border-radius: var(--dk-badge-radius);
+    box-sizing: border-box;
     color: var(--dk-badge-fg);
     display: inline-flex;
     gap: var(--dk-badge-gap);
-    min-block-size: var(--dk-badge-block-size);
+    min-block-size: calc(var(--dk-badge-block-size) + 2 * var(--dk-badge-border-width));
+    max-inline-size: 100%;
     padding: 0 var(--dk-badge-inline-padding);
-    white-space: nowrap;
+    white-space: normal;
   }
 
   .badge-leading {
@@ -69,5 +71,7 @@
     font-size: var(--dk-badge-label-size);
     font-weight: var(--dk-badge-label-weight);
     line-height: 1;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
   }
 </style>

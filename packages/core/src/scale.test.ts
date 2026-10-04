@@ -9,6 +9,13 @@ import {
 } from './scale.ts';
 
 describe('@dkcli/core scale', () => {
+  it('keeps deep downward fibonacci steps at the minimum instead of jumping to the maximum', () => {
+    const result = generateFibonacciScale({ base: 16, down: 6, steps: 2, unit: 'px' });
+
+    expect(result.scale[0]).toMatchObject({ step: -6, px: 2, value: '2px' });
+    expect(result.scale.map((step) => step.px)).toEqual([2, 2, 2, 4, 6, 10, 16, 26, 42]);
+  });
+
   it('resolves named and custom ratios', () => {
     expect(resolveRatio('golden')).toEqual({ name: 'golden', value: (1 + Math.sqrt(5)) / 2 });
     expect(resolveRatio('1.5')).toEqual({ name: 'custom', value: 1.5 });
@@ -36,6 +43,34 @@ describe('@dkcli/core scale', () => {
     expect(result.scale).toHaveLength(4);
     expect(result.scale[0].token).toBe('--space-n1');
     expect(result.scale.at(-1)?.token).toBe('--space-2');
+  });
+
+  it.each([
+    { name: 'equal endpoints', vwMin: 320, vwMax: 320 },
+    { name: 'reversed endpoints', vwMin: 480, vwMax: 320 },
+    { name: 'negative minimum', vwMin: -1, vwMax: 1440 },
+    { name: 'NaN minimum', vwMin: Number.NaN, vwMax: 1440 },
+    { name: 'NaN maximum', vwMin: 320, vwMax: Number.NaN },
+    { name: 'infinite minimum', vwMin: Number.POSITIVE_INFINITY, vwMax: 1440 },
+    { name: 'infinite maximum', vwMin: 320, vwMax: Number.POSITIVE_INFINITY },
+    { name: 'negative infinite minimum', vwMin: Number.NEGATIVE_INFINITY, vwMax: 1440 },
+    { name: 'negative infinite maximum', vwMin: 320, vwMax: Number.NEGATIVE_INFINITY }
+  ])('rejects invalid fluid viewport widths: $name', ({ vwMin, vwMax }) => {
+    expect(() => generateFluidScale({ vwMin, vwMax })).toThrow();
+  });
+
+  it('accepts a zero minimum viewport and emits finite fluid CSS', () => {
+    const result = generateFluidScale({ vwMin: 0, vwMax: 1440 });
+
+    expect(result.meta.vwMin).toBe(0);
+    expect(result.meta.vwMax).toBe(1440);
+    expect(result.scale.length).toBeGreaterThan(0);
+    for (const step of result.scale) {
+      expect(step.clamp).toMatch(/^clamp\(/);
+      expect(step.clamp).not.toMatch(/NaN|Infinity/);
+      expect(Number.isFinite(step.pxMin)).toBe(true);
+      expect(Number.isFinite(step.pxMax)).toBe(true);
+    }
   });
 
   it('generates fibonacci and fluid variants', () => {

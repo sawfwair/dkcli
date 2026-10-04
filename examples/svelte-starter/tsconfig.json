@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "allowImportingTsExtensions": true,
+    "noEmit": true,
     "checkJs": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",

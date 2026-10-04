@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { createEventDispatcher, tick } from 'svelte';
+  import { createEventDispatcher, tick, untrack } from 'svelte';
+  import { run } from 'svelte/legacy';
   import type { ThemeContract } from '@dkcli/core';
 
   import {
@@ -17,73 +18,92 @@
   } from './inline-edit.recipe.js';
   import type { InlineEditSize } from './inline-edit.spec.js';
 
+  const uid = $props.id();
+
   const dispatch = createEventDispatcher<{
     change: { value: string };
     commit: { value: string };
     cancel: { value: string };
   }>();
 
-  let nextId = 0;
+  interface Props {
+    value?: string;
+    label?: string;
+    description?: string;
+    placeholder?: string;
+    disabled?: boolean;
+    multiline?: boolean;
+    size?: InlineEditSize;
+    theme?: ThemeContract;
+    onChange?: (detail: { value: string }) => void;
+    onCommit?: (detail: { value: string }) => void;
+    onCancel?: (detail: { value: string }) => void;
+  }
 
-  export let value = '';
-  export let label: string | undefined = undefined;
-  export let description: string | undefined = undefined;
-  export let placeholder = 'Enter value';
-  export let disabled = false;
-  export let multiline = false;
-  export let size: InlineEditSize = 'md';
-  export let theme: ThemeContract = DEFAULT_INLINE_EDIT_THEME;
-  export let onChange: ((detail: { value: string }) => void) | undefined = undefined;
-  export let onCommit: ((detail: { value: string }) => void) | undefined = undefined;
-  export let onCancel: ((detail: { value: string }) => void) | undefined = undefined;
+  let {
+    value = $bindable(''),
+    label = $bindable(undefined),
+    description = $bindable(undefined),
+    placeholder = $bindable('Enter value'),
+    disabled = $bindable(false),
+    multiline = $bindable(false),
+    size = $bindable('md'),
+    theme = $bindable(DEFAULT_INLINE_EDIT_THEME),
+    onChange = $bindable(undefined),
+    onCommit = $bindable(undefined),
+    onCancel = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createInlineEditRegistration(DEFAULT_INLINE_EDIT_THEME);
-  const localId = `dk-inline-edit-${++nextId}`;
+  const localId = `dk-inline-edit-${uid}`;
 
-  let registration = defaultRegistration;
-  let fieldId = localId;
-  let compiledCase = getInlineEditRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeInlineEditSlotStyles(compiledCase);
-  let state = createInlineEditState(value);
-  let previousValue = value;
-  let inputEl: HTMLInputElement | HTMLTextAreaElement | null = null;
+  const fieldId = localId;
 
-  $: registration =
+  let editState = $state(untrack(() => createInlineEditState(value)));
+  let previousValue = $state(untrack(() => value));
+  let displayEl: HTMLButtonElement | null = $state(null);
+  let inputEl: HTMLInputElement | HTMLTextAreaElement | null = $state(null);
+
+  let registration = $derived(
     theme.name === DEFAULT_INLINE_EDIT_THEME.name
       ? defaultRegistration
-      : createInlineEditRegistration(theme);
-  $: compiledCase = getInlineEditRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeInlineEditSlotStyles(compiledCase);
-  $: if (value !== previousValue) {
-    state = createInlineEditState(value);
-    previousValue = value;
-  }
+      : createInlineEditRegistration(theme)
+  );
+  let compiledCase = $derived(getInlineEditRecipeCase(registration.recipe, { size }));
+  let slotStyles = $derived(serializeInlineEditSlotStyles(compiledCase));
+  run(() => {
+    if (value !== previousValue) {
+      editState = createInlineEditState(value);
+      previousValue = value;
+    }
+  });
 
   function startEditing(): void {
     if (disabled) {
       return;
     }
-    state = beginInlineEdit(state);
+    editState = beginInlineEdit(editState);
     void tick().then(() => inputEl?.focus());
   }
 
   function updateDraft(nextValue: string): void {
-    state = { ...state, draft: nextValue };
+    editState = { ...editState, draft: nextValue };
     onChange?.({ value: nextValue });
     dispatch('change', { value: nextValue });
   }
 
   function commitValue(): void {
-    state = commitInlineEdit(state, state.draft);
-    value = state.committed;
-    onCommit?.({ value: state.committed });
-    dispatch('commit', { value: state.committed });
+    editState = commitInlineEdit(editState, editState.draft);
+    value = editState.committed;
+    onCommit?.({ value: editState.committed });
+    dispatch('commit', { value: editState.committed });
   }
 
   function cancelValue(): void {
-    state = cancelInlineEdit(state);
-    onCancel?.({ value: state.committed });
-    dispatch('cancel', { value: state.committed });
+    editState = cancelInlineEdit(editState);
+    onCancel?.({ value: editState.committed });
+    dispatch('cancel', { value: editState.committed });
+    void tick().then(() => displayEl?.focus());
   }
 
   function handleInputKeydown(event: KeyboardEvent): void {
@@ -95,6 +115,7 @@
 
     if (!multiline && event.key === 'Enter') {
       commitValue();
+      void tick().then(() => displayEl?.focus());
       event.preventDefault();
     }
   }
@@ -108,13 +129,14 @@
   labelStyle={slotStyles.label}
   descriptionStyle={slotStyles.description}
 >
-  {#if state.editing}
+  {#if editState.editing}
     {#if multiline}
       <textarea
         bind:this={inputEl}
+        id={fieldId}
         class="inline-field inline-field--textarea"
         style={slotStyles.field}
-        bind:value={state.draft}
+        bind:value={editState.draft}
         placeholder={placeholder}
         disabled={disabled}
         rows={4}
@@ -128,9 +150,10 @@
     {:else}
       <input
         bind:this={inputEl}
+        id={fieldId}
         class="inline-field"
         style={slotStyles.field}
-        bind:value={state.draft}
+        bind:value={editState.draft}
         placeholder={placeholder}
         disabled={disabled}
         oninput={(event) => updateDraft((event.currentTarget as HTMLInputElement).value)}
@@ -141,6 +164,8 @@
   {:else}
     <button
       type="button"
+      id={fieldId}
+      bind:this={displayEl}
       class="inline-display"
       style={slotStyles.display}
       disabled={disabled}
@@ -152,7 +177,7 @@
         }
       }}
     >
-      {state.committed || placeholder}
+      {editState.committed || placeholder}
     </button>
   {/if}
 </FieldFrame>

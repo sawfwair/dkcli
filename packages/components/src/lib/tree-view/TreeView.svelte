@@ -82,7 +82,7 @@
   }
 
   function toggleBranch(item: TreeViewItem): void {
-    if (!item.children?.length) {
+    if (item.disabled || !item.children?.length) {
       return;
     }
     emitExpanded(toggleExpandedIds(internalExpandedIds, item.id));
@@ -95,6 +95,7 @@
   }
 
   function handleKeydown(event: KeyboardEvent, entry: FlatHierarchyItem<HierarchyItem>, index: number): void {
+    if (entry.item.disabled) return;
     if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'Home' || event.key === 'End') {
       const nextIndex = nextVisibleHierarchyIndex(visibleItems, index, event.key);
       focusVisible(nextIndex);
@@ -140,6 +141,7 @@
       aria-level={entry.depth + 1}
       aria-expanded={entry.hasChildren ? (entry.expanded ? 'true' : 'false') : undefined}
       aria-selected={internalValue === entry.id ? 'true' : 'false'}
+      aria-disabled={entry.item.disabled ? 'true' : undefined}
       data-depth={entry.depth}
     >
       <div class="tree-item-shell">
@@ -148,6 +150,7 @@
             class="tree-branch"
             style={slotStyles.branch}
             type="button"
+            disabled={entry.item.disabled}
             aria-label={entry.expanded ? `Collapse ${entry.item.label}` : `Expand ${entry.item.label}`}
             onclick={(event) => {
               event.stopPropagation();
@@ -206,6 +209,7 @@
     display: flex;
     gap: 0.5rem;
     min-block-size: var(--dk-tree-item-min-height);
+    min-inline-size: 0;
     padding-inline: var(--dk-tree-item-inline-padding);
     text-align: left;
     width: 100%;
@@ -221,17 +225,21 @@
     border: 0;
     color: inherit;
     font-size: var(--dk-tree-branch-size);
+    min-block-size: 44px;
+    min-inline-size: 44px;
     padding: 0;
   }
 
   .tree-copy {
     display: grid;
     gap: 0.1rem;
+    min-width: 0;
   }
 
   .tree-label {
     font-size: var(--dk-tree-label-size);
     font-weight: var(--dk-tree-label-weight);
+    overflow-wrap: anywhere;
   }
 
   .tree-description {

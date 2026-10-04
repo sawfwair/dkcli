@@ -60,6 +60,9 @@
 <style>
   .dk-field-frame {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     gap: var(--dk-field-stack-gap, 0.45rem);
   }
 

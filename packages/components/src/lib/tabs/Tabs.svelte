@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   export type TabItem = {
     value: string;
     label: string;
@@ -7,7 +7,8 @@
 </script>
 
 <script lang="ts">
-  import { createEventDispatcher, tick } from 'svelte';
+  import { run } from 'svelte/legacy';
+  import { createEventDispatcher, tick, untrack } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import { moveRovingIndex } from '../internal/behavior/index.js';
@@ -19,33 +20,49 @@
   } from './tabs.recipe.js';
   import type { TabsOrientation, TabsSize } from './tabs.spec.js';
 
-  export let value: string | undefined = undefined;
-  export let items: TabItem[] = [];
-  export let orientation: TabsOrientation = 'horizontal';
-  export let activation: 'automatic' | 'manual' = 'automatic';
-  export let size: TabsSize = 'md';
-  export let panels: Record<string, string> = {};
-  export let theme: ThemeContract = DEFAULT_TABS_THEME;
-  export let onChange: ((detail: { value: string }) => void) | undefined = undefined;
+  interface Props {
+    value?: string | undefined;
+    items?: TabItem[];
+    orientation?: TabsOrientation;
+    activation?: 'automatic' | 'manual';
+    size?: TabsSize;
+    panels?: Record<string, string>;
+    theme?: ThemeContract;
+    onChange?: ((detail: { value: string }) => void) | undefined;
+  }
+
+  let {
+    value = $bindable(undefined),
+    items = $bindable([]),
+    orientation = $bindable('horizontal'),
+    activation = $bindable('automatic'),
+    size = $bindable('md'),
+    panels = $bindable({}),
+    theme = $bindable(DEFAULT_TABS_THEME),
+    onChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createTabsRegistration(DEFAULT_TABS_THEME);
+  const uid = $props.id();
+
   const dispatch = createEventDispatcher<{ change: { value: string } }>();
 
-  let registration = defaultRegistration;
-  let currentValue = value;
-  let focusedIndex = 0;
-  let triggerRefs: HTMLButtonElement[] = [];
-  let compiledCase = getTabsRecipeCase(defaultRegistration.recipe, { size, orientation });
-  let slotStyles = serializeTabsSlotStyles(compiledCase);
+  let currentValue = $state(untrack(() => value));
+  let focusedIndex = $state(0);
+  let triggerRefs: HTMLButtonElement[] = $state([]);
 
-  $: registration = theme.name === DEFAULT_TABS_THEME.name ? defaultRegistration : createTabsRegistration(theme);
-  $: currentValue = value ?? currentValue ?? items.find((item) => !item.disabled)?.value;
-  $: focusedIndex = Math.max(
-    0,
-    items.findIndex((item) => item.value === currentValue)
-  );
-  $: compiledCase = getTabsRecipeCase(registration.recipe, { size, orientation });
-  $: slotStyles = serializeTabsSlotStyles(compiledCase);
+  let registration = $derived(theme.name === DEFAULT_TABS_THEME.name ? defaultRegistration : createTabsRegistration(theme));
+  run(() => {
+    currentValue = value ?? currentValue ?? items.find((item) => !item.disabled)?.value;
+  });
+  run(() => {
+    focusedIndex = Math.max(
+      0,
+      items.findIndex((item) => item.value === currentValue)
+    );
+  });
+  let compiledCase = $derived(getTabsRecipeCase(registration.recipe, { size, orientation }));
+  let slotStyles = $derived(serializeTabsSlotStyles(compiledCase));
 
   async function focusTab(index: number): Promise<void> {
     await tick();
@@ -104,8 +121,8 @@
         role="tab"
         type="button"
         aria-selected={selected ? 'true' : 'false'}
-        aria-controls={`panel-${item.value}`}
-        id={`tab-${item.value}`}
+        aria-controls={`${uid}-panel-${item.value}`}
+        id={`${uid}-tab-${item.value}`}
         tabindex={selected ? 0 : -1}
         data-selected={selected}
         disabled={item.disabled}
@@ -123,13 +140,11 @@
         class="tabs-panel"
         style={slotStyles.panel}
         role="tabpanel"
-        id={`panel-${item.value}`}
-        aria-labelledby={`tab-${item.value}`}
+        id={`${uid}-panel-${item.value}`}
+        aria-labelledby={`${uid}-tab-${item.value}`}
       >
         {#if panels[item.value]}
           <p>{panels[item.value]}</p>
-        {:else}
-          <p>No panel content supplied.</p>
         {/if}
       </div>
     {/if}
@@ -140,6 +155,8 @@
   .dk-tabs {
     display: grid;
     gap: var(--dk-tabs-gap);
+    grid-template-columns: minmax(0, 1fr);
+    min-inline-size: 0;
   }
 
   .tabs-list {
@@ -169,6 +186,9 @@
     font-weight: var(--dk-tabs-trigger-font-weight, 600);
     justify-content: center;
     min-block-size: var(--dk-tabs-trigger-block-size);
+    max-inline-size: 100%;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     padding: 0 var(--dk-tabs-trigger-inline-padding);
     position: relative;
     transition:
@@ -208,6 +228,8 @@
     background: var(--dk-tabs-panel-bg);
     border-radius: var(--dk-tabs-panel-radius);
     color: var(--dk-tabs-panel-fg);
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     padding: var(--dk-tabs-panel-padding);
   }
 

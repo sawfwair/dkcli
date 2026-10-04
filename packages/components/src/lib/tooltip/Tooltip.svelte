@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { createEventDispatcher, tick } from 'svelte';
+  import { run } from 'svelte/legacy';
+  import { createEventDispatcher, tick, untrack } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import {
@@ -15,44 +16,40 @@
     serializeTooltipSlotStyles
   } from './tooltip.recipe.js';
 
-  let nextId = 0;
+  const uid = $props.id();
+
   const dispatch = createEventDispatcher<{ openchange: { open: boolean } }>();
 
-  export let content = '';
-  export let open = false;
-  export let placement: Placement = 'top';
-  export let delayMs = 300;
-  export let disabled = false;
-  export let theme: ThemeContract = DEFAULT_TOOLTIP_THEME;
-  export let onOpenChange: ((detail: { open: boolean }) => void) | undefined = undefined;
+  interface Props {
+    content?: string;
+    open?: boolean;
+    placement?: Placement;
+    delayMs?: number;
+    disabled?: boolean;
+    theme?: ThemeContract;
+    onOpenChange?: ((detail: { open: boolean }) => void) | undefined;
+  }
+
+  let {
+    content = $bindable(''),
+    open = $bindable(false),
+    placement = $bindable('top'),
+    delayMs = $bindable(300),
+    disabled = $bindable(false),
+    theme = $bindable(DEFAULT_TOOLTIP_THEME),
+    onOpenChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createTooltipRegistration(DEFAULT_TOOLTIP_THEME);
-  const tooltipId = `dk-tooltip-${++nextId}`;
+  const tooltipId = `dk-tooltip-${uid}`;
 
-  let registration = defaultRegistration;
-  let internalOpen = open;
-  let previousOpen = open;
-  let triggerEl: HTMLElement | null = null;
-  let surfaceEl: HTMLElement | null = null;
+  let internalOpen = $state(untrack(() => open));
+  let previousOpen = $state(untrack(() => open));
+  let triggerEl: HTMLElement | null = $state(null);
+  let surfaceEl: HTMLElement | null = $state(null);
   let openTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
-  let position = { left: 0, top: 0 };
-  let compiledCase = getTooltipRecipeCase(defaultRegistration.recipe);
-  let slotStyles = serializeTooltipSlotStyles(compiledCase);
-
-  $: registration =
-    theme.name === DEFAULT_TOOLTIP_THEME.name ? defaultRegistration : createTooltipRegistration(theme);
-  $: if (open !== previousOpen) {
-    internalOpen = open;
-    previousOpen = open;
-  }
-  $: compiledCase = getTooltipRecipeCase(registration.recipe);
-  $: slotStyles = serializeTooltipSlotStyles(compiledCase);
-  $: if (internalOpen) {
-    void syncPosition();
-  }
-  $: if (disabled && internalOpen) {
-    closeTooltip();
-  }
+  let viewportInlineSize = $state('100vw');
+  let position = $state({ left: 0, top: 0 });
 
   function clearOpenTimeout(): void {
     if (openTimeout) {
@@ -126,6 +123,11 @@
     if (!triggerEl || !surfaceEl || typeof window === 'undefined') {
       return;
     }
+    const rootZoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom);
+    const coordinateScale = Number.isFinite(rootZoom) && rootZoom > 0 ? rootZoom : 1;
+    viewportInlineSize = `${window.innerWidth / coordinateScale}px`;
+    await tick();
+    if (!internalOpen || !triggerEl || !surfaceEl) return;
     const anchor = triggerEl.getBoundingClientRect();
     const surface = surfaceEl.getBoundingClientRect();
     const next = computeAnchoredPosition({
@@ -134,7 +136,8 @@
       placement,
       offset: 8,
       viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight
+      viewportHeight: window.innerHeight,
+      coordinateScale
     });
     position = { left: next.left, top: next.top };
   }
@@ -158,6 +161,25 @@
     }
   }
 
+  let registration = $derived(theme.name === DEFAULT_TOOLTIP_THEME.name ? defaultRegistration : createTooltipRegistration(theme));
+  run(() => {
+    if (open !== previousOpen) {
+      internalOpen = open;
+      previousOpen = open;
+    }
+  });
+  let compiledCase = $derived(getTooltipRecipeCase(registration.recipe));
+  let slotStyles = $derived(serializeTooltipSlotStyles(compiledCase));
+  run(() => {
+    if (internalOpen) {
+      void syncPosition();
+    }
+  });
+  run(() => {
+    if (disabled && internalOpen) {
+      closeTooltip();
+    }
+  });
 </script>
 
 <svelte:window onclick={handleWindowEvent} onkeydown={handleWindowEvent} onfocusin={handleWindowEvent} />
@@ -174,7 +196,8 @@
   onfocusin={scheduleOpen}
   onfocusout={closeTooltip}
 >
-  <slot>Hover target</slot>
+  <!-- svelte-ignore slot_element_deprecated (Preserve the legacy slot API.) -->
+    <slot>Details</slot>
 </span>
 
 {#if internalOpen}
@@ -183,7 +206,7 @@
     use:portal
     class="tooltip-surface"
     id={tooltipId}
-    style={`${slotStyles.surface}; left:${position.left}px; top:${position.top}px;`}
+    style={`${slotStyles.surface}; --dk-viewport-inline-size:${viewportInlineSize}; left:${position.left}px; top:${position.top}px;`}
     role="tooltip"
   >
     <p class="tooltip-content" style={slotStyles.content}>{content}</p>
@@ -196,12 +219,14 @@
   }
 
   .tooltip-surface {
+    box-sizing: border-box;
+    max-inline-size: calc(var(--dk-viewport-inline-size, 100vw) - 2rem);
     background: var(--dk-tooltip-surface-bg);
     border: 1px solid var(--dk-tooltip-surface-border);
     border-radius: var(--dk-tooltip-surface-radius);
     box-shadow: var(--dk-tooltip-surface-shadow);
     color: var(--dk-tooltip-surface-fg);
-    inline-size: min(var(--dk-tooltip-surface-max-width), calc(100vw - 2rem));
+    inline-size: min(var(--dk-tooltip-surface-max-width), calc(var(--dk-viewport-inline-size, 100vw) - 2rem));
     padding: var(--dk-tooltip-surface-padding);
     pointer-events: none;
     position: fixed;

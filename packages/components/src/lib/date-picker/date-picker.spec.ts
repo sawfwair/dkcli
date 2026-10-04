@@ -214,7 +214,8 @@ export const datePickerSpec: ComponentSpec = createComponentSpec({
         surfaceWidth: slotVar('surface', '--dk-date-picker-surface-width'),
         surfaceHeight: literal('324px'),
         offset: slotVar('root', '--dk-date-picker-offset'),
-        viewportPadding: 16
+        viewportPadding: 16,
+        viewportConstrained: true
       }
     ],
     layout: {

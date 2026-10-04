@@ -27,10 +27,13 @@ export type {
   CompiledComponentRecipe,
   CompiledSlotRecipe,
   ComponentProofFixture,
+  ProofCoverage,
   ResolvedAnchoredSurfaceCheck,
   ResolvedContrastProof,
+  ResolvedDistinctnessProof,
   ResolvedHelperTextProof,
   ResolvedLayoutCheck,
+  ResolvedLayoutWidthCheck,
   ResolvedMotionProof,
   ResolvedOptionRowProof,
   ResolvedTargetProof
@@ -38,6 +41,7 @@ export type {
 export {
   buildComponentProofFixtures,
   compileComponentRecipe,
+  compileProjectComponentFixtures,
   componentCaseKey,
   resolveTokenExpr,
   serializeStateVarName
@@ -54,3 +58,17 @@ export * from './perception.ts';
 export * from './scale.ts';
 export type { ThemeContract, ThemeFamily, ThemeTokenValue } from './theme-contract.ts';
 export * from './types.ts';
+export * from './ease.ts';
+export * from './fit.ts';
+export * from './future-text.ts';
+export * from './future.ts';
+export * from './glass.ts';
+export * from './jerk.ts';
+export * from './linebreak.ts';
+export * from './optical.ts';
+export * from './typography.ts';
+export * from './typeset.ts';
+export * from './perfect.ts';
+export * from './loop-presets.ts';
+export * from './project.ts';
+export * from './qualification.ts';

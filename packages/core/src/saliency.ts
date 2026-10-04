@@ -87,6 +87,7 @@ function relationHints(elements: DesignElement[], current: DesignElement): strin
   return [...hints].slice(0, 4);
 }
 
+/** Estimates element importance from document geometry and metadata. */
 export function analyzeImportance(
   document: DesignDocument,
   mode: ImportanceMode = 'heuristic'

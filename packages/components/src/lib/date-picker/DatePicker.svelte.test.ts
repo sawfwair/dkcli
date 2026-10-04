@@ -13,7 +13,7 @@ describe('DatePicker', () => {
       }
     });
 
-    const trigger = screen.getByRole('button', { name: /Apr 15, 2026/i });
+    const trigger = screen.getByRole('button', { name: 'Launch date' });
     await fireEvent.click(trigger);
     expect(screen.getByRole('dialog', { name: /Choose date/i })).toBeTruthy();
 
@@ -32,7 +32,7 @@ describe('DatePicker', () => {
       }
     });
 
-    await fireEvent.click(screen.getByRole('button', { name: /Apr 15, 2026/i }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Launch date' }));
     const dialog = screen.getByRole('dialog', { name: /Choose date/i });
     const currentDay = within(dialog).getByRole('button', { name: /Apr 15, 2026/i });
 

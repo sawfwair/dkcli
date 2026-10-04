@@ -33,6 +33,6 @@ describe('DataChart', () => {
       }
     });
 
-    expect(screen.getByText('No chart data yet')).toBeTruthy();
+    expect(screen.getByText('No data')).toBeTruthy();
   });
 });

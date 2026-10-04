@@ -21,7 +21,10 @@
   } from './menu.recipe.js';
   import type { MenuSize } from './menu.spec.js';
 
-  const dispatch = createEventDispatcher<{ openchange: { open: boolean } }>();
+  const dispatch = createEventDispatcher<{
+    openchange: { open: boolean };
+    action: { value: string };
+  }>();
 
   export let open = false;
   export let items: MenuItem[] = [];
@@ -29,6 +32,7 @@
   export let size: MenuSize = 'md';
   export let theme: ThemeContract = DEFAULT_MENU_THEME;
   export let onOpenChange: ((detail: { open: boolean }) => void) | undefined = undefined;
+  export let onAction: ((detail: { value: string }) => void) | undefined = undefined;
 
   const defaultRegistration = createMenuRegistration(DEFAULT_MENU_THEME);
 
@@ -40,6 +44,7 @@
   let currentValue: string | undefined = undefined;
   let highlightIndex = 0;
   let itemRefs: HTMLButtonElement[] = [];
+  let viewportInlineSize = '100vw';
   let position = { left: 0, top: 0, placement };
   let compiledCase = getMenuRecipeCase(defaultRegistration.recipe, { size });
   let slotStyles = serializeMenuSlotStyles(compiledCase);
@@ -61,6 +66,11 @@
     if (!triggerEl || !surfaceEl || typeof window === 'undefined') {
       return;
     }
+    const rootZoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom);
+    const coordinateScale = Number.isFinite(rootZoom) && rootZoom > 0 ? rootZoom : 1;
+    viewportInlineSize = `${window.innerWidth / coordinateScale}px`;
+    await tick();
+    if (!internalOpen || !triggerEl || !surfaceEl) return;
     const anchor = triggerEl.getBoundingClientRect();
     const surface = surfaceEl.getBoundingClientRect();
     position = computeAnchoredPosition({
@@ -69,12 +79,13 @@
       placement,
       offset: 12,
       viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight
+      viewportHeight: window.innerHeight,
+      coordinateScale
     });
     itemRefs[highlightIndex]?.focus();
   }
 
-  function setOpen(nextOpen: boolean): void {
+  function setOpen(nextOpen: boolean, restoreFocus = true): void {
     if (internalOpen === nextOpen) {
       return;
     }
@@ -83,15 +94,23 @@
     previousOpen = nextOpen;
     onOpenChange?.({ open: nextOpen });
     dispatch('openchange', { open: nextOpen });
-    if (!nextOpen) {
+    if (!nextOpen && restoreFocus) {
       void tick().then(() => {
         triggerEl?.focus();
       });
     }
   }
 
-  function closeMenu(): void {
-    setOpen(false);
+  function closeMenu(restoreFocus = true): void {
+    setOpen(false, restoreFocus);
+  }
+
+  function chooseItem(item: MenuItem): void {
+    if (item.disabled) return;
+    currentValue = item.value;
+    onAction?.({ value: item.value });
+    dispatch('action', { value: item.value });
+    closeMenu();
   }
 
   function handleWindowClick(event: MouseEvent): void {
@@ -99,7 +118,13 @@
       return;
     }
     if (isEventOutside(surfaceEl, event.target) && isEventOutside(triggerEl, event.target)) {
-      closeMenu();
+      closeMenu(Boolean(surfaceEl?.contains(document.activeElement)));
+    }
+  }
+
+  function handleWindowFocus(event: FocusEvent): void {
+    if (internalOpen && isEventOutside(surfaceEl, event.target) && isEventOutside(triggerEl, event.target)) {
+      closeMenu(false);
     }
   }
 
@@ -113,6 +138,8 @@
       return;
     }
 
+    if (isEventOutside(surfaceEl, event.target) && isEventOutside(triggerEl, event.target)) return;
+
     const nextIndex = nextListIndex(items, highlightIndex, event.key, { orientation: 'vertical' });
     if (nextIndex !== highlightIndex) {
       highlightIndex = nextIndex;
@@ -122,14 +149,13 @@
     }
 
     if ((event.key === 'Enter' || event.key === ' ') && items[highlightIndex] && !items[highlightIndex].disabled) {
-      currentValue = items[highlightIndex].value;
-      closeMenu();
+      chooseItem(items[highlightIndex]);
       event.preventDefault();
     }
   }
 </script>
 
-<svelte:window onclick={handleWindowClick} onkeydown={handleKeydown} />
+<svelte:window onclick={handleWindowClick} onfocusin={handleWindowFocus} onkeydown={handleKeydown} />
 
 <button
   bind:this={triggerEl}
@@ -148,7 +174,7 @@
   <div
     bind:this={surfaceEl}
     class="menu-surface"
-    style={`${slotStyles.surface}; left:${position.left}px; top:${position.top}px;`}
+    style={`${slotStyles.surface}; --dk-viewport-inline-size:${viewportInlineSize}; left:${position.left}px; top:${position.top}px;`}
     role="menu"
   >
     {#each items as item, index (item.value)}
@@ -162,10 +188,8 @@
         data-highlighted={highlightIndex === index}
         data-destructive={item.destructive}
         disabled={item.disabled}
-        onclick={() => {
-          currentValue = item.value;
-          closeMenu();
-        }}
+        onfocus={() => { highlightIndex = index; }}
+        onclick={() => chooseItem(item)}
       >
         <span class="menu-label">{item.label}</span>
         {#if item.shortcut}
@@ -180,10 +204,14 @@
   .menu-trigger {
     background: transparent;
     border: 0;
-    padding: 0;
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    padding: 0 .75rem;
   }
 
   .menu-surface {
+    box-sizing: border-box;
+    max-inline-size: calc(var(--dk-viewport-inline-size, 100vw) - 2rem);
     background: var(--dk-menu-surface-bg);
     border: 1px solid var(--dk-menu-surface-border);
     border-radius: var(--dk-menu-surface-radius);

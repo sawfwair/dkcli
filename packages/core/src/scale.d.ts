@@ -56,6 +56,7 @@ export type FluidScaleMeta = ScaleMeta & {
     vwMin: number;
     vwMax: number;
 };
+/** Generates CSS clamp() values between finite viewport widths with 0 <= vwMin < vwMax. */
 export declare function generateFluidScale(options?: {
     baseMin?: number;
     baseMax?: number;

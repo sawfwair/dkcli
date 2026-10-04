@@ -1,77 +1,111 @@
 <script lang="ts">
-  import { Button, Card, DatePicker, Dialog, Stepper, Table, TextField } from '@dkcli/components';
-  import { apcaContrast } from '@dkcli/core';
-  import { createTheme } from '@dkcli/tokens';
+  import { onMount } from 'svelte';
+  import { Button, Card, Combobox, Menu, Select, TextField } from '@dkcli/components';
+  import { createTheme, emitThemeCss } from '@dkcli/tokens';
 
   const theme = createTheme({
     name: 'Starter',
-    seed: {
-      color: '#295dff',
-      ratio: 'perfect-fourth',
-      mode: 'light',
-      density: 'comfortable',
-      motion: 'snappy'
-    }
+    seed: { color: '#295dff', ratio: 'perfect-fourth', mode: 'light', density: 'comfortable', motion: 'snappy' }
+  });
+  const environments = [
+    { value: 'staging', label: 'Staging' },
+    { value: 'production', label: 'Production' }
+  ];
+  const reviewers = [
+    { value: 'nina', label: 'Nina' },
+    { value: 'rafi', label: 'Rafi' },
+    { value: 'mara', label: 'Mara', disabled: true }
+  ];
+  type ReleaseDraft = { project: string; owner: string; environment: string; reviewer: string };
+  let project = $state('');
+  let owner = $state('');
+  let environment = $state<string | undefined>('staging');
+  let reviewer = $state<string | undefined>(undefined);
+  let preview = $state<ReleaseDraft | null>(null);
+  let message = $state('');
+  const canSave = $derived(Boolean(project.trim() && owner.trim() && environment && reviewer));
+  const actions = $derived([
+    { value: 'preview', label: 'Preview release', disabled: !canSave },
+    { value: 'clear', label: 'Clear form' }
+  ]);
+
+  onMount(() => {
+    const stylesheet = document.createElement('style');
+    stylesheet.dataset.designkitTheme = 'starter';
+    stylesheet.textContent = emitThemeCss(theme);
+    document.head.append(stylesheet);
+    return () => stylesheet.remove();
   });
 
-  const primaryColor = theme.families.color.primary;
-  const onPrimaryColor = theme.families.color['on-primary'];
-  const contrast = apcaContrast(onPrimaryColor, primaryColor);
+  function snapshot(): ReleaseDraft {
+    return {
+      project: project.trim(),
+      owner: owner.trim(),
+      environment: environments.find((item) => item.value === environment)?.label ?? '',
+      reviewer: reviewers.find((item) => item.value === reviewer)?.label ?? ''
+    };
+  }
 
-  const columns = [
-    { key: 'release', header: 'Release', sortable: true },
-    { key: 'owner', header: 'Owner' },
-    { key: 'shipDate', header: 'Ship date', align: 'end' as const }
-  ];
+  function saveRelease(): void {
+    if (!canSave) return;
+    preview = snapshot();
+    message = `Saved ${preview.project}.`;
+  }
 
-  const rows = [
-    { id: 'apollo', release: 'Apollo', owner: 'Nina', shipDate: 'Apr 16' },
-    { id: 'zephyr', release: 'Zephyr', owner: 'Rafi', shipDate: 'Apr 18' }
-  ];
-
-  const stepperItems = [
-    { id: 'draft', label: 'Draft', description: 'Define the scope.', status: 'complete' as const },
-    { id: 'review', label: 'Review', description: 'Resolve feedback.', status: 'current' as const },
-    { id: 'ship', label: 'Ship', description: 'Roll out the release.', status: 'upcoming' as const }
-  ];
+  function handleAction({ value }: { value: string }): void {
+    if (value === 'preview' && canSave) {
+      preview = snapshot();
+      message = `Preview: ${preview.project}.`;
+    } else if (value === 'clear') {
+      project = '';
+      owner = '';
+      environment = 'staging';
+      reviewer = undefined;
+      preview = null;
+      message = 'Form cleared.';
+    }
+  }
 </script>
 
 <main class="app-shell">
-  <header>
-    <p class="eyebrow">DesignKit starter</p>
-    <h1>DK components from packed packages</h1>
-    <p>APCA brand contrast: {contrast.Lc.toFixed(1)} Lc</p>
+  <header class="intro">
+    <h1>Plan a release</h1>
   </header>
-
-  <section class="grid">
-    <Card theme={theme} surface="raised">
-      <svelte:fragment slot="header"><h2>Theme bootstrap</h2></svelte:fragment>
-      <p>The starter consumes `@dkcli/core`, `@dkcli/tokens`, and `@dkcli/components` from packed tarballs.</p>
-      <Button theme={theme}>Continue</Button>
+  <section class="grid" aria-label="Release planner">
+    <Card {theme} surface="raised">
+      <div class="form-stack">
+        <h2>Release details</h2>
+        <TextField {theme} label="Project name" bind:value={project} />
+        <TextField {theme} label="Release owner" bind:value={owner} />
+        <Select {theme} label="Environment" items={environments} value={environment} onChange={({ value }) => environment = value} />
+        <Combobox {theme} label="Reviewer" items={reviewers} value={reviewer} onChange={({ value }) => reviewer = value} />
+        <div class="actions">
+          <Button {theme} disabled={!canSave} onClick={saveRelease}>Save release</Button>
+          <Menu {theme} items={actions} onAction={handleAction}>
+            <span slot="trigger">More actions</span>
+          </Menu>
+        </div>
+        {#if !canSave}
+          <p class="hint">To save, enter a project name and owner, and select a reviewer.</p>
+        {/if}
+      </div>
     </Card>
-
-    <Card theme={theme} surface="outlined">
-      <svelte:fragment slot="header"><h2>Field flow</h2></svelte:fragment>
-      <TextField theme={theme} label="Project name" placeholder="Atlas release" />
-      <DatePicker theme={theme} label="Launch date" value="2026-04-16" />
+    <Card {theme} surface="outlined">
+      <div class="form-stack">
+        <h2>Release summary</h2>
+        {#if message}<p role="status">{message}</p>{/if}
+        {#if preview}
+          <dl>
+            <div><dt>Project</dt><dd>{preview.project}</dd></div>
+            <div><dt>Owner</dt><dd>{preview.owner}</dd></div>
+            <div><dt>Environment</dt><dd>{preview.environment}</dd></div>
+            <div><dt>Reviewer</dt><dd>{preview.reviewer}</dd></div>
+          </dl>
+        {:else}
+          <p class="hint">No saved release</p>
+        {/if}
+      </div>
     </Card>
-
-    <Card theme={theme} surface="default">
-      <svelte:fragment slot="header"><h2>Data flow</h2></svelte:fragment>
-      <Table theme={theme} caption="Release table" columns={columns} rows={rows} sortable={true} />
-    </Card>
-
-    <Card theme={theme} surface="raised">
-      <svelte:fragment slot="header"><h2>Advanced flow</h2></svelte:fragment>
-      <Stepper theme={theme} items={stepperItems} value="review" />
-    </Card>
-
-    <Dialog theme={theme} title="Starter dialog" description="This dialog confirms the packaged component flow.">
-      Packed components are working inside the starter app.
-      <svelte:fragment slot="footer">
-        <Button theme={theme} variant="soft">Looks good</Button>
-      </svelte:fragment>
-    </Dialog>
   </section>
 </main>
 
@@ -79,39 +113,20 @@
   :global(body) {
     margin: 0;
     font-family: system-ui, sans-serif;
-    background: #f4f7fb;
-    color: #0f172a;
+    background: var(--surface, #f4f7fb);
+    color: var(--text, #0f172a);
   }
-
-  .app-shell {
-    display: grid;
-    gap: 1.5rem;
-    margin: 0 auto;
-    max-width: 1100px;
-    padding: 2rem;
-  }
-
-  .eyebrow {
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .grid {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
-
-  h1,
-  h2,
-  p {
-    margin: 0;
-  }
-
-  section :global(.dk-card-root),
-  section :global(.dk-dialog-trigger) {
-    width: 100%;
-  }
+  .app-shell { display: grid; gap: 2rem; margin: 0 auto; max-width: 1040px; padding: clamp(1rem, 4vw, 3rem); }
+  .intro, .form-stack { display: grid; gap: 1rem; }
+  .grid { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+  .actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+  h1, h2, p, dl, dd { margin: 0; }
+  h1 { font-size: clamp(2rem, 5vw, 3.5rem); letter-spacing: -0.03em; }
+  h2 { font-size: 1.25rem; }
+  .hint, dt { color: var(--text-muted, #475569); }
+  .hint { font-size: 0.9rem; line-height: 1.5; }
+  dl { display: grid; gap: 1rem; }
+  dl > div { display: grid; gap: 0.25rem; }
+  dt { font-size: 0.8rem; }
+  dd { font-weight: 600; overflow-wrap: anywhere; }
 </style>

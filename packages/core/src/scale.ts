@@ -106,7 +106,7 @@ export function generateFibonacciScale(options: {
 
   const scale: ScaleStep[] = [];
   for (let i = -down; i <= steps; i++) {
-    const fibIdx = centerIdx + i;
+    const fibIdx = Math.max(0, centerIdx + i);
     const fibVal = fibIdx >= 0 && fibIdx < FIBONACCI.length ? FIBONACCI[fibIdx] : FIBONACCI[FIBONACCI.length - 1];
     const px = base * fibVal / FIBONACCI[centerIdx];
     const name = stepName(i, naming);
@@ -120,6 +120,7 @@ export function generateFibonacciScale(options: {
 export type FluidScaleStep = ScaleStep & { clamp: string; pxMin: number; pxMax: number };
 export type FluidScaleMeta = ScaleMeta & { baseMin: number; baseMax: number; vwMin: number; vwMax: number };
 
+/** Generates CSS clamp() values between finite viewport widths with 0 <= vwMin < vwMax. */
 export function generateFluidScale(options: {
   baseMin?: number; baseMax?: number; ratio?: string; steps?: number; down?: number;
   prefix?: string; naming?: string; vwMin?: number; vwMax?: number;
@@ -133,6 +134,10 @@ export function generateFluidScale(options: {
   const naming = options.naming ?? 'natural';
   const vwMin = options.vwMin ?? 320;
   const vwMax = options.vwMax ?? 1440;
+
+  if (!Number.isFinite(vwMin) || !Number.isFinite(vwMax) || vwMin < 0 || vwMax <= vwMin) {
+    throw new Error('Fluid viewport widths must be finite, with vw-min >= 0 and vw-max > vw-min.');
+  }
 
   const scale: FluidScaleStep[] = [];
   for (let i = -down; i <= steps; i++) {

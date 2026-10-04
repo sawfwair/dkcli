@@ -103,7 +103,8 @@ export const toastSpec: ComponentSpec = createComponentSpec({
         surfaceWidth: slotVar('item', '--dk-toast-item-max-width'),
         surfaceHeight: literal('120px'),
         offset: literal('16px'),
-        viewportPadding: 16
+        viewportPadding: 16,
+        viewportConstrained: true
       }
     ],
     motion: [

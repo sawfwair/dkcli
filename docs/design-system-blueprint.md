@@ -1,25 +1,25 @@
-# DK Design System Blueprint
+# Archived design-system blueprint
 
-This document defines the first durable package split for a full DesignKit-native design system:
+For package contributors, this archived proposal records the original package split, schema sketch, and migration sequence.
 
-- `@dkcli/core`: deterministic math, schema, proofs, and compilation contracts
-- `@dkcli/tokens`: theme compilation and token emission
-- `@dkcli/components`: framework-facing component layer
+The proposed packages were `@dkcli/core` for calculations and compilation, `@dkcli/tokens` for themes and exports, and `@dkcli/components` for framework components.
 
-The private `../dkweb` SvelteKit app remains the proving ground. The public `packages/` layer gives us a clean path to turn the DK engine into a reusable system without forcing a big-bang migration.
+For implemented package responsibilities, see [Package overview](/packages/). The sibling `dkweb` workbench consumes the public package artifacts.
 
-## Goals
+## Original goals
 
-- Keep DK math authoritative and framework-agnostic.
-- Compile themes once instead of recomputing heavy math inside component renders.
-- Make every component proofable through contrast, target, spacing, layout, motion, and distinctness checks.
-- Separate authoring contracts from proof inputs so components stay ergonomic while proofs stay deterministic.
+The proposal defined four goals:
 
-## Package Boundaries
+- Keep DesignKit calculations authoritative and independent of a UI framework.
+- Compile themes before rendering components.
+- Check every component for contrast, target size, spacing, layout, motion, and distinctness.
+- Separate component authoring contracts from inputs to deterministic mathematical checks.
 
-### `@dkcli/core`
+## Package boundaries
 
-Responsibilities:
+### Core package
+
+The proposed responsibilities were:
 
 - Color, palette, perceptual distinctness, APCA, and gamut logic
 - Modular and fluid scales
@@ -27,7 +27,7 @@ Responsibilities:
 - Design-system schema and recipe contracts
 - Proof runners and audit helpers
 
-Initial migration targets from the current app:
+The original migration targeted these app files:
 
 - `src/lib/dk/color.ts`
 - `src/lib/dk/palette.ts`
@@ -46,64 +46,60 @@ Initial migration targets from the current app:
 - `src/lib/dk/design.ts`
 - `src/lib/dk/perfect.ts`
 
-Rules:
+The proposal defined these requirements:
 
-- No DOM access
-- No network access
-- Deterministic output for the same input
-- Public APIs typed explicitly
+- Exclude DOM access.
+- Exclude network access.
+- Produce deterministic output for the same input.
+- Type public APIs explicitly.
 
-### `@dkcli/tokens`
+### Token package
 
-Responsibilities:
+The proposed responsibilities were:
 
-- Turn a `ThemeSeed` into a normalized theme contract
-- Emit CSS custom properties, JSON token bundles, and adapter outputs
-- Own semantic aliasing and token family naming
-- Cache compiled token artifacts for component consumption
+- Turn a `ThemeSeed` into a normalized theme contract.
+- Emit CSS custom properties, JSON token bundles, and adapter outputs.
+- Define semantic aliases and token family names.
+- Cache compiled tokens for components.
 
-Key rule:
+The token package depended on the core package. The core package did not depend on the token package.
 
-- `@dkcli/tokens` depends on `@dkcli/core`, never the other way around.
+### Component package
 
-### `@dkcli/components`
+The proposed responsibilities were:
 
-Responsibilities:
+- Provide a framework layer for component APIs and rendering.
+- Provide accessible behavior primitives and slot wiring.
+- Consume compiled tokens instead of recalculating themes during rendering.
+- Expose test fixtures and mathematical cases for each public component.
 
-- Thin framework layer for component APIs and rendering
-- Accessible behavior primitives and slot wiring
-- Consume compiled token artifacts rather than running the full DK engine during render
-- Expose test fixtures and proof cases for each public component
+Svelte was the initial framework target. The proposal reserved renderer-neutral boundaries.
 
-Initial framework target:
+The proposal placed heavy mathematical checks in build, documentation, and test workflows. Production rendering was intended to use compiled recipes and token bundles.
 
-- Svelte first, with the architecture kept renderer-neutral enough to add other adapters later
+## Dependency rules
 
-Key rule:
-
-- Production component rendering should rely on precompiled recipes and token bundles. Heavy proof math stays in build, docs, and test workflows.
-
-## Dependency Rules
+The proposal defined these dependency rules:
 
 - `@dkcli/core` -> no UI package dependencies
 - `@dkcli/tokens` -> `@dkcli/core`
 - `@dkcli/components` -> `@dkcli/tokens`
-- Docs app and proof tooling may depend on all three
-- `@dkcli/components` may import `@dkcli/core` in dev and test utilities, but public rendering paths should avoid it
+- Documentation and mathematical tooling could depend on all three packages.
+- The proposal limited direct core imports in components to development and test utilities.
 
-## Build Pipeline
+## Proposed build pipeline
 
-1. `ThemeSeed` enters `@dkcli/tokens`
-2. `@dkcli/tokens` asks `@dkcli/core` for palette, scale, motion, and proof-derived values
-3. `@dkcli/tokens` emits a `ThemeContract`
-4. `ComponentSpec + ThemeContract` compiles into concrete recipes
-5. Recipes emit CSS variables, slot styles, and proof fixtures
-6. Proof fixtures compile into deterministic `DesignDocument`-style checks
-7. CI runs contrast, target, distinctness, layout, motion, and audit gates
+1. `ThemeSeed` enters `@dkcli/tokens`.
+2. `@dkcli/tokens` uses `@dkcli/core` to calculate palette, scale, motion, and mathematical values.
+3. `@dkcli/tokens` emits a `ThemeContract`.
+4. The compiler combines `ComponentSpec` and `ThemeContract` to produce recipes.
+5. Recipes emit CSS variables, slot styles, and proof fixtures.
+6. Proof fixtures compile into deterministic checks based on `DesignDocument`.
+7. CI runs contrast, target, distinctness, layout, motion, and audit checks.
 
-## First 10 Components
+## Initial component sequence
 
-The first public components should maximize reuse of behavior, proof infrastructure, and token families.
+The original order prioritized shared behavior, mathematical infrastructure, and token families in this sequence:
 
 1. `Button`
 2. `TextField`
@@ -116,15 +112,15 @@ The first public components should maximize reuse of behavior, proof infrastruct
 9. `Tabs`
 10. `Popover`
 
-Why this order:
+The order reflected these dependencies:
 
-- `Button` establishes action semantics, APCA gates, and size variants
-- `TextField`, `Textarea`, `Checkbox`, `Switch`, and `RadioGroup` create a reusable form shell
-- `Select`, `Dialog`, `Tabs`, and `Popover` force overlay, focus, keyboard, and layering primitives into the open
+- `Button` establishes action semantics, APCA checks, and size variants.
+- `TextField`, `Textarea`, `Checkbox`, `Switch`, and `RadioGroup` establish shared form behavior.
+- `Select`, `Dialog`, `Tabs`, and `Popover` exercise overlay, focus, keyboard, and layering primitives.
 
-## Internal Primitives
+## Proposed internal primitives
 
-These are not public roadmap slots, but should exist before or during the first ten:
+The proposal paired the initial components with these internal primitives:
 
 - `Box`
 - `Stack`
@@ -135,9 +131,11 @@ These are not public roadmap slots, but should exist before or during the first 
 - `Portal`
 - `FocusScope`
 
-## Component Schema
+## Schema sketch
 
-`@dkcli/core` owns the authoring schema. Components should be authored as high-level specs and compiled into proofable cases.
+The proposal assigned the authoring schema to `@dkcli/core`. It compiled component specifications into cases with mathematical checks.
+
+The following types record the original schema sketch. For implemented declarations, inspect the installed package types:
 
 ```ts
 type ThemeSeed = {
@@ -226,39 +224,39 @@ type ComponentSpec = {
 };
 ```
 
-## Proof Expectations Per Component
+## Proposed evidence per component
 
-Every public component should eventually emit:
+The proposal required the following evidence for each public component:
 
-- a default proof case
-- at least one stress case
-- touch-target verification
-- APCA checks for each meaningful foreground/background pair
-- responsive layout checks at small, medium, and large widths
-- token drift audit against DK scale ladders
+- A default mathematical case
+- At least one stress case
+- Touch-target verification
+- APCA checks for each meaningful foreground and background pair
+- Layout checks at small, medium, and large widths
+- A token audit against the design scales
 
-## Migration Plan
+## Original migration sequence
 
-### Phase 1
+### Package scaffolding
 
-- Land `packages/core`, `packages/tokens`, and `packages/components`
-- Add schema, theme contract, and placeholder exports
-- Keep the current app working unchanged
+- Create `packages/core`, `packages/tokens`, and `packages/components`.
+- Add the schema, theme contract, and placeholder exports.
+- Preserve app behavior.
 
-### Phase 2
+### Calculation modules
 
-- Move the existing pure math modules from `src/lib/dk` into `@dkcli/core`
-- Re-export from the app during transition
-- Keep route behavior stable while imports migrate
+- Move pure calculations from `src/lib/dk` into `@dkcli/core`.
+- Re-export from the app during the transition.
+- Preserve route behavior during import migration.
 
-### Phase 3
+### Tokens and recipes
 
-- Compile `tokens.css` from `@dkcli/tokens`
-- Introduce component recipes driven by `ComponentSpec`
-- Build docs and proofs for the first 3 to 5 public components
+- Compile `tokens.css` from `@dkcli/tokens`.
+- Introduce component recipes driven by `ComponentSpec`.
+- Build documentation and mathematical fixtures for the first three to five public components.
 
-### Phase 4
+### Component expansion
 
-- Expand to the first 10 public components
-- Add CI proof gates and docs publishing
-- Decide whether to publish packages publicly or keep them workspace-private longer
+- Expand to the first 10 public components.
+- Add CI mathematical checks and documentation publishing.
+- Review public publication or workspace-only distribution.

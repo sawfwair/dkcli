@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   export type RadioGroupItem = {
     value: string;
     label: string;
@@ -8,7 +8,8 @@
 </script>
 
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { run } from 'svelte/legacy';
+  import { createEventDispatcher, untrack } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import {
@@ -19,37 +20,53 @@
   } from './radio-group.recipe.js';
   import type { RadioGroupOrientation, RadioGroupSize } from './radio-group.spec.js';
 
-  let nextNameId = 0;
+  const uid = $props.id();
+  const localId = `dk-radio-group-${uid}`;
+
   const dispatch = createEventDispatcher<{ change: { value: string } }>();
 
-  export let value: string | undefined = undefined;
-  export let items: RadioGroupItem[] = [];
-  export let orientation: RadioGroupOrientation = 'vertical';
-  export let label: string | undefined = undefined;
-  export let description: string | undefined = undefined;
-  export let error: string | undefined = undefined;
-  export let required = false;
-  export let disabled = false;
-  export let name: string = `dk-radio-group-${++nextNameId}`;
-  export let size: RadioGroupSize = 'md';
-  export let theme: ThemeContract = DEFAULT_RADIO_GROUP_THEME;
-  export let onChange: ((detail: { value: string }) => void) | undefined = undefined;
+  interface Props {
+    value?: string | undefined;
+    items?: RadioGroupItem[];
+    orientation?: RadioGroupOrientation;
+    label?: string | undefined;
+    description?: string | undefined;
+    error?: string | undefined;
+    required?: boolean;
+    disabled?: boolean;
+    name?: string;
+    size?: RadioGroupSize;
+    theme?: ThemeContract;
+    onChange?: ((detail: { value: string }) => void) | undefined;
+  }
+
+  let {
+    value = $bindable(undefined),
+    items = $bindable([]),
+    orientation = $bindable('vertical'),
+    label = $bindable(undefined),
+    description = $bindable(undefined),
+    error = $bindable(undefined),
+    required = $bindable(false),
+    disabled = $bindable(false),
+    name = $bindable(localId),
+    size = $bindable('md'),
+    theme = $bindable(DEFAULT_RADIO_GROUP_THEME),
+    onChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createRadioGroupRegistration(DEFAULT_RADIO_GROUP_THEME);
 
-  let registration = defaultRegistration;
-  let currentValue = value;
-  let invalid = Boolean(error);
-  let compiledCase = getRadioGroupRecipeCase(defaultRegistration.recipe, { size, orientation });
-  let slotStyles = serializeRadioGroupSlotStyles(compiledCase);
+  let currentValue = $state(untrack(() => value));
 
-  $: registration =
-    theme.name === DEFAULT_RADIO_GROUP_THEME.name ? defaultRegistration : createRadioGroupRegistration(theme);
-  $: currentValue = value ?? currentValue ?? items.find((item) => !item.disabled)?.value;
-  $: invalid = Boolean(error);
-  $: compiledCase = getRadioGroupRecipeCase(registration.recipe, { size, orientation });
-  $: slotStyles = serializeRadioGroupSlotStyles(compiledCase);
-  $: describedBy = error ? `${name}-error` : description ? `${name}-description` : undefined;
+  let registration = $derived(theme.name === DEFAULT_RADIO_GROUP_THEME.name ? defaultRegistration : createRadioGroupRegistration(theme));
+  run(() => {
+    currentValue = value ?? currentValue ?? items.find((item) => !item.disabled)?.value;
+  });
+  let invalid = $derived(Boolean(error));
+  let compiledCase = $derived(getRadioGroupRecipeCase(registration.recipe, { size, orientation }));
+  let slotStyles = $derived(serializeRadioGroupSlotStyles(compiledCase));
+  let describedBy = $derived(error ? `${localId}-error` : description ? `${localId}-description` : undefined);
 
   function handleValueChange(nextValue: string): void {
     currentValue = nextValue;
@@ -110,9 +127,9 @@
   </div>
 
   {#if error}
-    <p class="radio-meta radio-error" style={slotStyles.error} id={`${name}-error`}>{error}</p>
+    <p class="radio-meta radio-error" style={slotStyles.error} id={`${localId}-error`}>{error}</p>
   {:else if description}
-    <p class="radio-meta radio-description" style={slotStyles.description} id={`${name}-description`}>{description}</p>
+    <p class="radio-meta radio-description" style={slotStyles.description} id={`${localId}-description`}>{description}</p>
   {/if}
 </fieldset>
 

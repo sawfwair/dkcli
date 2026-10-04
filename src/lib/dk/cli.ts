@@ -1,15 +1,6 @@
-import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { access, readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-
-import { renderCmsCommand } from './cms-cli.ts';
-import { isRecord, readJsonResponse } from '../json-boundary.ts';
 import {
   audit,
   formatAuditCss,
-  formatAuditJson,
   scoreComposition,
   scoreDesignComposition,
   solveDesignLayout,
@@ -17,66 +8,85 @@ import {
   analyzeTargetAcquisition,
   analyzeImportance,
   type DesignDocument,
+  type CompiledComponentRecipe,
+  type ComponentProofFixture,
   type Frame,
   type LayoutItem,
-  type Rect
-} from '@dkcli/core';
-import {
+  type Rect,
   apcaCheck,
   apcaContrast,
-  autoContrastAPCA,
   parseCssColor,
-  type ColorResult
-} from './color.ts';
-import { generateSpring, SPRING_PRESETS } from './ease.ts';
-import { generateGlassCss } from './glass.ts';
-import { generateMinimumJerk } from './jerk.ts';
-import { balanceLines, balanceLinesByWidth, flowLinesByWidth, greedyBreak } from './linebreak.ts';
-import { getCorrections } from './optical.ts';
-import {
+  type ColorResult,
+  generateSpring,
+  SPRING_PRESETS,
+  generateGlassCss,
+  generateMinimumJerk,
+  balanceLines,
+  balanceLinesByWidth,
+  flowLinesByWidth,
+  greedyBreak,
+  getCorrections,
   HARMONIES,
   STOPS,
   generateHarmony,
-  generateNeutral,
   optimizePalette,
   semanticDark,
   semanticLight,
   type HarmonyType,
   type PaletteOptimizeOptions,
-  type SemanticTokens
-} from './palette.ts';
-import { analyzeDistinctness, simulateCvd, type CvdType } from './perception.ts';
-import {
+  analyzeDistinctness,
+  simulateCvd,
+  type CvdType,
   RATIOS,
   generateFibonacciScale,
   generateFluidScale,
   generateScale,
   type FluidScaleStep,
-  type ScaleStep
-} from './scale.ts';
-import {
+  type ScaleStep,
   analyzeEmbeddingTopologyHeuristic,
   diagnoseFutureTopology,
   generateLayoutCss,
   refineFutureItems,
   type FutureDiagnosis,
   type FutureTopologyItem,
-  type FutureTopologyReport
-} from './future.ts';
-import { recommendTypography, type TypographyProfile } from './typography.ts';
-import { typesetParagraph } from './typeset.ts';
-import type {
-  ColorSpace,
-  CvdModel,
-  EngineMode,
-  Gamut,
-  ImportanceMode,
-  TargetModality,
-  WhiteSpaceMode
-} from './types.ts';
-import { createTheme, type CreateThemeOptions } from '@dkcli/tokens';
+  type FutureTopologyReport,
+  recommendTypography,
+  type TypographyProfile,
+  typesetParagraph,
+  compilePerfectProof,
+  type ColorSpace,
+  type CvdModel,
+  type EngineMode,
+  type Gamut,
+  type ImportanceMode,
+  type TargetModality,
+  type WhiteSpaceMode,
+  joinOpticalTransforms,
+  compileProjectComponentFixtures,
+  projectIdentity,
+  qualificationProjectInput,
+  validateThemeProject,
+  applyThemeProjectPatch,
+  assertProjectQualificationMatches,
+  assertQualificationOptionsMatch,
+  validateQualificationOptions,
+  MAX_QUALIFICATION_BYTES,
+  type ProjectQualificationReceipt,
+  type ComponentSpec,
+  type ThemeProject
+} from '@dkcli/core';
+import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { access, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+import { renderCmsCommand } from './cms-cli.ts';
+import { isRecord, readJsonResponse } from '../json-boundary.ts';
+import { createTheme, createProjectTheme, type CreateThemeOptions } from '@dkcli/tokens';
 
 type OutputFormat = 'css' | 'json' | 'tailwind' | 'text';
+type ProofCommandResult = { output: string; pass: boolean; reasons: string[] };
 type FlagValue = string | boolean;
 export type FlagMap = Record<string, FlagValue>;
 
@@ -93,6 +103,7 @@ export type CliIO = {
   stderr: (text: string) => void;
   readFile: (filePath: string) => Promise<string>;
   readStdin: () => Promise<string>;
+  writeFile?: (filePath: string, content: string) => Promise<void>;
   fetch?: typeof fetch;
   getEnv?: (name: string) => string | undefined;
 };
@@ -106,6 +117,7 @@ type RuntimeDescriptor = {
 export const CLI_COMMANDS = [
   'cms',
   'components',
+  'project',
   'perfect',
   'palette',
   'distinct',
@@ -127,34 +139,33 @@ export const CLI_COMMANDS = [
 ] as const;
 
 const COMMAND_SUMMARIES: Record<(typeof CLI_COMMANDS)[number], string> = {
-  cms: 'Authenticate and manage dkcms sites, pages, builds, and email exports',
-  components: 'Verify shipped component proofs and report the component matrix',
-  perfect: 'Compose palette, scale, contrast, motion, and layout into one proof state',
-  palette: 'Generate OKLCH color palette from a seed hex',
-  distinct: 'Measure perceptual distinctness and stress palettes under CVD simulation',
-  contrast: 'Check APCA perceptual contrast',
+  cms: 'Sign in and manage CMS sites, pages, builds, and email exports',
+  components: 'Verify mathematical component proofs and compare themes',
+  project: 'Verify, qualify, and patch portable theme projects',
+  perfect: 'Compile palette, scale, contrast, motion, and layout proofs',
+  palette: 'Generate an OKLCH color palette from a hex color',
+  distinct: 'Measure color differences and simulate color vision deficiency',
+  contrast: 'Check text contrast with APCA',
   glass: 'Generate layered glass material CSS',
-  layout: 'Solve stack layout constraints into stable rails',
-  compose: 'Score compositional order from rectangles',
+  layout: 'Solve stack layout constraints',
+  compose: 'Score composition heuristics for rectangles',
   scale: 'Generate spacing and sizing scales',
   optical: 'Return optical correction values',
   ease: 'Convert spring physics into CSS linear() easing',
   jerk: 'Generate minimum-jerk timing curves',
-  typeset: 'Shape, hyphenate, and balance text with width-based layout',
-  text: 'Recommend readable text spacing and measure',
+  typeset: 'Estimate text widths, hyphenate, and balance lines',
+  text: 'Recommend text spacing and line length',
   linebreak: 'Compare balanced and greedy line breaking',
   audit: 'Score CSS against DesignKit heuristics',
-  target: 'Estimate interaction burden with Fitts, Hick, and steering',
-  saliency: 'Score visual importance from a JSON design document',
-  future: 'Analyze content topology and generate layout CSS from the slot plan'
+  target: 'Estimate targeting, choice, and steering time',
+  saliency: 'Estimate visual importance in a JSON design document',
+  future: 'Group content and generate layout CSS'
 };
 
-const BOOLEAN_FLAGS = new Set(['help', 'h', 'json', 'tailwind', 'stdin', 'fluid', 'audit', 'refine', 'publish', 'all']);
+const BOOLEAN_FLAGS = new Set(['help', 'h', 'json', 'tailwind', 'stdin', 'fluid', 'audit', 'refine', 'publish', 'all', 'strict']);
 const OPTICAL_TYPES = ['icon', 'text', 'circle', 'button', 'card'] as const;
 const DEFAULT_LINEBREAK_TEXT =
-  'Mathematical interfaces deserve line breaks that feel intentional, even under pressure.';
-const DEFAULT_PERFECT_LINEBREAK =
-  'A proof solver should resolve layout, distinction, movement, and reading comfort together.';
+  'Compare balanced and greedy line breaks for text at different container widths.';
 const CLI_MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
 const WORKSPACE_COMPONENTS_DIR = path.resolve(CLI_MODULE_DIR, '../../../packages/components');
 const WORKSPACE_COMPONENTS_PACKAGE_JSON = path.join(WORKSPACE_COMPONENTS_DIR, 'package.json');
@@ -247,6 +258,7 @@ function createNodeIO(): CliIO {
       }, text);
     },
     readFile: (filePath) => readFile(filePath, 'utf8'),
+    writeFile: (filePath, content) => writeFile(filePath, content, 'utf8'),
     readStdin: readAllStdin,
     fetch: (input, init) => fetch(input, init),
     getEnv: (name) => process.env[name]
@@ -312,7 +324,7 @@ function getStringFlag(flags: FlagMap, name: string): string | undefined {
     return undefined;
   }
   if (typeof value === 'boolean') {
-    fail(`Flag --${name} requires a value.`, name);
+    fail(`Option --${name} requires a value.`, name);
   }
   return value;
 }
@@ -324,7 +336,7 @@ function getNumberFlag(flags: FlagMap, name: string, fallback: number, helpComma
   }
   const number = Number(value);
   if (!Number.isFinite(number)) {
-    fail(`Flag --${name} must be a number. Received "${value}".`, helpCommand);
+    fail(`Option --${name} requires a finite number. Received "${value}".`, helpCommand);
   }
   return number;
 }
@@ -417,7 +429,7 @@ function localRuntime(mode: ImportanceMode): RuntimeDescriptor {
   }
   return {
     source: 'local',
-    reason: 'No runtime URL configured; fell back to local heuristic analysis.'
+    reason: 'No runtime URL configured. Using local heuristic analysis.'
   };
 }
 
@@ -509,17 +521,17 @@ function parseFlowSpec(flags: FlagMap, helpCommand: string): FlowSpec | undefine
 
   const match = value.match(/^(\d+(?:\.\d+)?)x(\d+)x(\d+(?:\.\d+)?)$/i);
   if (!match) {
-    fail(`Flag --flow must use LEAD_WIDTHxLEAD_LINESxBODY_WIDTH syntax. Received "${value}".`, helpCommand);
+    fail(`Option --flow requires LEAD_WIDTHxLEAD_LINESxBODY_WIDTH syntax. Received "${value}".`, helpCommand);
   }
 
   const leadWidthPx = Number(match[1]);
   const leadLines = Number(match[2]);
   const bodyWidthPx = Number(match[3]);
   if (!Number.isFinite(leadWidthPx) || !Number.isFinite(bodyWidthPx) || !Number.isFinite(leadLines)) {
-    fail(`Flag --flow must contain numeric values. Received "${value}".`, helpCommand);
+    fail(`Option --flow requires numeric values. Received "${value}".`, helpCommand);
   }
   if (leadWidthPx <= 0 || bodyWidthPx <= 0 || leadLines < 1) {
-    fail(`Flag --flow requires positive widths and at least one lead line. Received "${value}".`, helpCommand);
+    fail(`Option --flow requires positive widths and at least one lead line. Received "${value}".`, helpCommand);
   }
 
   return {
@@ -615,53 +627,10 @@ function describeScaleRows(scale: ScaleStep[] | FluidScaleStep[], fluid: boolean
   const maxToken = Math.max(...scale.map((step) => step.token.length));
   return scale.map((step) => {
     if (fluid && 'pxMin' in step) {
-      return `  ${safePad(step.token, maxToken)}: ${step.value}; /* ${step.pxMin}–${step.pxMax}px */`;
+      return `  ${safePad(step.token, maxToken)}: ${step.value}; /* ${step.pxMin} px to ${step.pxMax} px */`;
     }
-    return `  ${safePad(step.token, maxToken)}: ${step.value.padStart(10)}; /* ${step.px}px */`;
+    return `  ${safePad(step.token, maxToken)}: ${step.value.padStart(10)}; /* ${step.px} px */`;
   });
-}
-
-function describeSemanticHex(value: string | ColorResult): string {
-  return typeof value === 'string' ? value : value.hex;
-}
-
-function perfectProofCard(
-  label: string,
-  fg: string,
-  bg: string,
-  size: number,
-  weight: number
-): {
-  label: string;
-  fg: string;
-  bg: string;
-  lc: number;
-  minLc: number;
-  recommendation: string;
-  pass: boolean;
-} {
-  const contrast = apcaContrast(fg, bg);
-  const verdict = apcaCheck(contrast.Lc, size, weight);
-  return {
-    label,
-    fg,
-    bg,
-    lc: contrast.abs,
-    minLc: verdict.minLc,
-    recommendation: verdict.recommendation,
-    pass: verdict.pass
-  };
-}
-
-function perfectPxStep(scale: FluidScaleStep[], name: string, fallback: number): number {
-  return scale.find((step) => step.name === name)?.pxMax ?? fallback;
-}
-
-function joinTransforms(values: Array<{ property: string; value: string }>): string {
-  return values
-    .filter((item) => item.property === 'transform')
-    .map((item) => item.value)
-    .join(' ');
 }
 
 function renderScale(flags: FlagMap): string {
@@ -874,7 +843,14 @@ function renderOptical(flags: FlagMap, positional: string[]): string {
     return formatJson(result);
   }
   const lines = [`/* Optical correction: ${result.description} (${result.size}px) */`];
+  const transforms = result.corrections.filter((correction) => correction.property === 'transform');
+  if (transforms.length > 0) {
+    lines.push(...transforms.map((correction) => `/* ${correction.reason} */`));
+    lines.push(`transform: ${joinOpticalTransforms(transforms)};`);
+    lines.push('');
+  }
   for (const correction of result.corrections) {
+    if (correction.property === 'transform') continue;
     lines.push(`/* ${correction.reason} */`);
     lines.push(`${correction.property}: ${correction.value};`);
     lines.push('');
@@ -900,7 +876,7 @@ function renderContrast(flags: FlagMap, positional: string[]): string {
   return [
     `/* dk contrast ${fg} ${bg} --size=${size} --weight=${weight} */`,
     `/* APCA Lc: ${result.Lc} (${result.polarity}) */`,
-    `/* At ${size}px/${weight}: ${check.recommendation} */`
+    `/* Font ${size} px, weight ${weight}: ${check.recommendation} */`
   ].join('\n');
 }
 
@@ -921,12 +897,15 @@ function renderEase(flags: FlagMap): string {
   return format === 'json' ? formatJson(result) : result.css;
 }
 
-async function renderAudit(flags: FlagMap, io: CliIO): Promise<string> {
+async function renderAudit(flags: FlagMap, io: CliIO): Promise<ProofCommandResult> {
   const helpCommand = 'audit';
   const format = resolveFormat(flags, 'css', ['css', 'json', 'text'], helpCommand);
-  const mode = (getStringFlag(flags, 'mode') ?? 'source') as 'source' | 'rendered';
+  const mode = getStringFlag(flags, 'mode') ?? 'source';
   if (mode === 'rendered') {
     fail('Rendered audits require the private dkweb runtime. Use source mode in dkcli.', helpCommand);
+  }
+  if (mode !== 'source') {
+    fail(`Unknown audit mode "${mode}". Supported: source.`, helpCommand);
   }
   let css: string | undefined;
   const cssFile = getStringFlag(flags, 'css');
@@ -939,10 +918,23 @@ async function renderAudit(flags: FlagMap, io: CliIO): Promise<string> {
     fail('Usage: dk audit --css=<file> or dk audit --stdin', helpCommand);
   }
   const report = audit(css);
-  if (format === 'json') {
-    return formatAuditJson(report);
-  }
-  return formatAuditCss(report);
+  const failures = report.categories.flatMap((category) => category.issues
+    .filter((issue) => issue.severity === 'fail')
+    .map((issue) => `${category.label}: ${issue.message}`));
+  const unsupported = report.extracted.colorPairs.length === 0 ? ['contrast'] : [];
+  const pass = failures.length === 0 && unsupported.length === 0;
+  const reasons = [...failures, ...unsupported.map((proof) => `${proof}: no resolvable text and background pairs in source CSS`)];
+  const evidence = { kind: 'source-heuristic', rendered: 'not-collected' };
+  const verification = { pass, unsupported, failures };
+  return {
+    output: format === 'json' ? formatJson({ ...report, evidence, verification }) : [
+      `/* source heuristic checks: ${pass ? 'pass' : 'fail'}; rendered evidence not collected */`,
+      ...unsupported.map((proof) => `/* unsupported ${proof}: no resolvable text and background pairs */`),
+      formatAuditCss(report)
+    ].join('\n'),
+    pass,
+    reasons
+  };
 }
 
 async function renderLayout(flags: FlagMap, io: CliIO): Promise<string> {
@@ -977,8 +969,8 @@ async function renderLayout(flags: FlagMap, io: CliIO): Promise<string> {
       return formatJson({ engine, document, importance, result, composition, runtime });
     }
     return [
-      `dk layout — advanced (${composition.total})`,
-      `frame ${document.frame.width}x${document.frame.height}  engine ${engine}  importance ${importanceMode} / resolved ${importance.mode}`,
+      `Layout score: ${composition.total}`,
+      `frame ${document.frame.width}x${document.frame.height}  engine ${engine}  importance requested ${importanceMode}, resolved ${importance.mode}`,
       describeRuntime(runtime),
       `overlap ${result.metrics.overlapPenalty}  safe ${result.metrics.safeRegionPenalty}  alignment ${result.metrics.alignment}`,
       ''
@@ -1016,14 +1008,14 @@ async function renderLayout(flags: FlagMap, io: CliIO): Promise<string> {
   }
 
   const lines = [
-    `dk layout — ${itemsFlag || flags.stdin ? 'custom' : scenario}`,
-    `container ${options.container}px  gap ${options.gap}px  padding ${options.padding}px  align ${options.align}`,
-    `used ${result.metrics.used}px  free ${result.metrics.free}px  overflow ${result.metrics.overflow}px  compression ${result.metrics.compression}`,
+    `Layout: ${itemsFlag || flags.stdin ? 'custom' : scenario}`,
+    `container ${options.container} px  gap ${options.gap} px  padding ${options.padding} px  align ${options.align}`,
+    `used ${result.metrics.used} px  free ${result.metrics.free} px  overflow ${result.metrics.overflow} px  compression ${result.metrics.compression}`,
     ''
   ];
   for (const item of result.items) {
     lines.push(
-      `${safePad(item.id, 10)} size ${safePad(`${item.size}px`, 9)} range ${safePad(`${item.min}/${item.preferred}/${item.max ?? 'inf'}`, 18)} position ${safePad(`${item.start}→${item.end}px`, 16)} delta ${item.delta >= 0 ? '+' : ''}${item.delta}px`
+      `${safePad(item.id, 10)} size ${safePad(`${item.size} px`, 9)} range ${safePad(`${item.min}/${item.preferred}/${item.max ?? 'inf'}`, 18)} position ${safePad(`${item.start} px to ${item.end} px`, 20)} delta ${item.delta >= 0 ? '+' : ''}${item.delta} px`
     );
   }
   return lines.join('\n');
@@ -1050,8 +1042,8 @@ async function renderCompose(flags: FlagMap, io: CliIO): Promise<string> {
       return formatJson({ document, importance, result, runtime });
     }
     return [
-      `dk compose — advanced total ${result.total}`,
-      `requested ${importanceMode} / resolved ${importance.mode}`,
+      `Composition score: ${result.total}`,
+      `importance requested ${importanceMode}, resolved ${importance.mode}`,
       describeRuntime(runtime),
       `weighted balance ${result.metrics.weightedBalance}  hierarchy ${result.metrics.hierarchy}  saliency ${result.metrics.saliencyRespect}`,
       ''
@@ -1083,7 +1075,7 @@ async function renderCompose(flags: FlagMap, io: CliIO): Promise<string> {
   }
 
   const lines = [
-    `dk compose — total ${result.total}`,
+    `Composition score: ${result.total}`,
     `frame ${frame.width}x${frame.height}`,
     ''
   ];
@@ -1146,8 +1138,8 @@ async function renderDistinct(flags: FlagMap, positional: string[], io: CliIO): 
   }
 
   const lines = [
-    `dk distinct — min ΔE ${report.minDeltaE} (${report.collisions.length} collisions under ${threshold})`,
-    `space ${space}  gamut ${gamut}  cvd ${cvdModel} severity ${severity}`,
+    `Minimum color difference: ΔE ${report.minDeltaE} (${report.collisions.length} collisions under ${threshold})`,
+    `space ${space}  gamut ${gamut}  color vision deficiency model ${cvdModel}, severity ${severity}`,
     `colors: ${normalizedColors.join(', ')}`
   ];
   if (vision !== 'none') {
@@ -1187,7 +1179,7 @@ async function renderSaliency(flags: FlagMap, io: CliIO): Promise<string> {
     return formatJson({ document, report, runtime });
   }
   return [
-    `dk saliency — requested ${mode} / resolved ${report.mode}`,
+    `Importance: requested ${mode}, resolved ${report.mode}`,
     describeRuntime(runtime),
     ...report.elements.map(
       (item) =>
@@ -1225,10 +1217,9 @@ function renderTarget(flags: FlagMap): string {
     return formatJson({ input, report });
   }
   return [
-    'dk target',
-    `distance ${input.distance}px  width ${input.width}px  choices ${input.choices}  modality ${modality}`,
-    `movement ${report.movementMs}ms  choice ${report.choiceMs}ms  steering ${report.steeringMs}ms  occlusion ${report.occlusionPenaltyMs}ms  total ${report.totalMs}ms`,
-    `difficulty ${report.difficultyBits} bits  effective width ${report.effectiveWidth}px`
+    `distance ${input.distance} px  width ${input.width} px  choices ${input.choices}  modality ${modality}`,
+    `movement ${report.movementMs} ms  choice ${report.choiceMs} ms  steering ${report.steeringMs} ms  occlusion ${report.occlusionPenaltyMs} ms  total ${report.totalMs} ms`,
+    `difficulty ${report.difficultyBits} bits  effective width ${report.effectiveWidth} px`
   ].join('\n');
 }
 
@@ -1268,7 +1259,7 @@ function renderText(flags: FlagMap): string {
         });
   const css = [
     `/* dk text --engine=${engine} --font=${input.fontSize} --measure=${input.containerWidth} --contrast=${input.contrastLc} --profile=${input.profile} --white-space=${whiteSpace} */`,
-    `/* ${recommendation.charactersPerLine} chars/line, crowding ${recommendation.crowdingRisk} */`,
+    `/* ${recommendation.charactersPerLine} characters per line, crowding ${recommendation.crowdingRisk} */`,
     ...recommendation.warnings.map((warning) => `/* ${warning} */`),
     `max-width: ${input.containerWidth}px;`,
     `font-size: ${input.fontSize}px;`,
@@ -1290,12 +1281,11 @@ function renderText(flags: FlagMap): string {
   }
   if (format === 'text') {
     return [
-      'dk typeset',
-      `chars/line ${recommendation.charactersPerLine}  line-height ${recommendation.lineHeight}  crowding ${recommendation.crowdingRisk}`,
-      `letter-spacing ${recommendation.letterSpacingEm}em  word-spacing ${recommendation.wordSpacingEm}em  paragraph ${recommendation.paragraphSpacingPx}px`,
+      `characters per line ${recommendation.charactersPerLine}  line-height ${recommendation.lineHeight}  crowding ${recommendation.crowdingRisk}`,
+      `letter-spacing ${recommendation.letterSpacingEm} em  word-spacing ${recommendation.wordSpacingEm} em  paragraph spacing ${recommendation.paragraphSpacingPx} px`,
       ...(typeset
         ? [
-            `advanced badness ${typeset.badness}  avg width ${typeset.averageWidth}px  lines ${typeset.lineCount}  height ${typeset.heightPx}px  tight ${typeset.maxLineWidth}px`,
+            `advanced badness ${typeset.badness}  average width ${typeset.averageWidth} px  lines ${typeset.lineCount}  height ${typeset.heightPx} px  maximum line width ${typeset.maxLineWidth} px`,
             `prepared ${typeset.segmentCount} segments  ${typeset.chunkCount} chunks`,
             ...typeset.lines.map((line, index) => `${index + 1}. ${line.text}`)
           ]
@@ -1362,7 +1352,7 @@ async function renderLinebreak(flags: FlagMap, positional: string[], io: CliIO):
   }
 
   return [
-    `dk linebreak — ${chars} chars, target ${linesTarget} lines`,
+    `Line limits: ${chars} characters, ${linesTarget} target lines`,
     '',
     `Balanced (${balanced.badness})`,
     ...balanced.lines.map((line, index) => `${index + 1}. ${line}`),
@@ -1373,7 +1363,7 @@ async function renderLinebreak(flags: FlagMap, positional: string[], io: CliIO):
       ? [
           '',
           `Advanced (${advanced.badness})`,
-          `lines ${advanced.lineCount}  height ${advanced.heightPx}px  tight ${advanced.maxLineWidth}px`,
+          `lines ${advanced.lineCount}  height ${advanced.heightPx} px  maximum line width ${advanced.maxLineWidth} px`,
           `prepared ${advanced.segmentCount} segments  ${advanced.chunkCount} chunks`,
           ...advanced.lines.map((line, index) => `${index + 1}. ${line.text}`)
         ]
@@ -1381,10 +1371,10 @@ async function renderLinebreak(flags: FlagMap, positional: string[], io: CliIO):
     ...(flow
       ? [
           '',
-          `Flow (${flow.tightWidth}px tight)`,
+          `Flow (maximum line width ${flow.tightWidth} px)`,
           `prepared ${flow.segmentCount} segments  ${flow.chunkCount} chunks  used all text ${flow.usedAllText ? 'yes' : 'no'}`,
           ...flow.slots.flatMap((slot) => [
-            `${slot.label} ${slot.widthPx}px${slot.maxLines !== undefined ? ` / ${slot.maxLines} lines` : ''}`,
+            `${slot.label} ${slot.widthPx} px${slot.maxLines !== undefined ? `, ${slot.maxLines} lines` : ''}`,
             ...slot.lines.map((line) => `${line.ordinal}. ${line.text}`)
           ])
         ]
@@ -1404,7 +1394,7 @@ function renderJerk(flags: FlagMap): string {
   }
   if (format === 'text') {
     return [
-      `dk jerk — duration ${result.duration}s`,
+      `Duration: ${result.duration} s`,
       `samples ${result.samples.length}`,
       `endpoint ${result.samples.at(-1)?.x ?? 1}`,
       result.linear
@@ -1413,14 +1403,17 @@ function renderJerk(flags: FlagMap): string {
   return result.css;
 }
 
-function renderPerfect(flags: FlagMap): string {
+function renderPerfect(flags: FlagMap): ProofCommandResult {
   const helpCommand = 'perfect';
   const format = resolveFormat(flags, 'css', ['css', 'json', 'text'], helpCommand);
   const engine = parseEngineMode(flags, helpCommand);
   const baseColor = normalizeHex(getStringFlag(flags, 'seed') ?? '#295dff', 'Perfect seed', helpCommand);
   const ratioName = getStringFlag(flags, 'ratio') ?? 'perfect-fourth';
-  const mode = (getStringFlag(flags, 'mode') ?? 'light') as 'light' | 'dark';
+  const mode = getStringFlag(flags, 'mode') ?? 'light';
   const motionPreset = getStringFlag(flags, 'motion') ?? 'snappy';
+  if (mode !== 'light' && mode !== 'dark') {
+    fail(`Unknown surface mode "${mode}". Supported: light, dark.`, helpCommand);
+  }
   if (!Object.hasOwn(SPRING_PRESETS, motionPreset)) {
     fail(`Unknown motion preset "${motionPreset}".`, helpCommand);
   }
@@ -1428,174 +1421,20 @@ function renderPerfect(flags: FlagMap): string {
     fail(`Unknown ratio "${ratioName}".`, helpCommand);
   }
 
-  const optimized = optimizePalette(baseColor, {
-    engine,
-    goal: 'ui',
-    gamut: 'srgb',
-    space: 'oklch',
-    cvdModel: 'machado',
-    optimize: engine !== 'basic'
-  });
-  const tonal = optimized.tonal;
-  const neutral = generateNeutral(optimized.seedHex, 0.016);
-  const semantic: SemanticTokens = mode === 'light' ? semanticLight(tonal, neutral) : semanticDark(tonal, neutral);
-  const harmony = generateHarmony(baseColor, 'split-complementary');
-  const fluid = generateFluidScale({
-    baseMin: 15,
-    baseMax: 20,
-    ratio: ratioName,
-    steps: 5,
-    down: 1,
-    prefix: 'proof',
-    naming: 'natural',
-    vwMin: 360,
-    vwMax: 1440
-  });
-  const motion = generateSpring(SPRING_PRESETS[motionPreset], 32);
-  const motionCurve = motion.linear.replace(/\s+/g, ' ');
-  const circleCorrections = getCorrections('circle', 72);
-  const iconCorrections = getCorrections('icon', 72);
-  const surfaceHex = describeSemanticHex(semantic.surface);
-  const surfaceInk = describeSemanticHex(semantic['on-surface']);
-  const primaryHex = describeSemanticHex(semantic.primary);
-  const onPrimaryHex = describeSemanticHex(semantic['on-primary']);
-  const outlineHex = describeSemanticHex(semantic.outline);
-  const glassCss = generateGlassCss({
-    selector: '.perfect-glass',
-    blur: 22,
-    opacity: mode === 'light' ? 0.48 : 0.24,
-    tint: surfaceHex,
-    mode,
-    layers: 2,
-    borderOpacity: mode === 'light' ? 0.62 : 0.24,
-    saturation: 145,
-    noise: 0.012,
-    radius: 30
-  });
-
-  const proofCards = [
-    perfectProofCard('Body on surface', surfaceInk, surfaceHex, 18, 400),
-    perfectProofCard('Primary action', onPrimaryHex, primaryHex, 16, 700),
-    perfectProofCard(
-      'Signal accent',
-      autoContrastAPCA(harmony.colors[1].tonal[500].hex),
-      harmony.colors[1].tonal[500].hex,
-      16,
-      700
-    )
-  ];
-
-  const proofMeasure = Math.round(perfectPxStep(fluid.scale, '2xl', 110) * 6.8);
-  const layoutGap = Math.round(perfectPxStep(fluid.scale, 'xs', 24) * 0.9);
-  const layoutPadding = Math.round(perfectPxStep(fluid.scale, 'sm', 32) * 0.85);
-  const proofLayoutPlan: LayoutItem[] = [
-    {
-      id: 'signal',
-      min: Math.round(perfectPxStep(fluid.scale, 'md', 52) * 1.9),
-      preferred: Math.round(perfectPxStep(fluid.scale, 'lg', 72) * 2.1),
-      max: Math.round(perfectPxStep(fluid.scale, 'xl', 90) * 2.4),
-      grow: 1.1,
-      shrink: 1
-    },
-    {
-      id: 'body',
-      min: Math.round(perfectPxStep(fluid.scale, 'xl', 90) * 2.45),
-      preferred: Math.round(perfectPxStep(fluid.scale, '2xl', 110) * 2.75),
-      max: Math.round(perfectPxStep(fluid.scale, '2xl', 110) * 3.15),
-      grow: 1.8,
-      shrink: 1.8
-    },
-    {
-      id: 'assist',
-      min: Math.round(perfectPxStep(fluid.scale, 'md', 52) * 2),
-      preferred: Math.round(perfectPxStep(fluid.scale, 'lg', 72) * 2.15),
-      max: Math.round(perfectPxStep(fluid.scale, 'xl', 90) * 2.05),
-      grow: 0.8,
-      shrink: 0.9
-    }
-  ];
-  const layout = solveStackLayout(proofLayoutPlan, {
-    container: proofMeasure,
-    gap: layoutGap,
-    padding: layoutPadding,
-    align: 'start'
-  });
-  const layoutRects: Rect[] = [
-    { id: 'signal', x: layout.items[0]?.start ?? 28, y: 26, width: layout.items[0]?.size ?? 170, height: 82 },
-    { id: 'body', x: layout.items[1]?.start ?? 224, y: 118, width: layout.items[1]?.size ?? 320, height: 142 },
-    { id: 'assist', x: layout.items[2]?.start ?? 520, y: 58, width: layout.items[2]?.size ?? 160, height: 104 }
-  ];
-  const composition = scoreComposition(layoutRects, { width: proofMeasure, height: 300 });
-  const designDocument: DesignDocument = {
-    frame: { width: proofMeasure, height: 300, padding: layoutPadding, gap: layoutGap, columns: 12 },
-    background: {
-      dominantColor: surfaceHex,
-      subjectRegion: { x: proofMeasure * 0.36, y: 82, width: proofMeasure * 0.18, height: 104 }
-    },
-    elements: layoutRects.map((rect, index) => ({
-      ...rect,
-      kind: index === 0 ? 'shape' : 'text',
-      role: index === 0 ? 'cta' : index === 1 ? 'body' : 'support',
-      color: surfaceInk,
-      background: index === 0 ? primaryHex : surfaceHex,
-      fontSize: index === 1 ? 22 : 16,
-      fontWeight: index === 0 ? 700 : 500
-    }))
-  };
-  const saliency = analyzeImportance(designDocument, 'heuristic');
-  const advancedLayout = solveDesignLayout(designDocument, { importanceReport: saliency });
-  const advancedComposition = scoreDesignComposition(
-    {
-      ...designDocument,
-      elements: advancedLayout.elements
-    },
-    saliency
-  );
-  const distinctness = analyzeDistinctness(
-    [primaryHex, harmony.colors[1].hex, harmony.colors[2].hex, tonal[300].hex],
-    10,
-    { space: 'oklch', gamut: 'srgb', cvdModel: 'machado' }
-  );
-  const target = analyzeTargetAcquisition({
-    distance: Math.round((layout.items[1]?.start ?? 220) + perfectPxStep(fluid.scale, 'xl', 90) * 0.8),
-    width: Math.round(perfectPxStep(fluid.scale, 'sm', 32) * 1.5),
-    choices: harmony.colors.length + 6,
-    pathLength: Math.round(perfectPxStep(fluid.scale, '2xl', 110) * 1.8),
-    pathWidth: Math.round(perfectPxStep(fluid.scale, 'sm', 32) * 0.92),
-    modality: 'touch'
-  });
-  const typography = recommendTypography({
-    fontSize: Math.round(perfectPxStep(fluid.scale, 'sm', 32) * 0.56),
-    containerWidth: Math.round(perfectPxStep(fluid.scale, '2xl', 110) * 5.1),
-    contrastLc: proofCards[0].lc,
-    profile: proofCards[0].lc < 70 ? 'low-vision' : 'default',
-    engine,
-    sampleText: DEFAULT_PERFECT_LINEBREAK,
-    language: 'en',
-    hyphenate: true
-  });
+  const compiled = compilePerfectProof({ baseColorInput: baseColor, ratioName, mode, motionPreset }, { engine });
+  const {
+    optimizedPalette: optimized, harmony, fluid, motion, motionCurve, surfaceHex, surfaceInk,
+    primaryHex, onPrimaryHex, outlineHex, glassCss, proofCards, proofMeasure, layoutGap,
+    layoutPadding, layoutProof: layout, basicComposition: composition, advancedLayout,
+    composition: advancedComposition, proofImportance: saliency, distinctness, targetProof: target,
+    typography, jerkProof: jerk, circleCorrections, iconCorrections, iconTransform
+  } = compiled.outputs;
   const linebreak = {
-    text: DEFAULT_PERFECT_LINEBREAK,
-    balanced: balanceLines(DEFAULT_PERFECT_LINEBREAK, 24, 4),
-    greedy: greedyBreak(DEFAULT_PERFECT_LINEBREAK, 24),
-    advanced: balanceLinesByWidth({
-      text: DEFAULT_PERFECT_LINEBREAK,
-      widthPx: 420,
-      fontSize: 18,
-      language: 'en',
-      hyphenate: true,
-      opticalSizing: true,
-      targetLines: 4,
-      engine: 'advanced'
-    })
+    text: compiled.outputs.linebreakText,
+    balanced: compiled.outputs.balancedBreak,
+    greedy: compiled.outputs.greedyBreakResult,
+    advanced: compiled.outputs.advancedBreak
   };
-  const jerk = generateMinimumJerk(Math.max(0.34, motion.duration), 24);
-  const optics = {
-    circle: circleCorrections,
-    icon: iconCorrections,
-    iconTransform: joinTransforms(iconCorrections.corrections)
-  };
-
   const summary = {
     input: { seed: baseColor, ratio: ratioName, mode, motion: motionPreset, engine },
     tokens: {
@@ -1629,22 +1468,21 @@ function renderPerfect(flags: FlagMap): string {
     typography,
     linebreak,
     jerk,
-    optics
+    optics: { circle: circleCorrections, icon: iconCorrections, iconTransform },
+    report: compiled.report,
+    evidence: { kind: 'mathematical', rendered: 'not-collected' }
   };
 
-  if (format === 'json') {
-    return formatJson(summary);
-  }
-
   const rootLines = [
-      `/* dk perfect --seed=${baseColor} --ratio=${ratioName} --motion=${motionPreset} --mode=${mode} */`,
-      `/* engine ${engine} optimized seed ${optimized.seedHex} score ${optimized.scores.total} */`,
-      `/* primary APCA ${proofCards[1].lc} (min ${proofCards[1].minLc}) */`,
-      `/* distinct min ΔE00 ${distinctness.minDeltaE} */`,
-      `/* composition total ${composition.total} */`,
-      `/* advanced composition ${advancedComposition.total} saliency ${saliency.elements[0]?.id ?? 'n/a'} */`,
-      `/* target total ${target.totalMs}ms */`,
-      `/* text crowding ${typography.crowdingRisk} */`,
+    `/* dk perfect --seed=${baseColor} --ratio=${ratioName} --motion=${motionPreset} --mode=${mode} */`,
+    `/* mathematical proofs: ${compiled.report.ok ? 'pass' : 'fail'}; rendered evidence not collected */`,
+    `/* engine ${engine} optimized seed ${optimized.seedHex} score ${optimized.scores.total} */`,
+    `/* primary APCA ${proofCards[1].lc} (min ${proofCards[1].minLc}) */`,
+    `/* distinct min ΔE00 ${distinctness.minDeltaE} */`,
+    `/* composition total ${composition.total} */`,
+    `/* advanced composition ${advancedComposition.total} saliency ${saliency.elements[0]?.id ?? 'n/a'} */`,
+    `/* target total ${target.totalMs}ms */`,
+    `/* text crowding ${typography.crowdingRisk} */`,
     ':root {',
     `  --perfect-base-color: ${baseColor};`,
     `  --perfect-primary: ${primaryHex};`,
@@ -1658,26 +1496,27 @@ function renderPerfect(flags: FlagMap): string {
     ...fluid.scale.map((step) => `  ${step.token}: ${step.value};`),
     '}'
   ];
-
-  if (format === 'text') {
-    return [
-      'dk perfect',
-      `primary ${primaryHex}  surface ${surfaceHex}  ratio ${fluid.meta.ratioName} (${fluid.meta.ratio})`,
-      `motion ${motionPreset} settles in ${Math.round(motion.duration * 1000)}ms`,
-      `distinctness ${distinctness.minDeltaE}  composition ${composition.total}  target ${target.totalMs}ms`,
-      `typography crowding ${typography.crowdingRisk}  balanced break ${linebreak.balanced.badness}`,
-      '',
-      ...rootLines,
-      '',
-      glassCss
-    ].join('\n');
-  }
-
-  return [...rootLines, '', glassCss].join('\n');
+  const output = format === 'json' ? formatJson(summary) : format === 'text' ? [
+    `Mathematical proofs: ${compiled.report.ok ? 'pass' : 'fail'} (${compiled.report.failCount} failed)`,
+    'Rendered evidence: not collected',
+    `primary ${primaryHex}  surface ${surfaceHex}  ratio ${fluid.meta.ratioName} (${fluid.meta.ratio})`,
+    `motion ${motionPreset} settles in ${Math.round(motion.duration * 1000)} ms`,
+    `distinctness ${distinctness.minDeltaE}  composition ${composition.total}  target ${target.totalMs} ms`,
+    `typography crowding ${typography.crowdingRisk}  balanced break ${linebreak.balanced.badness}`,
+    '',
+    ...rootLines,
+    '',
+    glassCss
+  ].join('\n') : [...rootLines, '', glassCss].join('\n');
+  return {
+    output,
+    pass: compiled.report.ok,
+    reasons: compiled.report.failures.map((failure) => `${failure.label}: ${failure.actual}; expected ${failure.expected}`)
+  };
 }
 
 function renderMainHelp(): string {
-  const lines = ['dk — Design Kit CLI', '', 'Usage: dk <command> [options]', '', 'Commands:'];
+  const lines = ['Usage: dk <command> [options]', '', 'Commands:'];
   for (const command of CLI_COMMANDS) {
     lines.push(`  ${safePad(command, 10)} ${COMMAND_SUMMARIES[command]}`);
   }
@@ -1702,13 +1541,13 @@ function renderMainHelp(): string {
 
 export const HELP: Record<string, string> = {
   main: renderMainHelp(),
-  cms: `dk cms — Manage the DkCms typed publishing engine
+  cms: `Manage CMS sites, pages, builds, and email exports.
 
 Usage: dk cms login [options]
        dk cms sites <list|create|update> [options]
   dk cms pages <list|create|update|build|publish|submit|export-email> [options]
 
-Login:
+Sign in:
   dk cms login [--base-url=<url>] [--scope="openid profile email dkcms:read dkcms:write"]
   dk cms login --legacy-auth [--callback-port=<port>]
 
@@ -1728,10 +1567,10 @@ Pages:
   dk cms pages export-email <site-id|slug> <page-id|slug> --format=<html|text|json>
 
 Notes:
-  Page create/update expects --file to point to an EmailCampaignContent JSON file.
-  Email export reads either the chosen build (--build) or the page's published build.
-  Login uses OAuth/OIDC device flow when discovery metadata is available and falls back to the legacy browser-code flow only for older deployments.`,
-  components: `dk components — Verify proof-backed component recipes
+  For page creation or updates, set --file to an EmailCampaignContent JSON file.
+  Email export reads the --build value or the page's published build.
+  Sign-in uses the OAuth or OpenID Connect device flow when discovery metadata is available. Otherwise, sign-in uses browser authorization.`,
+  components: `Verify mathematical component proofs. Rendered evidence is not collected.
 
 Usage: dk components verify [options]
        dk components matrix [options]
@@ -1739,7 +1578,8 @@ Usage: dk components verify [options]
 Options:
   --all                      Verify every shipped component (default if --name is omitted)
   --name=<slug[,slug]>       Verify one or more component slugs or names
-  --theme=<id[,id]|all>      Theme preset ids: cobalt, sage, ember, linen (default: all)
+  --theme=<id[,id]|all>      Theme preset IDs: cobalt, sage, ember, linen (default: all)
+  --strict                   Exit 1 after emitting the report if a declared proof fails or is unsupported
 
 Formats:
   text (default), json
@@ -1748,20 +1588,50 @@ Examples:
   dk components verify --all
   dk components verify --name=table --theme=ember --json
   dk components matrix --theme=cobalt`,
-  perfect: `dk perfect — Compose the full proof state
+  project: `Verify mathematical fixtures, collect runtime measurements, or apply a token patch.
+
+Usage: dk project verify --input=<project.json> [--format=json] [--strict]
+       dk project qualify --input=<project.json> --runtime-url=<url> [options]
+       dk project patch --input=<project.json> --patch=<patch.json> --output=<project.json>
+
+Options:
+  --input=<file>                    Portable version 1 theme project
+  --runtime-url=<url>               Explicit HTTP or HTTPS qualification runtime
+  --runtime-token=<token>           Bearer token for an authenticated runtime
+  --artifact-fingerprint=<sha256>   Require this prepared package fingerprint
+  --browser=<engine>               Request chromium, firefox, or webkit
+  --color-scheme=<scheme>           Request light or dark browser color scheme
+  --zoom=<factor>                  Request CSS zoom 1 (100%) or 2 (200%)
+  --cases=<component:caseId,...>     Select 1 to 12 named scenes
+  --font-fixture=release-sans-v1     Load the same-origin ABeeZee fixture
+  --patch=<file>                    Identity-bound token override patch
+  --output=<file>                   Save the revised project after a valid patch
+  --strict                          Exit 1 after emitting failed or incomplete proof reports
+
+Formats:
+  verify and qualify: text (default), json
+  patch: JSON on stdout and in the output file
+
+Scope:
+  verify checks all 38 shipped components using declared and recorded widths.
+  Mathematical fixtures estimate layout and APCA; they do not certify accessibility.
+  qualify validates runtime receipt identity and provenance fields. Runtime claims
+  are not signed attestations. No runtime URL is inferred from the environment.`,
+  perfect: `Compile palette, scale, contrast, motion, and layout proofs.
 
 Usage: dk perfect [options]
 
 Options:
-  --seed=<hex>               Base seed color (default: #295dff)
+  --seed=<hex>               Seed color (default: #295dff)
   --ratio=<name>             Ratio name from dk scale (default: perfect-fourth)
   --motion=<preset>          Spring preset: ${Object.keys(SPRING_PRESETS).join(', ')}
   --mode=<light|dark>        Surface mode (default: light)
   --engine=<basic|advanced|auto>
+  --strict                   Exit 1 after emitting the artifact if a mathematical proof fails
 
 Formats:
   css (default), text, json`,
-  palette: `dk palette — Generate and optimize OKLCH color palettes
+  palette: `Generate and optimize OKLCH color palettes.
 
 Usage: dk palette <hex> [options]
 
@@ -1778,7 +1648,7 @@ Options:
 
 Formats:
   css (default), json, tailwind`,
-  distinct: `dk distinct — Measure perceptual distinctness
+  distinct: `Measure color differences and simulate color vision deficiency.
 
 Usage: dk distinct [seed-hex] [options]
 
@@ -1795,17 +1665,17 @@ Options:
 
 Formats:
   text (default), json`,
-  contrast: `dk contrast — APCA contrast checker
+  contrast: `Check text contrast with APCA.
 
 Usage: dk contrast <fg-hex> <bg-hex> [options]
 
 Options:
-  --size=<px>                Font size in px (default: 16)
+  --size=<px>                Font size in pixels (default: 16)
   --weight=<n>               Font weight (default: 400)
 
 Formats:
   css (default), text, json`,
-  glass: `dk glass — Generate layered glass material CSS
+  glass: `Generate CSS for layered glass effects.
 
 Usage: dk glass [options]
 
@@ -1823,7 +1693,7 @@ Options:
 
 Formats:
   css (default), json`,
-  layout: `dk layout — Solve stack layout constraints
+  layout: `Solve stack layout constraints.
 
 Usage: dk layout [options]
 
@@ -1833,8 +1703,8 @@ Options:
   --input=<file>             JSON design document for advanced layout
   --engine=<basic|advanced|auto>
   --importance=<heuristic|ml|auto>
-  --runtime-url=<url>        Runtime base URL for server-backed importance (required for remote ml/auto)
-  --stdin                    Read layout items JSON from stdin
+  --runtime-url=<url>        Runtime URL for remote ml or auto importance analysis
+  --stdin                    Read layout items as JSON from stdin
   --container=<px>           Container width (default: 860)
   --gap=<px>                 Gap between items (default: 24)
   --padding=<px>             Rail padding (default: 28)
@@ -1842,42 +1712,42 @@ Options:
 
 Formats:
   text (default), json`,
-  compose: `dk compose — Score compositional order
+  compose: `Score composition heuristics.
 
 Usage: dk compose [options]
 
 Options:
   --variant=<name>           Variant: ${Object.keys(COMPOSE_VARIANTS).join(', ')}
-  --rects=<file>             JSON file containing rects
+  --rects=<file>             JSON file containing rectangles
   --input=<file>             JSON design document for advanced composition
   --importance=<heuristic|ml|auto>
-  --runtime-url=<url>        Runtime base URL for server-backed importance (required for remote ml/auto)
-  --stdin                    Read rects JSON from stdin
+  --runtime-url=<url>        Runtime URL for remote ml or auto importance analysis
+  --stdin                    Read rectangles as JSON from stdin
   --frame=<width>x<height>   Frame size (default: 360x320)
 
 Formats:
   text (default), json`,
-  scale: `dk scale — Generate spacing and sizing scales
+  scale: `Generate spacing and sizing scales.
 
 Usage: dk scale [options]
 
 Options:
-  --base=<px>                Base size in px (default: 16)
+  --base=<px>                Base size in pixels (default: 16)
   --ratio=<name|number>      Ratio name or custom number (default: golden)
   --steps=<n>                Steps above base (default: 6)
   --down=<n>                 Steps below base (default: 2)
   --unit=<px|rem>            Output unit (default: rem)
   --prefix=<string>          CSS variable prefix (default: space)
   --naming=<natural|signed>  Step naming (default: natural)
-  --fluid                    Generate fluid clamp() scale
+  --fluid                    Generate a fluid clamp() scale
   --base-min=<px>            Fluid minimum base size
   --base-max=<px>            Fluid maximum base size
-  --vw-min=<px>              Fluid minimum viewport width
-  --vw-max=<px>              Fluid maximum viewport width
+  --vw-min=<px>              Minimum viewport width, at least 0 (default: 320)
+  --vw-max=<px>              Maximum viewport width, greater than --vw-min (default: 1440)
 
 Formats:
   css (default), json, tailwind`,
-  optical: `dk optical — Optical correction values
+  optical: `Get optical correction presets.
 
 Usage: dk optical <type> [options]
 
@@ -1885,11 +1755,11 @@ Types:
   ${OPTICAL_TYPES.join(', ')}
 
 Options:
-  --size=<px>                Element or font size in px (default: 48)
+  --size=<px>                Element or font size in pixels (default: 48)
 
 Formats:
   css (default), text, json`,
-  ease: `dk ease — Spring physics easing
+  ease: `Convert spring physics into CSS easing.
 
 Usage: dk ease [options]
 
@@ -1902,7 +1772,7 @@ Options:
 
 Formats:
   css (default), text, json`,
-  jerk: `dk jerk — Minimum-jerk motion
+  jerk: `Generate a minimum-jerk motion curve.
 
 Usage: dk jerk [options]
 
@@ -1912,14 +1782,14 @@ Options:
 
 Formats:
   css (default), text, json`,
-  typeset: `dk typeset — Advanced text shaping and balancing
+  typeset: `Estimate text widths, hyphenate, and balance lines.
 
 Usage: dk typeset [options]
 
 Options:
   --engine=<basic|advanced|auto>
-  --font=<px>                Font size in px (default: 18)
-  --width-px=<px>            Container width in px (default: 620)
+  --font=<px>                Font size in pixels (default: 18)
+  --width-px=<px>            Container width in pixels (default: 620)
   --text=<string>            Input text
   --language=<code>          Language code (default: en)
   --white-space=<normal|pre-wrap>
@@ -1928,14 +1798,14 @@ Options:
 
 Formats:
   css (default), text, json`,
-  text: `dk text — Text spacing recommendations
+  text: `Recommend text spacing and line length.
 
 Usage: dk text [options]
 
 Options:
   --engine=<basic|advanced|auto>
-  --font=<px>                Font size in px (default: 18)
-  --measure=<px>             Container width in px (default: 620)
+  --font=<px>                Font size in pixels (default: 18)
+  --measure=<px>             Container width in pixels (default: 620)
   --width-px=<px>            Alias for --measure
   --text=<string>            Input text
   --language=<code>          Language code (default: en)
@@ -1947,18 +1817,18 @@ Options:
 
 Formats:
   css (default), text, json`,
-  linebreak: `dk linebreak — Compare balanced and greedy wrapping
+  linebreak: `Compare balanced and greedy line breaks.
 
 Usage: dk linebreak [text] [options]
 
 Options:
   --text=<string>            Input text
-  --file=<path>              Read text from file
+  --file=<path>              Read text from a file
   --stdin                    Read text from stdin
   --engine=<basic|advanced|auto>
   --width-px=<px>            Width-aware balancing target
   --flow=<lead>x<lines>x<body>
-  --font=<px>                Font size in px (default: 18)
+  --font=<px>                Font size in pixels (default: 18)
   --language=<code>          Language code (default: en)
   --white-space=<normal|pre-wrap>
   --hyphenate                Enable hyphenation
@@ -1968,16 +1838,17 @@ Options:
 
 Formats:
   text (default), json`,
-  audit: `dk audit — Score CSS against DesignKit heuristics
+  audit: `Score source CSS against DesignKit heuristics. Rendered evidence is not collected.
 
 Usage: dk audit (--css=<file> | --stdin) [options]
 
 Options:
   --mode=<source>            Source CSS audit mode (default: source)
+  --strict                   Exit 1 after emitting the report for failed checks or unresolved contrast
 
 Formats:
   css (default), text, json`,
-  target: `dk target — Estimate interaction burden
+  target: `Estimate targeting, choice, and steering time.
 
 Usage: dk target [options]
 
@@ -1991,17 +1862,17 @@ Options:
 
 Formats:
   text (default), json`,
-  saliency: `dk saliency — Score visual importance from a design document
+  saliency: `Estimate visual importance in a design document.
 
 Usage: dk saliency (--input=<file> | --stdin) [options]
 
 Options:
   --importance=<heuristic|ml|auto>
-  --runtime-url=<url>        Runtime base URL for server-backed importance (required for remote ml/auto)
+  --runtime-url=<url>        Runtime URL for remote ml or auto importance analysis
 
 Formats:
   text (default), json`,
-  future: `dk future — Analyze content topology and generate layout CSS
+  future: `Group content and generate layout CSS.
 
 Usage: dk future --items=<file> [--query="..."] [options]
        cat items.json | dk future --stdin --query="..."
@@ -2010,17 +1881,17 @@ Options:
   --items=<file>             JSON array of {id, role, label, text} items
   --query=<string>           Semantic query describing the layout goal
   --audit                    Run dk audit on the generated layout CSS
-  --refine                   Auto-iterate until topology stabilizes
-  --iterations=<n>           Max refinement passes (default: 3)
-  --runtime-url=<url>        Server URL for LLM-driven refinement (uses kimi-k2.5 via Workers AI)
+  --refine                   Repeat refinement until topology stabilizes
+  --iterations=<n>           Maximum refinement passes (default: 3)
+  --runtime-url=<url>        Server URL for language model refinement
   --stdin                    Read items JSON from stdin
 
 Formats:
   css (default), json, text
 
 Refinement modes:
-  --refine                   Local heuristic (role demotion/promotion based on anchor scores)
-  --refine --runtime-url=<url>  LLM-driven (kimi-k2.5 analyzes topology and suggests rewrites)`
+  --refine                   Adjust roles locally from anchor scores
+  --refine --runtime-url=<url>  Use the server language model to refine content`
 };
 
 async function renderFuture(flags: FlagMap, positional: string[], io: CliIO): Promise<string> {
@@ -2038,19 +1909,19 @@ async function renderFuture(flags: FlagMap, positional: string[], io: CliIO): Pr
   } else if (flags.stdin) {
     itemsJson = await io.readStdin();
   } else {
-    fail('Provide --items=path.json or pipe JSON with --stdin', helpCommand);
+    fail('Use --items=path.json or pipe JSON with --stdin.', helpCommand);
   }
 
-  let items: FutureTopologyItem[];
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(itemsJson) as unknown;
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      fail('Items must be a non-empty JSON array', helpCommand);
-    }
-    items = parsed as FutureTopologyItem[];
+    parsed = JSON.parse(itemsJson) as unknown;
   } catch {
-    fail('Items file is not valid JSON', helpCommand);
+    fail('The items input contains invalid JSON.', helpCommand);
   }
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    fail('Items must be a non-empty JSON array.', helpCommand);
+  }
+  const items = parsed as FutureTopologyItem[];
 
   const query = queryFlag || 'Arrange these content items into a coherent layout.';
   const runtimeUrl = getStringFlag(flags, 'runtime-url') ?? io.getEnv?.('DK_RUNTIME_URL') ?? process.env.DK_RUNTIME_URL;
@@ -2135,8 +2006,8 @@ async function renderFuture(flags: FlagMap, positional: string[], io: CliIO): Pr
     const lines: string[] = [];
     for (const pass of passes) {
       const r = pass.report;
-      if (passes.length > 1) lines.push(`── Pass ${pass.iteration} ──`);
-      lines.push(`dk future — ${r.evaluation.verdict} (${r.clusters.length} clusters)`);
+      if (passes.length > 1) lines.push(`Pass ${pass.iteration}`);
+      lines.push(`Topology: ${r.evaluation.verdict} (${r.clusters.length} clusters)`);
       lines.push(`  separation: ${r.metrics.clusterSeparation}  adjacency: ${r.metrics.adjacencyConfidence}  query-align: ${r.metrics.queryAlignment}`);
       lines.push(`  anchor: ${r.recommendation.anchorId}  bridge: ${r.recommendation.bridgeId}`);
       lines.push(`  reading order: ${r.recommendation.readingOrder.join(' → ')}`);
@@ -2149,12 +2020,12 @@ async function renderFuture(flags: FlagMap, positional: string[], io: CliIO): Pr
       if (pass.diagnosis.notes.length > 0) {
         lines.push('');
         for (const note of pass.diagnosis.notes) {
-          lines.push(`  ⚠ ${note}`);
+          lines.push(`  ${note}`);
         }
       }
       if (pass.diagnosis.stable) {
         lines.push('');
-        lines.push('  ✓ Topology is stable.');
+        lines.push('  Topology is stable.');
       }
       lines.push('');
     }
@@ -2193,6 +2064,7 @@ type ComponentVerificationSummary = {
 
 type ComponentsCommandReport = {
   mode: 'verify' | 'matrix';
+  evidence: { kind: 'mathematical'; rendered: 'not-collected' };
   components: string[];
   themes: string[];
   summary: ComponentVerificationSummary;
@@ -2205,26 +2077,8 @@ type ComponentVerificationEntry = {
   slug: string;
   name: string;
   createRegistration: (theme: ReturnType<typeof createTheme>) => {
-    recipe: {
-      cases: Record<string, unknown>;
-      proofFixtures: Array<{
-        name: string;
-        caseKey: string;
-        contrast: Array<{ pass: boolean; lc: number; minLc: number }>;
-        target: Array<{ pass: boolean; actualSizePx: number; minSizePx: number }>;
-        layout: Array<{ pass: boolean; widths: number[] }>;
-        helperText: Array<{ pass: boolean; estimatedLines: number[]; maxLines: number }>;
-        optionRow: Array<{ pass: boolean; actualSizePx: number; minSizePx: number }>;
-        anchoredSurface: Array<{
-          pass: boolean;
-          viewportWidth: number;
-          viewportHeight: number;
-          surfaceWidthPx: number;
-          surfaceHeightPx: number;
-        }>;
-        motion: Array<{ pass: boolean; durationMs: number; durationMaxMs: number }>;
-      }>;
-    };
+    spec: ComponentSpec;
+    recipe: CompiledComponentRecipe;
   };
 };
 
@@ -2236,7 +2090,6 @@ type ComponentsVerificationModule = {
 };
 
 let componentsVerificationPromise: Promise<ComponentsVerificationModule> | undefined;
-const PUBLISHED_COMPONENTS_VERIFICATION_SPECIFIER = '@dkcli/components/verification';
 
 async function fileExists(filePath: string): Promise<boolean> {
   try {
@@ -2291,12 +2144,13 @@ async function loadComponentsVerificationModule(): Promise<ComponentsVerificatio
     }
 
     try {
+      // A literal source import lets the CLI bundle the pure proof registry without Svelte.
       return (await import(
-        PUBLISHED_COMPONENTS_VERIFICATION_SPECIFIER
+        '../../../packages/components/src/lib/verification.ts'
       )) as unknown as ComponentsVerificationModule;
     } catch (initialError) {
       const reason = initialError instanceof Error ? initialError.message : String(initialError);
-      fail(`Unable to load @dkcli/components/verification for dk components.\n${reason}`, 'components');
+      fail(`Unable to load bundled component verification for dk components.\n${reason}`, 'components');
     }
   })();
 
@@ -2364,28 +2218,21 @@ function resolveThemePresets(
 
 function collectFixtureFailures(
   runName: string,
-  fixture: {
-    name: string;
-    caseKey: string;
-    contrast: Array<{ pass: boolean; lc: number; minLc: number }>;
-    target: Array<{ pass: boolean; actualSizePx: number; minSizePx: number }>;
-    layout: Array<{ pass: boolean; widths: number[] }>;
-    helperText: Array<{ pass: boolean; estimatedLines: number[]; maxLines: number }>;
-    optionRow: Array<{ pass: boolean; actualSizePx: number; minSizePx: number }>;
-    anchoredSurface: Array<{ pass: boolean; viewportWidth: number; viewportHeight: number; surfaceWidthPx: number; surfaceHeightPx: number }>;
-    motion: Array<{ pass: boolean; durationMs: number; durationMaxMs: number }>;
-  }
+  fixture: ComponentProofFixture
 ): ComponentProofFailure | null {
   const reasons = [
     ...fixture.contrast
       .filter((proof) => !proof.pass)
       .map((proof) => `contrast ${proof.lc.toFixed(1)}Lc < ${proof.minLc}Lc`),
+    ...fixture.distinctness
+      .filter((proof) => !proof.pass)
+      .map((proof) => `distinctness ${Math.min(proof.report.minDeltaE, ...(proof.cvd ? Object.values(proof.report.cvd).map((result) => result.minDeltaE) : []))} ΔE < ${proof.requiredMinDeltaE} ΔE (${proof.tokens.join(', ')}${proof.cvd ? '; CVD required' : ''})`),
     ...fixture.target
       .filter((proof) => !proof.pass)
       .map((proof) => `target ${proof.actualSizePx}px < ${proof.minSizePx}px`),
     ...fixture.layout
       .filter((proof) => !proof.pass)
-      .map((proof) => `layout overflow at ${proof.widths.join(', ')}px`),
+      .map((proof) => `layout overflow at ${proof.widthChecks.filter((check) => !check.pass).map((check) => check.width).join(', ')}px`),
     ...fixture.helperText
       .filter((proof) => !proof.pass)
       .map((proof) => `helper text ${proof.estimatedLines.join(', ')} lines > ${proof.maxLines}`),
@@ -2397,11 +2244,15 @@ function collectFixtureFailures(
       .map((proof) => `surface ${proof.surfaceWidthPx}x${proof.surfaceHeightPx}px exceeds ${proof.viewportWidth}x${proof.viewportHeight}px viewport`),
     ...fixture.motion
       .filter((proof) => !proof.pass)
-      .map((proof) => `motion ${proof.durationMs}ms > ${proof.durationMaxMs}ms`)
+      .map((proof) => `motion ${proof.durationMs}ms > ${proof.durationMaxMs}ms`),
+    ...fixture.coverage.unsupported.map((kind) => `unsupported proof: ${kind}`)
   ];
 
-  if (reasons.length === 0) {
+  if (reasons.length === 0 && fixture.resolved && fixture.pass) {
     return null;
+  }
+  if (reasons.length === 0) {
+    reasons.push(fixture.resolved ? 'proof fixture failed' : 'proof fixture could not be resolved');
   }
 
   return {
@@ -2445,6 +2296,7 @@ function buildComponentsReport(
 
   return {
     mode,
+    evidence: { kind: 'mathematical', rendered: 'not-collected' },
     components: componentEntries.map((entry) => entry.slug),
     themes: themes.map((theme) => theme.id),
     summary: {
@@ -2461,7 +2313,7 @@ function buildComponentsReport(
 }
 
 function renderComponentsVerifyText(report: ComponentsCommandReport): string {
-  const lines = ['dk components verify'];
+  const lines: string[] = [];
   lines.push(`  components: ${report.summary.componentCount}`);
   lines.push(
     `  themes: ${report.runs
@@ -2473,23 +2325,27 @@ function renderComponentsVerifyText(report: ComponentsCommandReport): string {
   lines.push(`  proof fixtures: ${report.summary.fixtureCount}`);
 
   if (report.summary.pass) {
-    lines.push('  result: all component proofs passed');
+    lines.push('  result: all declared mathematical component proofs passed');
   } else {
     lines.push(
       `  result: ${report.summary.passedRuns}/${report.summary.runCount} runs passed, ${report.summary.failedFixtureCount} fixtures failed`
     );
   }
 
+  lines.push('  rendered evidence: not collected');
   const fewRuns = report.runs.length <= 12;
   if (fewRuns || !report.summary.pass) {
     lines.push('');
     for (const run of report.runs) {
       lines.push(
-        `${run.pass ? '✓' : '✗'} ${run.themeName} / ${run.name} — ${run.fixtureCount} fixtures across ${run.caseCount} cases`
+        `${run.pass ? 'Pass' : 'Fail'}: ${run.name}, ${run.themeName}, ${run.fixtureCount} fixtures across ${run.caseCount} cases`
       );
       if (!run.pass) {
         for (const failure of run.failures) {
-          lines.push(`    ${failure.fixtureName} (${failure.caseKey})`);
+          const caseLabel = failure.fixtureName.endsWith(`(${failure.caseKey})`)
+            ? failure.fixtureName
+            : `${failure.fixtureName} (${failure.caseKey})`;
+          lines.push(`    ${caseLabel}`);
           for (const reason of failure.reasons) {
             lines.push(`      - ${reason}`);
           }
@@ -2526,7 +2382,7 @@ function renderComponentsMatrixText(report: ComponentsCommandReport, themes: Com
   const header = ['Component', ...themeOrder.map((theme) => theme.name)];
   const nameWidth = Math.max(header[0].length, ...report.runs.map((run) => run.name.length));
   const cellWidth = Math.max(...header.slice(1).map((label) => label.length), 7);
-  const lines = ['dk components matrix', ''];
+  const lines = ['Mathematical proofs. Rendered evidence: not collected.', ''];
 
   lines.push(
     `${safePad(header[0], nameWidth)}  ${header
@@ -2543,7 +2399,7 @@ function renderComponentsMatrixText(report: ComponentsCommandReport, themes: Com
       if (!run) {
         return safePad('-', cellWidth);
       }
-      return safePad(`${run.pass ? '✓' : '✗'}${run.fixtureCount}`, cellWidth);
+      return safePad(`${run.pass ? 'Pass' : 'Fail'} ${run.fixtureCount}`, cellWidth);
     });
     lines.push(`${safePad(name, nameWidth)}  ${cells.join('  ')}`);
   }
@@ -2555,7 +2411,7 @@ function renderComponentsMatrixText(report: ComponentsCommandReport, themes: Com
   return lines.join('\n');
 }
 
-async function renderComponents(flags: FlagMap, positional: string[]): Promise<string> {
+async function renderComponents(flags: FlagMap, positional: string[]): Promise<ProofCommandResult> {
   const helpCommand = 'components';
   const subcommand = (positional[0] ?? 'verify').toLowerCase();
   const format = resolveFormat(flags, 'text', ['text', 'json'], helpCommand);
@@ -2569,11 +2425,224 @@ async function renderComponents(flags: FlagMap, positional: string[]): Promise<s
   const themes = resolveThemePresets(flags, helpCommand, verification);
   const report = buildComponentsReport(subcommand as 'verify' | 'matrix', componentEntries, themes);
 
-  if (format === 'json') {
-    return formatJson(report);
-  }
+  return {
+    output: format === 'json' ? formatJson(report) : subcommand === 'matrix' ? renderComponentsMatrixText(report, themes) : renderComponentsVerifyText(report),
+    pass: report.summary.pass,
+    reasons: report.runs.flatMap((run) => run.failures.flatMap((failure) => failure.reasons.map((reason) => `${failure.fixtureName}: ${reason}`)))
+  };
+}
 
-  return subcommand === 'matrix' ? renderComponentsMatrixText(report, themes) : renderComponentsVerifyText(report);
+type ProjectMathReport = {
+  mode: 'verify';
+  projectId: string;
+  revision: number;
+  projectIdentity: string;
+  viewports: number[];
+  evidence: { kind: 'mathematical'; rendered: 'not-collected' };
+  summary: ComponentVerificationSummary;
+  runs: ComponentVerificationRun[];
+  fixtures: ComponentProofFixture[];
+};
+
+async function readProject(flags: FlagMap, io: CliIO): Promise<ThemeProject> {
+  const input = getStringFlag(flags, 'input');
+  if (!input) fail('Set --input to a portable theme project JSON file.', 'project');
+  const checked = validateThemeProject(await readJsonFile(io, input, 'project'));
+  if (!checked.valid) {
+    fail(`Invalid theme project: ${Object.entries(checked.errors).map(([field, error]) => `${field}: ${error}`).join(' ')}`, 'project');
+  }
+  return checked.project;
+}
+
+async function buildProjectMathReport(project: ThemeProject): Promise<ProjectMathReport> {
+  const verification = await loadComponentsVerificationModule();
+  const theme = createProjectTheme(project.theme);
+  const fixtures: ComponentProofFixture[] = [];
+  const runs = verification.COMPONENT_VERIFICATION_REGISTRY.map((entry) => {
+    const registration = entry.createRegistration(theme);
+    const componentFixtures = compileProjectComponentFixtures(registration.spec, registration.recipe, theme, project.viewports);
+    fixtures.push(...componentFixtures);
+    const failures = componentFixtures
+      .map((fixture) => collectFixtureFailures(`${theme.name} / ${entry.name}`, fixture))
+      .filter((failure): failure is ComponentProofFailure => failure !== null);
+    return {
+      slug: entry.slug, name: entry.name, themeId: project.id, themeName: theme.name,
+      caseCount: Object.keys(registration.recipe.cases).length,
+      fixtureCount: componentFixtures.length, pass: failures.length === 0, failures
+    };
+  });
+  const failedFixtureCount = runs.reduce((count, run) => count + run.failures.length, 0);
+  return {
+    mode: 'verify', projectId: project.id, revision: project.revision,
+    projectIdentity: await projectIdentity(project), viewports: project.viewports,
+    evidence: { kind: 'mathematical', rendered: 'not-collected' },
+    summary: {
+      componentCount: runs.length, themeCount: 1, runCount: runs.length,
+      passedRuns: runs.filter((run) => run.pass).length, fixtureCount: fixtures.length,
+      failedFixtureCount, pass: failedFixtureCount === 0
+    },
+    runs, fixtures
+  };
+}
+
+function projectMathReasons(report: ProjectMathReport): string[] {
+  return report.runs.flatMap((run) => run.failures.flatMap((failure) =>
+    failure.reasons.map((reason) => `${failure.fixtureName}: ${reason}`)));
+}
+
+async function renderProject(flags: FlagMap, positional: string[], io: CliIO): Promise<ProofCommandResult> {
+  const subcommand = positional.at(0)?.toLowerCase();
+  if (!['verify', 'qualify', 'patch'].includes(subcommand ?? '') || positional.length !== 1) {
+    fail('Usage: dk project <verify|qualify|patch> --input=<project.json> [options]', 'project');
+  }
+  const format = resolveFormat(flags, subcommand === 'patch' ? 'json' : 'text', subcommand === 'patch' ? ['json'] : ['text', 'json'], 'project');
+  const project = await readProject(flags, io);
+  if (subcommand === 'patch') {
+    const patchFile = getStringFlag(flags, 'patch');
+    const outputFile = getStringFlag(flags, 'output');
+    if (!patchFile || !outputFile) fail('Set --patch and --output to apply a project patch.', 'project');
+    if (!io.writeFile) fail('The CLI file adapter does not support writing a project. Provide writeFile.', 'project');
+    const revised = await applyThemeProjectPatch(project, await readJsonFile(io, patchFile, 'project'));
+    createProjectTheme(revised.theme);
+    const output = formatJson(revised);
+    await io.writeFile(path.resolve(io.cwd, outputFile), `${output}\n`);
+    return { output, pass: true, reasons: [] };
+  }
+  if (subcommand === 'verify') {
+    const report = await buildProjectMathReport(project);
+    const textReport: ComponentsCommandReport = {
+      mode: 'verify', evidence: report.evidence,
+      components: report.runs.map((run) => run.slug), themes: [project.id],
+      summary: report.summary, runs: report.runs
+    };
+    return {
+      output: format === 'json' ? formatJson(report) : `Project: ${project.theme.name} (revision ${project.revision})\nIdentity: ${report.projectIdentity}\nRecorded widths: ${project.viewports.join(', ')}px\n${renderComponentsVerifyText(textReport)}`,
+      pass: report.summary.pass, reasons: projectMathReasons(report)
+    };
+  }
+  return renderProjectQualification(flags, project, io, format);
+}
+
+function projectQualificationReasons(receipt: ProjectQualificationReceipt): string[] {
+  return [
+    ...receipt.mathematics.components.flatMap((result) => [
+      ...result.failedCaseIds.map((id) => `${result.component}: mathematical fixture failed (${id})`),
+      ...result.unsupportedCaseIds.map((id) => `${result.component}: unsupported mathematical fixture (${id})`)
+    ]),
+    ...receipt.measurements.flatMap((measurement) => [
+      ...measurement.checks.filter((check) => check.status !== 'pass').map((check) =>
+        `${measurement.component} / ${measurement.caseId} / ${measurement.viewport.width}px: ${check.kind} ${check.status}: ${check.message}`),
+      ...measurement.geometry.filter((geometry) => geometry.textOverflow || geometry.containerOverflow).map((geometry) =>
+        `${measurement.component} / ${measurement.caseId} / ${measurement.viewport.width}px: measured overflow at ${geometry.selector}`)
+    ]),
+    ...receipt.coverage.untested.map((item) => `untested: ${item}`),
+    ...receipt.coverage.unsupported.map((item) => `unsupported: ${item}`),
+    ...(!receipt.fonts.ready ? ['Requested fonts are not ready.'] : []),
+    ...(receipt.status !== 'passed' ? [`Runtime qualification is ${receipt.status}.`] : [])
+  ];
+}
+
+async function readQualificationBody(response: Response, maxBytes: number, truncate = false): Promise<string> {
+  const reader = response.body?.getReader();
+  if (!reader) return '';
+  const decoder = new TextDecoder();
+  let text = '';
+  let bytes = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const remaining = maxBytes - bytes;
+      if (value.byteLength > remaining) {
+        await reader.cancel();
+        if (truncate) return text + decoder.decode(value.subarray(0, remaining));
+        fail('Qualification runtime receipt exceeds 2 MiB.', 'project');
+      }
+      bytes += value.byteLength;
+      text += decoder.decode(value, { stream: true });
+    }
+    return text + decoder.decode();
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+async function renderProjectQualification(
+  flags: FlagMap,
+  project: ThemeProject,
+  io: CliIO,
+  format: OutputFormat
+): Promise<ProofCommandResult> {
+  const runtimeUrl = getStringFlag(flags, 'runtime-url');
+  if (!runtimeUrl) fail('Set --runtime-url to an explicit qualification runtime.', 'project');
+  let endpoint: URL;
+  try {
+    const base = new URL(runtimeUrl);
+    if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password) throw new Error('Use an HTTP or HTTPS URL without embedded credentials.');
+    endpoint = new URL('/api/dk/projects/qualify', base);
+  } catch {
+    fail(`Invalid qualification runtime URL "${runtimeUrl}". Use HTTP or HTTPS without embedded credentials.`, 'project');
+  }
+  const fingerprint = getStringFlag(flags, 'artifact-fingerprint');
+  if (fingerprint !== undefined && !/^[a-f0-9]{64}$/.test(fingerprint)) {
+    fail('Option --artifact-fingerprint requires a lowercase SHA-256 digest.', 'project');
+  }
+  const token = getStringFlag(flags, 'runtime-token');
+  const browser = getStringFlag(flags, 'browser');
+  const colorScheme = getStringFlag(flags, 'color-scheme');
+  const zoom = getStringFlag(flags, 'zoom');
+  const cases = getStringFlag(flags, 'cases');
+  const fontFixture = getStringFlag(flags, 'font-fixture');
+  const selection = validateQualificationOptions({
+    ...(browser !== undefined ? { browser } : {}),
+    ...(colorScheme !== undefined ? { colorScheme } : {}),
+    ...(zoom !== undefined ? { zoom: Number(zoom) } : {}),
+    ...(cases !== undefined ? { cases: cases.split(',').map((item) => item.trim()) } : {}),
+    ...(fontFixture !== undefined ? { fontFixture } : {})
+  });
+  if (!selection.valid) fail(selection.errors.join(' '), 'project');
+  const options = selection.options;
+  const response = await (io.fetch ?? fetch)(endpoint.toString(), {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ project: qualificationProjectInput(project), ...(Object.keys(options).length ? { options } : {}) }),
+    signal: AbortSignal.timeout(120_000)
+  });
+  if (!response.ok) {
+    const message = await readQualificationBody(response, 1024, true);
+    fail(`Qualification runtime returned ${response.status}${message ? `: ${message}` : '.'}`, 'project');
+  }
+  const body = await readQualificationBody(response, MAX_QUALIFICATION_BYTES);
+  let value: unknown;
+  try {
+    value = JSON.parse(body);
+  } catch {
+    fail('Qualification runtime response must be valid JSON.', 'project');
+  }
+  const receipt = await assertProjectQualificationMatches(project, value, fingerprint);
+  assertQualificationOptionsMatch(receipt, options);
+  const verification = await loadComponentsVerificationModule();
+  const expected = verification.COMPONENT_VERIFICATION_REGISTRY.map((entry) => entry.slug).sort();
+  const observed = receipt.mathematics.components.map((result) => result.component).sort();
+  if (JSON.stringify(expected) !== JSON.stringify(observed)) {
+    fail('Qualification mathematical coverage must include all 38 shipped components.', 'project');
+  }
+  const reasons = projectQualificationReasons(receipt);
+  return {
+    output: format === 'json' ? formatJson(receipt) : [
+      `Project: ${project.theme.name} (revision ${project.revision})`,
+      `Identity: ${receipt.projectIdentity}`,
+      `Artifact fingerprint: ${receipt.artifactFingerprint}${fingerprint === undefined ? ' (reported by runtime)' : ' (matches requested fingerprint)'}`,
+      `Browser: ${receipt.browser.provider}, ${receipt.browser.version}`,
+      ...(receipt.environment ? [`Environment: ${receipt.environment.colorScheme}; CSS zoom ${receipt.environment.zoom * 100}% (${receipt.environment.zoomMode}); DPR ${receipt.environment.dpr}${receipt.environment.fontFixture ? `; font fixture ${receipt.environment.fontFixture}` : ''}`] : []),
+      `Result: ${receipt.status}`,
+      `Mathematical fixtures: ${receipt.mathematics.fixtureCount}, ${receipt.mathematics.failedCount} failed, ${receipt.mathematics.unsupportedCount} unsupported`,
+      `Measured scenes: ${receipt.measurements.length}, ${receipt.coverage.componentCount} components, ${receipt.coverage.widthCount} widths`,
+      'Evidence: unsigned runtime claims scoped to the recorded scenes and checks.',
+      ...reasons.map((reason) => `  - ${reason}`)
+    ].join('\n'),
+    pass: receipt.status === 'passed', reasons
+  };
 }
 
 function renderHelp(command: string | undefined, executableName: string): string {
@@ -2591,12 +2660,19 @@ export async function runCli(argv: string[], io: CliIO = createNodeIO()): Promis
 
   try {
     let output: string;
+    let proof: ProofCommandResult | undefined;
     switch (command) {
+      case 'project':
+        proof = await renderProject(flags, positional, io);
+        output = proof.output;
+        break;
       case 'components':
-        output = await renderComponents(flags, positional);
+        proof = await renderComponents(flags, positional);
+        output = proof.output;
         break;
       case 'perfect':
-        output = renderPerfect(flags);
+        proof = renderPerfect(flags);
+        output = proof.output;
         break;
       case 'palette':
         output = renderPalette(flags, positional);
@@ -2638,7 +2714,8 @@ export async function runCli(argv: string[], io: CliIO = createNodeIO()): Promis
         output = await renderLinebreak(flags, positional, io);
         break;
       case 'audit':
-        output = await renderAudit(flags, io);
+        proof = await renderAudit(flags, io);
+        output = proof.output;
         break;
       case 'target':
         output = renderTarget(flags);
@@ -2657,6 +2734,10 @@ export async function runCli(argv: string[], io: CliIO = createNodeIO()): Promis
     }
 
     io.stdout(output);
+    if (flags.strict && proof && !proof.pass) {
+      io.stderr(`dk ${command}: strict verification failed\n${proof.reasons.map((reason) => `  - ${reason}`).join('\n')}`);
+      return 1;
+    }
     return 0;
   } catch (error) {
     const cliLikeError =

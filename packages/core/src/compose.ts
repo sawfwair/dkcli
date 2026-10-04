@@ -1,4 +1,4 @@
-// Compose — Layout composition scoring inspired by computable aesthetics work.
+// Scores geometric composition heuristics.
 
 import type { DesignDocument } from './design.ts';
 import { analyzeImportance, type ImportanceReport } from './saliency.ts';
@@ -67,6 +67,7 @@ function gapSeries(values: number[]): number[] {
   return gaps;
 }
 
+/** Scores geometric composition heuristics for rectangles within a frame. */
 export function scoreComposition(rects: Rect[], frame: Frame): CompositionScore {
   const centerX = frame.width / 2;
   const centerY = frame.height / 2;
@@ -182,6 +183,7 @@ export type AdvancedCompositionScore = {
   total: number;
 };
 
+/** Scores composition heuristics using element importance estimates. */
 export function scoreDesignComposition(
   document: DesignDocument,
   importanceReport?: ImportanceReport

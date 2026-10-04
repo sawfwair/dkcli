@@ -33,8 +33,15 @@ export function computeAnchoredPosition(input: {
   offset: number;
   viewportWidth: number;
   viewportHeight: number;
+  coordinateScale?: number;
 }): AnchoredPosition {
   const { anchor, surface, offset, viewportWidth, viewportHeight } = input;
+  const scale = Number.isFinite(input.coordinateScale) && (input.coordinateScale ?? 0) > 0 ? input.coordinateScale! : 1;
+  const toCssPosition = (position: AnchoredPosition): AnchoredPosition => ({ ...position, left: position.left / scale, top: position.top / scale });
+  const clampCrossAxis = (position: AnchoredPosition): AnchoredPosition =>
+    position.placement === 'top' || position.placement === 'bottom'
+      ? { ...position, left: Math.max(8, Math.min(position.left, viewportWidth - surface.width - 8)) }
+      : { ...position, top: Math.max(8, Math.min(position.top, viewportHeight - surface.height - 8)) };
   const positions: Record<Placement, AnchoredPosition> = {
     bottom: {
       left: anchor.left,
@@ -65,7 +72,7 @@ export function computeAnchoredPosition(input: {
       : fitsHorizontally(preferred.left, surface.width, viewportWidth));
 
   if (fitsPreferred) {
-    return preferred;
+    return toCssPosition(clampCrossAxis(preferred));
   }
 
   const fallbacks: Placement[] = input.placement === 'bottom' ? ['top', 'right', 'left'] : ['bottom', 'right', 'left'];
@@ -76,13 +83,13 @@ export function computeAnchoredPosition(input: {
         ? fitsVertically(candidate.top, surface.height, viewportHeight)
         : fitsHorizontally(candidate.left, surface.width, viewportWidth));
     if (fits) {
-      return candidate;
+      return toCssPosition(clampCrossAxis(candidate));
     }
   }
 
-  return {
+  return toCssPosition({
     left: Math.max(8, Math.min(preferred.left, viewportWidth - surface.width - 8)),
     top: Math.max(8, Math.min(preferred.top, viewportHeight - surface.height - 8)),
     placement: preferred.placement
-  };
+  });
 }

@@ -115,6 +115,7 @@
           class="stepper-item"
           style={`${slotStyles.item} ${slotStyles.label} ${slotStyles.description} ${slotStyles.indicator}`}
           type="button"
+          disabled={!interactive}
           role={interactive ? 'tab' : 'button'}
           aria-selected={interactive ? (selected ? 'true' : 'false') : undefined}
           data-selected={selected}

@@ -187,7 +187,8 @@ export const selectSpec: ComponentSpec = createComponentSpec({
         surfaceWidth: slotVar('surface', '--dk-select-surface-width'),
         surfaceHeight: literal('280px'),
         offset: slotVar('root', '--dk-select-offset'),
-        viewportPadding: 16
+        viewportPadding: 16,
+        viewportConstrained: true
       }
     ]
   },

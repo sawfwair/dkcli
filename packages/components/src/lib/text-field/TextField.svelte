@@ -6,39 +6,58 @@
   import { DEFAULT_TEXT_FIELD_THEME, createTextFieldRegistration, getTextFieldRecipeCase, serializeTextFieldSlotStyles } from './text-field.recipe.js';
   import type { TextFieldSize } from './text-field.spec.js';
 
-  let nextId = 0;
+  interface $$Slots {
+    leading: Record<string, never>;
+    trailing: Record<string, never>;
+  }
+
+  const uid = $props.id();
+
   const dispatch = createEventDispatcher<{ change: { value: string } }>();
 
-  export let label: string | undefined = undefined;
-  export let description: string | undefined = undefined;
-  export let error: string | undefined = undefined;
-  export let required = false;
-  export let disabled = false;
-  export let readonly = false;
-  export let placeholder = '';
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let type = 'text';
-  export let value = '';
-  export let size: TextFieldSize = 'md';
-  export let theme: ThemeContract = DEFAULT_TEXT_FIELD_THEME;
-  export let onChange: ((detail: { value: string }) => void) | undefined = undefined;
+  interface Props {
+    label?: string | undefined;
+    description?: string | undefined;
+    error?: string | undefined;
+    required?: boolean;
+    disabled?: boolean;
+    readonly?: boolean;
+    placeholder?: string;
+    name?: string | undefined;
+    id?: string | undefined;
+    type?: string;
+    value?: string;
+    size?: TextFieldSize;
+    theme?: ThemeContract;
+    onChange?: ((detail: { value: string }) => void) | undefined;
+  }
+
+  let {
+    label = $bindable(undefined),
+    description = $bindable(undefined),
+    error = $bindable(undefined),
+    required = $bindable(false),
+    disabled = $bindable(false),
+    readonly = $bindable(false),
+    placeholder = $bindable(''),
+    name = $bindable(undefined),
+    id = $bindable(undefined),
+    type = $bindable('text'),
+    value = $bindable(''),
+    size = $bindable('md'),
+    theme = $bindable(DEFAULT_TEXT_FIELD_THEME),
+    onChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createTextFieldRegistration(DEFAULT_TEXT_FIELD_THEME);
-  const localId = `dk-text-field-${++nextId}`;
+  const localId = `dk-text-field-${uid}`;
 
-  let registration = defaultRegistration;
-  let fieldId = id ?? localId;
-  let invalid = Boolean(error);
-  let compiledCase = getTextFieldRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeTextFieldSlotStyles(compiledCase);
-
-  $: registration = theme.name === DEFAULT_TEXT_FIELD_THEME.name ? defaultRegistration : createTextFieldRegistration(theme);
-  $: fieldId = id ?? localId;
-  $: invalid = Boolean(error);
-  $: compiledCase = getTextFieldRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeTextFieldSlotStyles(compiledCase);
-  $: describedBy = error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined;
+  let registration = $derived(theme.name === DEFAULT_TEXT_FIELD_THEME.name ? defaultRegistration : createTextFieldRegistration(theme));
+  let fieldId = $derived(id ?? localId);
+  let invalid = $derived(Boolean(error));
+  let compiledCase = $derived(getTextFieldRecipeCase(registration.recipe, { size }));
+  let slotStyles = $derived(serializeTextFieldSlotStyles(compiledCase));
+  let describedBy = $derived(error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined);
 
   function handleInput(event: Event): void {
     value = (event.currentTarget as HTMLInputElement).value;
@@ -63,6 +82,7 @@
   <div class="field-shell" style={slotStyles.field} data-invalid={invalid} data-disabled={disabled}>
     {#if $$slots.leading}
       <span class="field-addon" style={slotStyles.leading}>
+        <!-- svelte-ignore slot_element_deprecated (Preserve the legacy named-slot API.) -->
         <slot name="leading" />
       </span>
     {/if}
@@ -83,6 +103,7 @@
 
     {#if $$slots.trailing}
       <span class="field-addon" style={slotStyles.trailing}>
+        <!-- svelte-ignore slot_element_deprecated (Preserve the legacy named-slot API.) -->
         <slot name="trailing" />
       </span>
     {/if}
@@ -131,11 +152,13 @@
     appearance: none;
     background: transparent;
     border: 0;
+    box-sizing: border-box;
     color: var(--dk-text-field-fg);
     flex: 1;
     font-size: var(--dk-text-field-input-font-size);
     line-height: 1.2;
     min-width: 0;
+    min-block-size: min(44px, var(--dk-text-field-block-size));
     outline: none;
   }
 

@@ -24,7 +24,7 @@ export default defineConfig({
     testTimeout: 20000,
     hookTimeout: 20000,
     include: ['src/**/*.test.{js,ts}', 'packages/**/*.test.{js,ts}'],
-    exclude: ['dist/**', 'node_modules/**', '**/.svelte-kit/**', 'packages/*/dist/**'],
+    exclude: ['**/dist/**', '**/node_modules/**', '**/.svelte-kit/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

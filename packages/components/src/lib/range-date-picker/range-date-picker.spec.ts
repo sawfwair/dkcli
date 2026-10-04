@@ -188,7 +188,8 @@ export const rangeDatePickerSpec: ComponentSpec = createComponentSpec({
         surfaceWidth: slotVar('surface', '--dk-range-surface-width'),
         surfaceHeight: literal('360px'),
         offset: slotVar('root', '--dk-range-offset'),
-        viewportPadding: 16
+        viewportPadding: 16,
+        viewportConstrained: true
       }
     ],
     layout: {

@@ -1,33 +1,43 @@
-# DECISIONS
+# Design decisions
 
-## Public repo excludes the website
+This document records implementation constraints for DesignKit contributors.
 
-The public `dkcli` repo contains the CLI, reusable packages, examples, and package verification only. The SvelteKit website, Cloudflare deploy config, DKCMS worker, public routes, static site assets, and web-only docs live in the sibling private workspace at `../dkweb`.
+## Repository ownership
 
-## Color math uses OKLCH
+The public `dkcli` repository owns the CLI, packages, examples, and package
+publication. The private `dkweb` workspace owns the workbench, web runtime,
+Cloudflare configuration, and DKCMS worker. Workbench qualification uses
+installed public artifacts.
 
-Palette and color utilities are built around OKLCH instead of HSL because the tools are intended to generate perceptually uniform scales and harmonies.
+## Color models
 
-## Contrast uses APCA
+Palette generation uses OKLCH for perceptually uniform scales and harmonies.
+Contrast constraints use the Accessible Perceptual Contrast Algorithm (APCA).
+A mathematical contrast result is separate from a rendered accessibility
+assessment.
 
-The contrast and audit engines use APCA-oriented helpers to better reflect perceptual readability than a WCAG 2 ratio alone.
+## Module imports
 
-## CLI source stays explicit
+CLI implementations import concrete modules from `src/lib/dk`.
+The `src/lib/dk/index.ts` file defines the package export surface.
 
-The `dk` command imports concrete modules from `src/lib/dk`. The barrel at `src/lib/dk/index.ts` exists as the package-facing export surface.
+## Package dependencies
 
-## Package boundaries stay directional
+`@dkcli/tokens` can depend on `@dkcli/core`. `@dkcli/components` can depend on
+both packages. Core must remain independent of tokens, components, and Svelte.
 
-`@dkcli/core` owns the framework-agnostic math and proof contracts. `@dkcli/tokens` may depend on `@dkcli/core`. `@dkcli/components` may depend on both packages. The core package must not depend on tokens, components, or Svelte.
+## Component constraints
 
-## Graphical element contrast uses minLc: 30
+Graphical indicators use `minLc: 30` in their contrast specifications.
+Description and error slots use `literal('0.8125rem')` to keep helper text sizes
+consistent across theme ratios.
 
-Component proof specs for non-text visual indicators use `minLc: 30` on their contrast proofs. Text thresholds are too strict for marks and thumbs that communicate through shape and position.
+## Proof verification
 
-## Helper text uses a literal font size
+The component matrix evaluates registered components across gallery themes.
+The public baseline retains failing width estimates. Tests verify those verdicts
+and coverage without treating mathematical results as browser measurements.
 
-Description and error slots in field/choice components use `literal('0.8125rem')` instead of `ref('type.xs')` so compact helper text remains stable across theme ratios.
-
-## Proof matrix validates component themes
-
-`packages/components/src/lib/proof-matrix.test.ts` validates components across gallery themes. This catches contrast, layout, target-size, and motion regressions that single-theme unit tests miss.
+The CLI writes proof artifacts before enforcing `--strict` failure exits.
+Consumer gates verify package declarations, server rendering, and interactions
+separately from mathematical constraints.

@@ -6,7 +6,7 @@ export default defineConfig({
   target: 'es2022',
   format: ['esm'],
   clean: true,
-  dts: true,
+  dts: { entry: { 'index': '.types/index.d.ts', 'audit': '.types/audit.d.ts', 'color': '.types/color.d.ts', 'component-compiler': '.types/component-compiler.d.ts', 'component-spec': '.types/component-spec.d.ts', 'compose': '.types/compose.d.ts', 'design': '.types/design.d.ts', 'interaction': '.types/interaction.d.ts', 'layout': '.types/layout.d.ts', 'palette': '.types/palette.d.ts', 'perception': '.types/perception.d.ts', 'saliency': '.types/saliency.d.ts', 'scale': '.types/scale.d.ts', 'theme-contract': '.types/theme-contract.d.ts', 'types': '.types/types.d.ts' } },
   sourcemap: false,
   splitting: false,
   shims: false,

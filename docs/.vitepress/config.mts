@@ -12,7 +12,7 @@ function resolveBase(): string {
 
 export default defineConfig({
   title: 'DesignKit CLI',
-  description: 'Proof-driven design tooling for palettes, scales, typography, motion, layout, and component systems.',
+  description: 'CLI and package documentation for mathematical design artifacts.',
   base: resolveBase(),
   cleanUrls: true,
   lastUpdated: true,
@@ -21,7 +21,7 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#fdf3ea' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:title', content: 'DesignKit CLI' }],
-    ['meta', { property: 'og:description', content: 'A mathematical design workbench for proofable interface systems.' }]
+    ['meta', { property: 'og:description', content: 'Generate palettes, tokens, typography, motion, layout, and mathematical evidence.' }]
   ],
   markdown: {
     theme: {
@@ -34,7 +34,7 @@ export default defineConfig({
     logo: '/mark.svg',
     search: { provider: 'local' },
     nav: [
-      { text: 'Start', link: '/getting-started' },
+      { text: 'Get started', link: '/getting-started' },
       { text: 'CLI', link: '/cli/' },
       { text: 'Packages', link: '/packages/' },
       { text: 'Guides', link: '/guides/proof-driven-design' }
@@ -44,25 +44,25 @@ export default defineConfig({
         text: 'Orientation',
         items: [
           { text: 'Home', link: '/' },
-          { text: 'Getting Started', link: '/getting-started' },
-          { text: 'Repository Tour', link: '/architecture' }
+          { text: 'Get started', link: '/getting-started' },
+          { text: 'Repository architecture', link: '/architecture' }
         ]
       },
       {
-        text: 'CLI Workbench',
+        text: 'CLI commands',
         items: [
-          { text: 'Command Map', link: '/cli/' },
+          { text: 'Command reference', link: '/cli/' },
           { text: 'Palette', link: '/cli/palette' },
-          { text: 'Scale & Type', link: '/cli/scale-type' },
-          { text: 'Motion & Layout', link: '/cli/motion-layout' },
-          { text: 'Audit & Proofs', link: '/cli/audit-proof' },
+          { text: 'Scale and typography', link: '/cli/scale-type' },
+          { text: 'Motion and layout', link: '/cli/motion-layout' },
+          { text: 'Audits and evidence', link: '/cli/audit-proof' },
           { text: 'DKCMS', link: '/cli/cms' }
         ]
       },
       {
         text: 'Packages',
         items: [
-          { text: 'Package Overview', link: '/packages/' },
+          { text: 'Package overview', link: '/packages/' },
           { text: '@dkcli/core', link: '/packages/core' },
           { text: '@dkcli/tokens', link: '/packages/tokens' },
           { text: '@dkcli/components', link: '/packages/components' }
@@ -71,17 +71,18 @@ export default defineConfig({
       {
         text: 'Guides',
         items: [
-          { text: 'Proof-Driven Design', link: '/guides/proof-driven-design' },
-          { text: 'Build A Theme', link: '/guides/build-a-theme' },
-          { text: 'Ship Components', link: '/guides/ship-components' },
-          { text: 'Release Workflow', link: '/guides/release-workflow' }
+          { text: 'Design with mathematical evidence', link: '/guides/proof-driven-design' },
+          { text: 'Build a theme', link: '/guides/build-a-theme' },
+          { text: 'Theme projects', link: '/guides/theme-projects' },
+          { text: 'Ship components', link: '/guides/ship-components' },
+          { text: 'Release workflow', link: '/guides/release-workflow' }
         ]
       },
       {
         text: 'Reference',
         items: [
-          { text: 'Architecture Blueprint', link: '/design-system-blueprint' },
-          { text: 'Generated Proof', link: '/reference/generated-proof' }
+          { text: 'Archived architecture proposal', link: '/design-system-blueprint' },
+          { text: 'Generated artifacts', link: '/reference/generated-proof' }
         ]
       }
     ],
@@ -94,11 +95,11 @@ export default defineConfig({
       text: 'Edit this page'
     },
     docFooter: {
-      prev: 'Previous proof',
-      next: 'Next proof'
+      prev: 'Previous page',
+      next: 'Next page'
     },
     footer: {
-      message: 'Released under the MIT License.',
+      message: 'Licensed under the MIT License.',
       copyright: 'Copyright © DesignKit contributors'
     }
   }

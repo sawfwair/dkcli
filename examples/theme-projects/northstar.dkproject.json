@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "northstar",
+  "revision": 1,
+  "theme": {
+    "name": "Northstar",
+    "seed": {
+      "color": "#c44724",
+      "ratio": "perfect-fourth",
+      "mode": "light",
+      "density": "comfortable",
+      "motion": "snappy"
+    },
+    "fonts": {
+      "body": "system-ui, sans-serif",
+      "display": "Georgia, serif",
+      "mono": "ui-monospace, monospace"
+    },
+    "overrides": { "radius": { "md": "8px" } }
+  },
+  "viewports": [320, 768, 1280],
+  "history": [],
+  "reviews": []
+}

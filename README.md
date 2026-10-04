@@ -3,129 +3,147 @@
 [![CI](https://github.com/sawfwair/dkcli/actions/workflows/ci.yml/badge.svg)](https://github.com/sawfwair/dkcli/actions/workflows/ci.yml)
 [![Packages](https://github.com/sawfwair/dkcli/actions/workflows/packages.yml/badge.svg)](https://github.com/sawfwair/dkcli/actions/workflows/packages.yml)
 [![Docs](https://github.com/sawfwair/dkcli/actions/workflows/docs.yml/badge.svg)](https://github.com/sawfwair/dkcli/actions/workflows/docs.yml)
-[![npm](https://img.shields.io/npm/v/%40dkcli%2Fcli?color=%23af6100)](https://www.npmjs.com/package/@dkcli/cli)
+[![npm version](https://img.shields.io/npm/v/%40dkcli%2Fcli?color=%23af6100)](https://www.npmjs.com/package/@dkcli/cli)
 
-<p align="center">
-  <img src="docs/public/readme-hero.svg" alt="DesignKit CLI turns a seed color into palette, type, motion, layout, and proof outputs." width="100%" />
-</p>
+DesignKit generates palettes, type and spacing scales, CSS tokens, and component
+proof reports for designers and frontend developers.
 
-Proof-driven design tooling for teams that want interface decisions to leave evidence behind.
+Proof reports evaluate mathematical constraints. CSS audits analyze source
+declarations and inferred backgrounds. Neither establishes rendered accessibility.
+For evidence scope and strict checks, see [Proof-driven design](docs/guides/proof-driven-design.md).
 
-DesignKit ships a deterministic CLI and package workspace for OKLCH palettes, APCA contrast, fluid scales, motion curves, optical corrections, layout rails, composition scoring, typography recommendations, CSS audits, token emission, and Svelte 5 component recipes.
+## Install the CLI
 
-## Docs
-
-- Public site: [dkcli.com](https://dkcli.com)
-- GitHub Pages workflow: [.github/workflows/docs.yml](.github/workflows/docs.yml)
-- VitePress source: [docs/](docs/)
-- Docs theme proof artifacts: [docs/.vitepress/theme/generated](docs/.vitepress/theme/generated)
-
-The docs site uses DesignKit itself. `pnpm docs:build` runs `scripts/generate-docs-design.mjs`, which invokes the local `dk` CLI to generate the docs palette, fluid scale, typography rhythm, motion curve, and proof JSON before VitePress builds.
-
-## Install
+To install the published CLI, run:
 
 ```bash
 npm install -g @dkcli/cli
 ```
 
-Or run it one-off:
+## Generate design outputs
 
-```bash
-npx @dkcli/cli --help
-```
-
-Inside this repository, use the source-owned wrapper:
-
-```bash
-pnpm install
-pnpm dk --help
-```
-
-## Quick Start
+The following commands generate a design proof, a palette, a fluid scale, and a
+source CSS audit:
 
 ```bash
 dk perfect --seed "#D96F32" --ratio perfect-fourth --motion snappy
 dk palette "#D96F32" --harmony split-complementary --json
 dk scale --fluid --ratio perfect-fourth --base-min 15 --base-max 19
-dk text --font 18 --measure 680 --contrast 72
-dk audit --css app.css
+dk audit --css CSS_FILE
 ```
 
-<p align="center">
-  <img src="docs/public/readme-proof.svg" alt="A generated DesignKit proof snapshot with palette swatches, APCA passes, layout metrics, and motion output." width="100%" />
-</p>
+Replace `CSS_FILE` with the path to a CSS file.
+
+To enforce failed or unsupported checks in CI, add `--strict` to supported proof
+and audit commands. Artifact generation without `--strict` can return a report
+that contains failures.
 
 ## Packages
 
-- `@dkcli/cli`: the `dk` and `dkcli` command line tools.
-- `@dkcli/core`: framework-agnostic math, proofs, specs, and recipe compilation.
-- `@dkcli/tokens`: compiled themes, token aliases, and CSS/JSON emitters.
-- `@dkcli/components`: Svelte 5 components backed by DesignKit recipes and themes.
+The workspace contains these packages:
 
-## Command Families
+- `@dkcli/cli`: the `dk` and `dkcli` command-line tools
+- `@dkcli/core`: design math, proof contracts, and component recipe compilation
+- `@dkcli/tokens`: theme generation and CSS and JSON emitters
+- `@dkcli/components`: Svelte 5 components with compiled recipes and themes
+
+## Command families
+
+The following table groups the commands by purpose:
 
 | Family | Commands | Purpose |
 | --- | --- | --- |
-| Proof | `perfect`, `contrast`, `target`, `audit` | Generate evidence for readability, interaction burden, CSS quality, and complete design states. |
-| Foundations | `palette`, `distinct`, `scale`, `text`, `typeset`, `linebreak` | Build color, spacing, and typography systems with measurable constraints. |
-| Motion | `ease`, `jerk` | Convert spring physics and minimum-jerk motion into CSS-ready curves. |
-| Layout | `layout`, `compose`, `saliency`, `future` | Solve rails, score composition, and explore content topology. |
-| Product | `components`, `cms` | Verify component recipes and manage hosted DKCMS content. |
+| Proof | `perfect`, `contrast`, `target`, `audit` | Evaluate design constraints and source CSS |
+| Foundations | `palette`, `distinct`, `scale`, `text`, `typeset`, `linebreak` | Generate color and type systems |
+| Motion | `ease`, `jerk` | Generate motion curves |
+| Layout | `layout`, `compose`, `saliency`, `future` | Solve layout constraints and estimate composition metrics |
+| Projects | `project verify`, `project qualify`, `project patch` | Verify, measure, and revise portable theme projects |
+| Components and content | `components`, `cms` | Verify recipes and manage DKCMS content |
 
-<p align="center">
-  <img src="docs/public/readme-map.svg" alt="DesignKit command families flowing into CLI, core, tokens, and components packages." width="100%" />
-</p>
+## Author and qualify a theme
 
-## Local Development
+Theme projects record font stacks, semantic tokens, motion settings, viewport
+widths, revisions, reviews, and measured browser evidence. The workbench and CLI
+compile the same public engine. Browser qualification uses a running workbench
+and binds its results to the authored inputs and exact package artifacts.
 
-Use Node 22 or newer and pnpm 10.33.0.
+For the format, commands, and evidence scope, see
+[Theme projects](docs/guides/theme-projects.md). A portable example is in
+[Theme project examples](examples/theme-projects/README.md).
+
+## Run the examples
+
+Both examples install package tarballs built from this checkout:
+
+- [Svelte starter](examples/svelte-starter/): field entry, selection, save, and clear
+- [Release desk](examples/sveltekit-starter/README.md): a SvelteKit demo with release
+  creation, review, filters, server validation, and theme preferences
+
+To build and verify Release desk, run:
 
 ```bash
-corepack enable
-corepack prepare pnpm@10.33.0 --activate
-pnpm install
-pnpm lint
-pnpm check:strict
-pnpm test
-pnpm build
+pnpm example:sveltekit:verify
 ```
 
-## Docs Development
+In **Appearance**, import theme JSON exported from the workbench.
 
-```bash
-pnpm docs:tokens
-pnpm docs:dev
-pnpm docs:build
-pnpm docs:preview
-```
+## Develop locally
 
-`docs:tokens` is safe in a fresh checkout: it builds the workspace packages required by the local CLI before generating docs tokens.
+Use Node.js 22 and pnpm 10.33.0.
 
-## Release Checks
+1. To activate the repository's pnpm version, run:
 
-Run the full public release gate before publishing packages or tagging a release:
+   ```bash
+   corepack enable
+   corepack prepare pnpm@10.33.0 --activate
+   ```
+
+2. To install dependencies, run:
+
+   ```bash
+   pnpm install --frozen-lockfile
+   ```
+
+3. To inspect source CLI commands, run:
+
+   ```bash
+   pnpm dk --help
+   ```
+
+4. To verify code changes, run:
+
+   ```bash
+   pnpm preflight
+   ```
+
+## Verify a release
+
+Before publishing packages, run:
 
 ```bash
 pnpm release:verify
 ```
 
-This runs linting, strict checks, tests, builds, package verification, dry packs, package-content checks, and starter verification.
+The gate checks lint, types, tests, builds, package metadata, and tarball contents.
+It also verifies the standalone CLI and both example apps from packed artifacts.
+Release desk checks include server actions and Chromium flows with and without
+JavaScript.
 
-## Architecture
+## Documentation
 
-- `src/bin/dk.ts` is the publishable CLI entrypoint compiled into `dist/bin/dk.js`.
-- `bin/dk.js` is the local development wrapper used by docs and source commands.
-- `src/lib/dk` contains deterministic CLI helpers and command implementations.
-- `src/lib/dkcms` contains typed payload helpers used by `dk cms` commands.
-- `packages/core` contains framework-agnostic design math and proof contracts.
-- `packages/tokens` emits theme tokens and CSS/JSON artifacts.
-- `packages/components` contains the Svelte component package.
-- `examples/svelte-starter` verifies the published package tarballs in a small consumer app.
+The documentation build generates its theme through the source CLI. To build the
+VitePress site, run:
 
-## Contributing And Security
+```bash
+pnpm docs:build
+```
 
-- Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR.
-- Report sensitive security issues through [SECURITY.md](SECURITY.md).
-- Do not commit `.env` files, `.npmrc`, service tokens, or deployment overlays.
+For development and package guidance, see these documents:
 
-Released under the [MIT License](LICENSE).
+- [Documentation site](https://dkcli.com)
+- [Getting started](docs/getting-started.md)
+- [Architecture](docs/architecture.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+
+DesignKit uses the [MIT License](LICENSE).

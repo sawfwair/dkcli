@@ -12,4 +12,5 @@ export type ImportanceReport = {
     focusRegions: RectLike[];
     elements: ImportanceItem[];
 };
+/** Estimates element importance from document geometry and metadata. */
 export declare function analyzeImportance(document: DesignDocument, mode?: ImportanceMode): ImportanceReport;

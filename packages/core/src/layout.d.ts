@@ -33,7 +33,9 @@ export type LayoutResult = {
     items: SolvedLayoutItem[];
     metrics: LayoutMetrics;
 };
+/** Distributes stack space using item size constraints, growth, and shrink weights. */
 export declare function solveStackLayout(items: LayoutItem[], options: LayoutSolveOptions): LayoutResult;
+/** Computes estimated element rectangles from a design document and layout heuristics. */
 export declare function solveDesignLayout(document: DesignDocument, options?: {
     importanceReport?: ImportanceReport;
     preservePositions?: boolean;

@@ -10,6 +10,9 @@
   export let as: 'button' | 'a' | undefined = undefined;
   export let iconOnly = false;
   export let loading = false;
+  export let disabled = false;
+  export let onClick: ((event: MouseEvent) => void) | undefined = undefined;
+  export let onClickEvent: ((event: MouseEvent) => void) | undefined = undefined;
   export let ariaLabel = 'Icon action';
   export let showLeading = false;
   export let showTrailing = false;
@@ -17,7 +20,7 @@
   export let showSpinner = false;
 </script>
 
-<Button {theme} {variant} {href} {as} {iconOnly} {loading} ariaLabel={iconOnly ? ariaLabel : undefined}>
+<Button {theme} {variant} {href} {as} {iconOnly} {loading} {disabled} {onClick} on:click={(event) => onClickEvent?.(event)} ariaLabel={iconOnly ? ariaLabel : undefined}>
   <svelte:fragment slot="leading">
     {#if showLeading}
       <span data-testid="leading-slot">!</span>

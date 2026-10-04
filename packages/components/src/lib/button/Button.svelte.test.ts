@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { createTheme } from '@dkcli/tokens';
 
@@ -18,6 +18,53 @@ const theme = createTheme({
 });
 
 describe('Button', () => {
+  it.each([undefined, '/checkout'])('delivers the original click through callback and legacy event for href=%s', async (href) => {
+    const onClick = vi.fn((event: MouseEvent) => event.preventDefault());
+    const onClickEvent = vi.fn();
+    const { container } = render(ButtonHarness, { props: { theme, href, onClick, onClickEvent } });
+    const element = container.querySelector('.dk-button')!;
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+
+    await fireEvent(element, event);
+
+    expect(onClick).toHaveBeenCalledOnce();
+    expect(onClick.mock.calls[0][0]).toBe(event);
+    expect(onClickEvent).toHaveBeenCalledOnce();
+    expect(onClickEvent.mock.calls[0][0]).toBe(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it('allows a legacy click listener to prevent the original anchor navigation', async () => {
+    const onClickEvent = vi.fn((event: MouseEvent) => event.preventDefault());
+    const { container } = render(ButtonHarness, { props: { theme, href: '/checkout', onClickEvent } });
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+
+    await fireEvent(container.querySelector('a')!, event);
+
+    expect(onClickEvent).toHaveBeenCalledOnce();
+    expect(onClickEvent.mock.calls[0][0]).toBe(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it.each([
+    { disabled: true },
+    { loading: true },
+    { href: '/checkout', disabled: true },
+    { href: '/checkout', loading: true }
+  ])('suppresses action delivery for an unavailable control: %o', async (props) => {
+    const onClick = vi.fn();
+    const onClickEvent = vi.fn();
+    const { container } = render(ButtonHarness, { props: { theme, ...props, onClick, onClickEvent } });
+    const event = new MouseEvent('click', { bubbles: true, cancelable: true });
+
+    await fireEvent(container.querySelector('.dk-button')!, event);
+
+    expect(onClick).not.toHaveBeenCalled();
+    expect(onClickEvent).not.toHaveBeenCalled();
+    if (props.href) expect(event.defaultPrevented).toBe(true);
+    else expect(container.querySelector('button')?.disabled).toBe(true);
+  });
+
   it('renders as a button by default and as an anchor when href is provided', () => {
     const buttonRender = render(ButtonHarness, {
       props: { theme }

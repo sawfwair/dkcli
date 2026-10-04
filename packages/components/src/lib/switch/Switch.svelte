@@ -5,32 +5,42 @@
   import { DEFAULT_SWITCH_THEME, createSwitchRegistration, getSwitchRecipeCase, serializeSwitchSlotStyles } from './switch.recipe.js';
   import type { SwitchSize } from './switch.spec.js';
 
-  let nextId = 0;
+  const uid = $props.id();
+
   const dispatch = createEventDispatcher<{ change: { checked: boolean } }>();
 
-  export let checked = false;
-  export let label = '';
-  export let description: string | undefined = undefined;
-  export let disabled = false;
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let size: SwitchSize = 'md';
-  export let theme: ThemeContract = DEFAULT_SWITCH_THEME;
-  export let onChange: ((detail: { checked: boolean }) => void) | undefined = undefined;
+  interface Props {
+    checked?: boolean;
+    label?: string;
+    description?: string | undefined;
+    disabled?: boolean;
+    name?: string | undefined;
+    id?: string | undefined;
+    size?: SwitchSize;
+    theme?: ThemeContract;
+    onChange?: ((detail: { checked: boolean }) => void) | undefined;
+  }
+
+  let {
+    checked = $bindable(false),
+    label = $bindable(''),
+    description = $bindable(undefined),
+    disabled = $bindable(false),
+    name = $bindable(undefined),
+    id = $bindable(undefined),
+    size = $bindable('md'),
+    theme = $bindable(DEFAULT_SWITCH_THEME),
+    onChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createSwitchRegistration(DEFAULT_SWITCH_THEME);
-  const localId = `dk-switch-${++nextId}`;
+  const localId = `dk-switch-${uid}`;
 
-  let registration = defaultRegistration;
-  let fieldId = id ?? localId;
-  let compiledCase = getSwitchRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeSwitchSlotStyles(compiledCase);
-
-  $: registration = theme.name === DEFAULT_SWITCH_THEME.name ? defaultRegistration : createSwitchRegistration(theme);
-  $: fieldId = id ?? localId;
-  $: compiledCase = getSwitchRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeSwitchSlotStyles(compiledCase);
-  $: describedBy = description ? `${fieldId}-description` : undefined;
+  let registration = $derived(theme.name === DEFAULT_SWITCH_THEME.name ? defaultRegistration : createSwitchRegistration(theme));
+  let fieldId = $derived(id ?? localId);
+  let compiledCase = $derived(getSwitchRecipeCase(registration.recipe, { size }));
+  let slotStyles = $derived(serializeSwitchSlotStyles(compiledCase));
+  let describedBy = $derived(description ? `${fieldId}-description` : undefined);
 
   function handleChange(event: Event): void {
     checked = (event.currentTarget as HTMLInputElement).checked;

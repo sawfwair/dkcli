@@ -194,7 +194,8 @@ export const comboboxSpec: ComponentSpec = createComponentSpec({
         surfaceWidth: slotVar('surface', '--dk-combobox-surface-width'),
         surfaceHeight: literal('280px'),
         offset: slotVar('root', '--dk-combobox-offset'),
-        viewportPadding: 16
+        viewportPadding: 16,
+        viewportConstrained: true
       }
     ]
   },

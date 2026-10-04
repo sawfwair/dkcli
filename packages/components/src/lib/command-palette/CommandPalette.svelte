@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   export type CommandPaletteItem = {
     id: string;
     label: string;
@@ -10,7 +10,8 @@
 </script>
 
 <script lang="ts">
-  import { createEventDispatcher, tick } from 'svelte';
+  import { run } from 'svelte/legacy';
+  import { createEventDispatcher, tick, untrack } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import {
@@ -29,63 +30,54 @@
     serializeCommandPaletteSlotStyles
   } from './command-palette.recipe.js';
 
+  const uid = $props.id();
+
   const dispatch = createEventDispatcher<{
     openchange: { open: boolean };
     querychange: { query: string };
     action: { id: string };
   }>();
 
-  export let open = false;
-  export let items: CommandPaletteItem[] = [];
-  export let query = '';
-  export let placeholder = 'Search commands';
-  export let emptyTitle = 'No commands found';
-  export let emptyDescription = 'Try a broader search or clear the query.';
-  export let hotkey: 'mod+k' | false = false;
-  export let theme: ThemeContract = DEFAULT_COMMAND_PALETTE_THEME;
-  export let onOpenChange: ((detail: { open: boolean }) => void) | undefined = undefined;
-  export let onQueryChange: ((detail: { query: string }) => void) | undefined = undefined;
-  export let onAction: ((detail: { id: string }) => void) | undefined = undefined;
+  interface Props {
+    open?: boolean;
+    items?: CommandPaletteItem[];
+    query?: string;
+    placeholder?: string;
+    emptyTitle?: string;
+    emptyDescription?: string;
+    hotkey?: 'mod+k' | false;
+    theme?: ThemeContract;
+    onOpenChange?: ((detail: { open: boolean }) => void) | undefined;
+    onQueryChange?: ((detail: { query: string }) => void) | undefined;
+    onAction?: ((detail: { id: string }) => void) | undefined;
+  }
+
+  let {
+    open = $bindable(false),
+    items = $bindable([]),
+    query = $bindable(''),
+    placeholder = $bindable('Search commands'),
+    emptyTitle = $bindable('No commands found'),
+    emptyDescription = $bindable('Change or clear the search.'),
+    hotkey = $bindable(false),
+    theme = $bindable(DEFAULT_COMMAND_PALETTE_THEME),
+    onOpenChange = $bindable(undefined),
+    onQueryChange = $bindable(undefined),
+    onAction = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createCommandPaletteRegistration(DEFAULT_COMMAND_PALETTE_THEME);
 
-  let registration = defaultRegistration;
-  let compiledCase = getCommandPaletteRecipeCase(defaultRegistration.recipe);
-  let slotStyles = serializeCommandPaletteSlotStyles(compiledCase);
-  let internalOpen = open;
-  let internalQuery = query;
-  let previousOpen = open;
-  let previousQuery = query;
-  let highlightIndex = 0;
+  let internalOpen = $state(untrack(() => open));
+  let internalQuery = $state(untrack(() => query));
+  let previousOpen = $state(untrack(() => open));
+  let previousQuery = $state(untrack(() => query));
+  let highlightIndex = $state(0);
   let restoreFocusEl: HTMLElement | null = null;
-  let surfaceEl: HTMLDivElement | null = null;
-  let inputEl: HTMLInputElement | null = null;
-  let itemRefs: HTMLButtonElement[] = [];
+  let surfaceEl: HTMLDivElement | null = $state(null);
+  let inputEl: HTMLInputElement | null = $state(null);
+  let itemRefs: HTMLButtonElement[] = $state([]);
   let ignoreOutsideClickUntil = 0;
-
-  $: registration =
-    theme.name === DEFAULT_COMMAND_PALETTE_THEME.name
-      ? defaultRegistration
-      : createCommandPaletteRegistration(theme);
-  $: compiledCase = getCommandPaletteRecipeCase(registration.recipe);
-  $: slotStyles = serializeCommandPaletteSlotStyles(compiledCase);
-  $: if (open !== previousOpen) {
-    internalOpen = open;
-    previousOpen = open;
-    if (internalOpen) {
-      ignoreOpeningClick();
-      void focusInput();
-    }
-  }
-  $: if (query !== previousQuery) {
-    internalQuery = query;
-    previousQuery = query;
-  }
-  $: filteredItems = filterCommandItems(items as CommandItem[], internalQuery);
-  $: groupedItems = groupCommandItems(filteredItems);
-  $: if (internalOpen && filteredItems.length > 0 && (highlightIndex < 0 || filteredItems[highlightIndex]?.disabled)) {
-    highlightIndex = firstEnabledCommandIndex(filteredItems);
-  }
 
   async function focusInput(): Promise<void> {
     await tick();
@@ -233,6 +225,35 @@
       closePalette();
     }
   }
+  let registration = $derived(theme.name === DEFAULT_COMMAND_PALETTE_THEME.name
+        ? defaultRegistration
+        : createCommandPaletteRegistration(theme));
+  let compiledCase = $derived(getCommandPaletteRecipeCase(registration.recipe));
+  let slotStyles = $derived(serializeCommandPaletteSlotStyles(compiledCase));
+  run(() => {
+    if (open !== previousOpen) {
+      internalOpen = open;
+      previousOpen = open;
+      if (internalOpen) {
+        restoreFocusEl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        ignoreOpeningClick();
+        void focusInput();
+      }
+    }
+  });
+  run(() => {
+    if (query !== previousQuery) {
+      internalQuery = query;
+      previousQuery = query;
+    }
+  });
+  let filteredItems = $derived(filterCommandItems(items as CommandItem[], internalQuery));
+  let groupedItems = $derived(groupCommandItems(filteredItems));
+  run(() => {
+    if (internalOpen && filteredItems.length > 0 && (highlightIndex < 0 || filteredItems[highlightIndex]?.disabled)) {
+      highlightIndex = firstEnabledCommandIndex(filteredItems);
+    }
+  });
 </script>
 
 <svelte:window onkeydown={handleWindowKeydown} onclick={handleWindowClick} />
@@ -254,19 +275,21 @@
         style={slotStyles.input}
         role="combobox"
         aria-expanded="true"
-        aria-controls="dk-command-palette-listbox"
-        aria-activedescendant={filteredItems[highlightIndex] ? `command-item-${filteredItems[highlightIndex].id}` : undefined}
+        aria-controls={`${uid}-listbox`}
+        aria-activedescendant={filteredItems[highlightIndex] ? `${uid}-command-item-${filteredItems[highlightIndex].id}` : undefined}
         {placeholder}
         value={internalQuery}
         oninput={(event) => emitQuery((event.currentTarget as HTMLInputElement).value)}
         onkeydown={handleInputKeydown}
       />
 
-      <div class="command-list" id="dk-command-palette-listbox" role="listbox">
+      <div class="command-list" id={`${uid}-listbox`} role="listbox">
         {#if filteredItems.length === 0}
           <div class="command-empty" style={slotStyles.empty}>
             <strong>{emptyTitle}</strong>
-            <p>{emptyDescription}</p>
+            {#if emptyDescription}
+              <p>{emptyDescription}</p>
+            {/if}
           </div>
         {:else}
           {#each groupedItems as group}
@@ -277,7 +300,7 @@
                   {@const itemIndex = filteredItems.findIndex((entry) => entry.id === item.id)}
                   <button
                     bind:this={itemRefs[itemIndex]}
-                    id={`command-item-${item.id}`}
+                    id={`${uid}-command-item-${item.id}`}
                     class="command-item"
                     style={`${slotStyles.item} ${slotStyles.itemLabel} ${slotStyles.itemMeta}`}
                     type="button"
@@ -326,6 +349,7 @@
   }
 
   .command-surface {
+    box-sizing: border-box;
     background: var(--dk-command-surface-bg);
     border: 1px solid var(--dk-command-surface-border);
     border-radius: var(--dk-command-surface-radius);

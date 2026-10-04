@@ -6,39 +6,53 @@
   import { DEFAULT_TEXTAREA_THEME, createTextareaRegistration, getTextareaRecipeCase, serializeTextareaSlotStyles } from './textarea.recipe.js';
   import type { TextareaSize } from './textarea.spec.js';
 
-  let nextId = 0;
+  const uid = $props.id();
+
   const dispatch = createEventDispatcher<{ change: { value: string } }>();
 
-  export let label: string | undefined = undefined;
-  export let description: string | undefined = undefined;
-  export let error: string | undefined = undefined;
-  export let required = false;
-  export let disabled = false;
-  export let placeholder = '';
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let value = '';
-  export let rows = 4;
-  export let resize: 'none' | 'vertical' | 'both' = 'vertical';
-  export let size: TextareaSize = 'md';
-  export let theme: ThemeContract = DEFAULT_TEXTAREA_THEME;
-  export let onChange: ((detail: { value: string }) => void) | undefined = undefined;
+  interface Props {
+    label?: string | undefined;
+    description?: string | undefined;
+    error?: string | undefined;
+    required?: boolean;
+    disabled?: boolean;
+    placeholder?: string;
+    name?: string | undefined;
+    id?: string | undefined;
+    value?: string;
+    rows?: number;
+    resize?: 'none' | 'vertical' | 'both';
+    size?: TextareaSize;
+    theme?: ThemeContract;
+    onChange?: ((detail: { value: string }) => void) | undefined;
+  }
+
+  let {
+    label = $bindable(undefined),
+    description = $bindable(undefined),
+    error = $bindable(undefined),
+    required = $bindable(false),
+    disabled = $bindable(false),
+    placeholder = $bindable(''),
+    name = $bindable(undefined),
+    id = $bindable(undefined),
+    value = $bindable(''),
+    rows = $bindable(4),
+    resize = $bindable('vertical'),
+    size = $bindable('md'),
+    theme = $bindable(DEFAULT_TEXTAREA_THEME),
+    onChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createTextareaRegistration(DEFAULT_TEXTAREA_THEME);
-  const localId = `dk-textarea-${++nextId}`;
+  const localId = `dk-textarea-${uid}`;
 
-  let registration = defaultRegistration;
-  let fieldId = id ?? localId;
-  let invalid = Boolean(error);
-  let compiledCase = getTextareaRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeTextareaSlotStyles(compiledCase);
-
-  $: registration = theme.name === DEFAULT_TEXTAREA_THEME.name ? defaultRegistration : createTextareaRegistration(theme);
-  $: fieldId = id ?? localId;
-  $: invalid = Boolean(error);
-  $: compiledCase = getTextareaRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeTextareaSlotStyles(compiledCase);
-  $: describedBy = error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined;
+  let registration = $derived(theme.name === DEFAULT_TEXTAREA_THEME.name ? defaultRegistration : createTextareaRegistration(theme));
+  let fieldId = $derived(id ?? localId);
+  let invalid = $derived(Boolean(error));
+  let compiledCase = $derived(getTextareaRecipeCase(registration.recipe, { size }));
+  let slotStyles = $derived(serializeTextareaSlotStyles(compiledCase));
+  let describedBy = $derived(error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined);
 
   function handleInput(event: Event): void {
     value = (event.currentTarget as HTMLTextAreaElement).value;

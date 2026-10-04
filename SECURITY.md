@@ -1,22 +1,30 @@
-# Security Policy
+# Security policy
 
-## Supported Versions
+This policy describes how to report security issues in DesignKit.
 
-Security fixes target the latest `main` branch and the latest published npm versions of the `@dkcli/*` packages. Older minor versions are handled on a best-effort basis.
+## Supported versions
 
-## Reporting A Vulnerability
+Security fixes target `main` and the published `@dkcli/*` package versions that
+npm identifies as `latest`. Support for earlier minor versions depends on the
+issue.
 
-Please report sensitive issues privately through GitHub Security Advisories for this repository. If that is unavailable, open a minimal public issue asking for a private contact path and do not include exploit details.
+## Report a vulnerability
 
-For non-sensitive hardening requests, use a regular GitHub issue.
+To report a sensitive issue, use the repository's private GitHub Security
+Advisories. If private reporting is unavailable, open a public issue requesting
+a contact method. Omit exploit details from the public issue.
 
-## Secrets
+For hardening requests without sensitive details, open a regular GitHub issue.
 
-Do not commit service tokens, `.env` files, `.npmrc` files, or generated package credentials. Cloudflare deployment config and private overlays belong in the sibling `../dkweb` workspace, not in this public CLI repo.
+## Protect credentials
 
-## Local Checks
+Exclude service tokens, `.env` files, `.npmrc` files, and generated credentials
+from commits. Cloudflare deployment configuration and private files belong in
+the sibling `../dkweb` workspace.
 
-Useful checks before release:
+## Check dependencies and packages
+
+Before a release, inspect dependency reports and verify the package artifacts:
 
 ```bash
 pnpm audit --audit-level low

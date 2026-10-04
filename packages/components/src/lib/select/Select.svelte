@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   export type SelectItem = {
     value: string;
     label: string;
@@ -21,60 +21,69 @@
   } from './select.recipe.js';
   import type { SelectSize } from './select.spec.js';
 
-  let nextId = 0;
+  type Props = {
+    value?: string;
+    items?: SelectItem[];
+    label?: string;
+    description?: string;
+    error?: string;
+    placeholder?: string;
+    required?: boolean;
+    disabled?: boolean;
+    name?: string;
+    id?: string;
+    size?: SelectSize;
+    theme?: ThemeContract;
+    onChange?: (detail: { value: string | undefined }) => void;
+  };
 
-  export let value: string | undefined = undefined;
-  export let items: SelectItem[] = [];
-  export let label: string | undefined = undefined;
-  export let description: string | undefined = undefined;
-  export let error: string | undefined = undefined;
-  export let placeholder = 'Select an option';
-  export let required = false;
-  export let disabled = false;
-  export let name: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let size: SelectSize = 'md';
-  export let theme: ThemeContract = DEFAULT_SELECT_THEME;
-  export let onChange: ((detail: { value: string | undefined }) => void) | undefined = undefined;
+  let {
+    value = $bindable(undefined),
+    items = $bindable([]),
+    label = $bindable(),
+    description = $bindable(),
+    error = $bindable(),
+    placeholder = $bindable('Select an option'),
+    required = $bindable(false),
+    disabled = $bindable(false),
+    name = $bindable(),
+    id = $bindable(),
+    size = $bindable('md'),
+    theme = $bindable(DEFAULT_SELECT_THEME),
+    onChange = $bindable()
+  }: Props = $props();
 
+  const uid = $props.id();
   const defaultRegistration = createSelectRegistration(DEFAULT_SELECT_THEME);
   const dispatch = createEventDispatcher<{ change: { value: string | undefined } }>();
-  const localId = `dk-select-${++nextId}`;
+  const fieldId = $derived(id ?? `dk-select-${uid}`);
+  const registration = $derived(theme.name === DEFAULT_SELECT_THEME.name ? defaultRegistration : createSelectRegistration(theme));
+  const invalid = $derived(Boolean(error));
+  const compiledCase = $derived(getSelectRecipeCase(registration.recipe, { size }));
+  const slotStyles = $derived(serializeSelectSlotStyles(compiledCase));
+  const selectedItem = $derived(findSelectedItem(items, value));
+  const describedBy = $derived(error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined);
 
-  let registration = defaultRegistration;
-  let internalOpen = false;
-  let triggerEl: HTMLButtonElement | null = null;
-  let surfaceEl: HTMLDivElement | null = null;
-  let itemRefs: HTMLButtonElement[] = [];
-  let highlightIndex = 0;
-  let fieldId = id ?? localId;
-  let currentValue = value;
-  let invalid = Boolean(error);
-  let position = { left: 0, top: 0, placement: 'bottom' as Placement };
-  let compiledCase = getSelectRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeSelectSlotStyles(compiledCase);
+  let internalOpen = $state(false);
+  let triggerEl = $state<HTMLButtonElement | null>(null);
+  let surfaceEl = $state<HTMLDivElement | null>(null);
+  let itemRefs = $state<HTMLButtonElement[]>([]);
+  let highlightIndex = $state(-1);
+  let viewportInlineSize = $state('100vw');
+  let position = $state({ left: 0, top: 0, placement: 'bottom' as Placement });
 
-  $: registration = theme.name === DEFAULT_SELECT_THEME.name ? defaultRegistration : createSelectRegistration(theme);
-  $: fieldId = id ?? localId;
-  $: if (value !== undefined) {
-    currentValue = value;
-  }
-  $: invalid = Boolean(error);
-  $: compiledCase = getSelectRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeSelectSlotStyles(compiledCase);
-  $: selectedItem = findSelectedItem(items, currentValue);
-  $: describedBy = error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined;
-  $: if (internalOpen) {
-    const selectedIndex = items.findIndex((item) => item.value === currentValue && !item.disabled);
-    highlightIndex = selectedIndex >= 0 ? selectedIndex : Math.max(0, firstEnabledIndex(items));
-    void syncPosition();
-  }
+  $effect(() => {
+    if (disabled) internalOpen = false;
+  });
 
   async function syncPosition(): Promise<void> {
     await tick();
-    if (!triggerEl || !surfaceEl || typeof window === 'undefined') {
-      return;
-    }
+    if (!internalOpen || !triggerEl || !surfaceEl) return;
+    const rootZoom = Number.parseFloat(getComputedStyle(document.documentElement).zoom);
+    const coordinateScale = Number.isFinite(rootZoom) && rootZoom > 0 ? rootZoom : 1;
+    viewportInlineSize = `${window.innerWidth / coordinateScale}px`;
+    await tick();
+    if (!internalOpen || !triggerEl || !surfaceEl) return;
     const anchor = triggerEl.getBoundingClientRect();
     const surface = surfaceEl.getBoundingClientRect();
     position = computeAnchoredPosition({
@@ -83,39 +92,48 @@
       placement: 'bottom',
       offset: 8,
       viewportWidth: window.innerWidth,
-      viewportHeight: window.innerHeight
+      viewportHeight: window.innerHeight,
+      coordinateScale
     });
     itemRefs[highlightIndex]?.focus();
   }
 
-  function handleWindowClick(event: MouseEvent): void {
-    if (!internalOpen) {
-      return;
-    }
-    if (isEventOutside(surfaceEl, event.target) && isEventOutside(triggerEl, event.target)) {
-      closeList();
+  function handleOutsideEvent(event: MouseEvent | FocusEvent): void {
+    if (internalOpen && isEventOutside(surfaceEl, event.target) && isEventOutside(triggerEl, event.target)) {
+      closeList(false);
     }
   }
 
-  function emitChange(nextValue: string | undefined): void {
-    currentValue = nextValue;
-    value = nextValue;
-    onChange?.({ value: nextValue });
-    dispatch('change', { value: nextValue });
+  function chooseItem(item: SelectItem): void {
+    if (disabled || item.disabled) return;
+    value = item.value;
+    onChange?.({ value: item.value });
+    dispatch('change', { value: item.value });
+    closeList();
   }
 
   function openList(): void {
+    if (disabled || internalOpen) return;
+    const selectedIndex = items.findIndex((item) => item.value === value && !item.disabled);
+    highlightIndex = selectedIndex >= 0 ? selectedIndex : firstEnabledIndex(items);
     internalOpen = true;
+    void syncPosition();
   }
 
-  function closeList(): void {
+  function closeList(restoreFocus = true): void {
     internalOpen = false;
-    void tick().then(() => {
-      triggerEl?.focus();
-    });
+    if (restoreFocus) void tick().then(() => triggerEl?.focus());
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent): void {
+    if (internalOpen && event.key === 'Escape') {
+      closeList();
+      event.preventDefault();
+    }
   }
 
   function handleKeydown(event: KeyboardEvent): void {
+    if (disabled) return;
     if (!internalOpen) {
       if (event.key === 'ArrowDown' || event.key === 'Enter' || event.key === ' ') {
         openList();
@@ -123,29 +141,28 @@
       }
       return;
     }
-
     if (event.key === 'Escape') {
       closeList();
-      return;
-    }
-
-    const nextIndex = nextListIndex(items, highlightIndex, event.key, { orientation: 'vertical' });
-    if (nextIndex !== highlightIndex) {
-      highlightIndex = nextIndex;
-      itemRefs[nextIndex]?.focus();
       event.preventDefault();
       return;
     }
+    if (event.key === 'Tab') {
+      closeList(false);
+      return;
+    }
 
-    if ((event.key === 'Enter' || event.key === ' ') && items[highlightIndex] && !items[highlightIndex].disabled) {
-      emitChange(items[highlightIndex].value);
-      closeList();
+    if (['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) {
+      highlightIndex = nextListIndex(items, highlightIndex, event.key, { orientation: 'vertical' });
+      itemRefs[highlightIndex]?.focus();
+      event.preventDefault();
+    } else if ((event.key === 'Enter' || event.key === ' ') && items[highlightIndex]) {
+      chooseItem(items[highlightIndex]);
       event.preventDefault();
     }
   }
 </script>
 
-<svelte:window onclick={handleWindowClick} onkeydown={handleKeydown} />
+<svelte:window onclick={handleOutsideEvent} onfocusin={handleOutsideEvent} onkeydown={handleWindowKeydown} />
 
 <FieldFrame
   {label}
@@ -160,11 +177,12 @@
   descriptionStyle={slotStyles.description}
   errorStyle={slotStyles.error}
 >
-  <input type="hidden" {name} value={currentValue} />
+  <input type="hidden" {name} {value} {disabled} />
 
   <button
     bind:this={triggerEl}
     class="select-trigger"
+    id={fieldId}
     style={`${slotStyles.trigger} ${slotStyles.icon}`}
     type="button"
     aria-haspopup="listbox"
@@ -172,6 +190,7 @@
     aria-controls={`${fieldId}-listbox`}
     aria-describedby={describedBy}
     {disabled}
+    onkeydown={handleKeydown}
     onclick={() => {
       if (internalOpen) {
         closeList();
@@ -189,10 +208,11 @@
   <div
     bind:this={surfaceEl}
     class="select-surface"
-    style={`${slotStyles.surface}; left:${position.left}px; top:${position.top}px;`}
+    style={`${slotStyles.surface}; --dk-viewport-inline-size:${viewportInlineSize}; left:${position.left}px; top:${position.top}px;`}
     role="listbox"
     id={`${fieldId}-listbox`}
     tabindex="-1"
+    onkeydown={handleKeydown}
   >
     {#each items as item, index (item.value)}
       <button
@@ -201,14 +221,13 @@
         style={`${slotStyles.item} ${slotStyles.itemLabel} ${slotStyles.itemDescription}`}
         type="button"
         role="option"
-        aria-selected={currentValue === item.value ? 'true' : 'false'}
-        data-selected={currentValue === item.value}
+        aria-selected={value === item.value ? 'true' : 'false'}
+        data-selected={value === item.value}
         data-highlighted={highlightIndex === index}
-        disabled={item.disabled}
-        onclick={() => {
-          emitChange(item.value);
-          closeList();
-        }}
+        disabled={item.disabled || disabled}
+        tabindex="-1"
+        onfocus={() => { highlightIndex = index; }}
+        onclick={() => chooseItem(item)}
       >
         <span class="select-item-copy">
           <span class="select-item-label">{item.label}</span>
@@ -216,7 +235,7 @@
             <span class="select-item-description">{item.description}</span>
           {/if}
         </span>
-        {#if currentValue === item.value}
+        {#if value === item.value}
           <span aria-hidden="true">✓</span>
         {/if}
       </button>
@@ -254,12 +273,13 @@
   }
 
   .select-surface {
+    box-sizing: border-box;
     background: var(--dk-select-surface-bg);
     border: 1px solid var(--dk-select-surface-border);
     border-radius: var(--dk-select-surface-radius);
     box-shadow: var(--dk-select-surface-shadow);
     color: var(--dk-select-surface-fg);
-    inline-size: min(var(--dk-select-surface-width), calc(100vw - 2rem));
+    inline-size: min(var(--dk-select-surface-width), calc(var(--dk-viewport-inline-size, 100vw) - 2rem));
     padding: var(--dk-select-surface-padding);
     position: fixed;
     z-index: 45;
@@ -288,6 +308,8 @@
   .select-item-copy {
     display: grid;
     gap: 0.18rem;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
     text-align: left;
   }
 

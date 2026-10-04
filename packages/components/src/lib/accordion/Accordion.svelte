@@ -1,4 +1,4 @@
-<script context="module" lang="ts">
+<script module lang="ts">
   export type AccordionItem = {
     value: string;
     label: string;
@@ -9,6 +9,8 @@
 </script>
 
 <script lang="ts">
+  import { untrack } from 'svelte';
+  import { run } from 'svelte/legacy';
   import { writable } from 'svelte/store';
   import type { ThemeContract } from '@dkcli/core';
 
@@ -20,26 +22,27 @@
   } from './accordion.recipe.js';
   import type { AccordionSize } from './accordion.spec.js';
 
-  export let items: AccordionItem[] = [];
-  export let value: string | string[] | undefined = undefined;
-  export let size: AccordionSize = 'md';
-  export let allowMultiple = false;
-  export let theme: ThemeContract = DEFAULT_ACCORDION_THEME;
+  const uid = $props.id();
+
+  interface Props {
+    items?: AccordionItem[];
+    value?: string | string[] | undefined;
+    size?: AccordionSize;
+    allowMultiple?: boolean;
+    theme?: ThemeContract;
+  }
+
+  let {
+    items = $bindable([]),
+    value = $bindable(undefined),
+    size = $bindable('md'),
+    allowMultiple = $bindable(false),
+    theme = $bindable(DEFAULT_ACCORDION_THEME)
+  }: Props = $props();
 
   const defaultRegistration = createAccordionRegistration(DEFAULT_ACCORDION_THEME);
 
-  let registration = defaultRegistration;
-  const openValues = writable<string[]>(normalizeValue(value, allowMultiple));
-  let compiledCase = getAccordionRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeAccordionSlotStyles(compiledCase);
-
-  $: registration =
-    theme.name === DEFAULT_ACCORDION_THEME.name ? defaultRegistration : createAccordionRegistration(theme);
-  $: if (value !== undefined) {
-    openValues.set(normalizeValue(value, allowMultiple));
-  }
-  $: compiledCase = getAccordionRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeAccordionSlotStyles(compiledCase);
+  const openValues = untrack(() => writable<string[]>(normalizeValue(value, allowMultiple)));
 
   function normalizeValue(
     input: string | string[] | undefined,
@@ -81,6 +84,14 @@
     event.preventDefault();
     toggleItem(itemValue, disabled);
   }
+  let registration = $derived(theme.name === DEFAULT_ACCORDION_THEME.name ? defaultRegistration : createAccordionRegistration(theme));
+  run(() => {
+    if (value !== undefined) {
+      openValues.set(normalizeValue(value, allowMultiple));
+    }
+  });
+  let compiledCase = $derived(getAccordionRecipeCase(registration.recipe, { size }));
+  let slotStyles = $derived(serializeAccordionSlotStyles(compiledCase));
 </script>
 
 <div class="dk-accordion" style={slotStyles.root}>
@@ -94,11 +105,11 @@
         data-open={open}
         data-disabled={item.disabled}
         aria-expanded={open}
-        aria-controls={`accordion-panel-${item.value}`}
-        id={`accordion-trigger-${item.value}`}
+        aria-controls={`${uid}-accordion-panel-${item.value}`}
+        id={`${uid}-accordion-trigger-${item.value}`}
         disabled={item.disabled}
-        on:keydown={(event) => handleKeydown(event, item.value, item.disabled)}
-        on:click={() => toggleItem(item.value, item.disabled)}
+        onkeydown={(event) => handleKeydown(event, item.value, item.disabled)}
+        onclick={() => toggleItem(item.value, item.disabled)}
       >
         <span class="accordion-copy">
           <span class="accordion-label" style={slotStyles.label}>{item.label}</span>
@@ -113,8 +124,8 @@
         <section
           class="accordion-panel"
           style={slotStyles.panel}
-          id={`accordion-panel-${item.value}`}
-          aria-labelledby={`accordion-trigger-${item.value}`}
+          id={`${uid}-accordion-panel-${item.value}`}
+          aria-labelledby={`${uid}-accordion-trigger-${item.value}`}
         >
           <p>{item.content}</p>
         </section>

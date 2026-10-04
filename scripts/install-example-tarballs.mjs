@@ -6,6 +6,7 @@ const repoRoot = resolve(new URL('..', import.meta.url).pathname);
 const tarballDir = join(repoRoot, '.release-tarballs');
 const tempExampleDir = resolve(process.env.TMPDIR ?? '/tmp', 'designkit-svelte-starter-pack');
 const sourceExampleDir = join(repoRoot, 'examples', 'svelte-starter');
+const repoPackageJson = JSON.parse(readFileSync(join(repoRoot, 'package.json'), 'utf8'));
 const corePackageJson = JSON.parse(readFileSync(join(repoRoot, 'packages', 'core', 'package.json'), 'utf8'));
 const tokensPackageJson = JSON.parse(readFileSync(join(repoRoot, 'packages', 'tokens', 'package.json'), 'utf8'));
 const componentsPackageJson = JSON.parse(readFileSync(join(repoRoot, 'packages', 'components', 'package.json'), 'utf8'));
@@ -39,6 +40,7 @@ cpSync(sourceExampleDir, tempExampleDir, { recursive: true });
 
 const tempPackageJsonPath = join(tempExampleDir, 'package.json');
 const tempPackageJson = JSON.parse(readFileSync(tempPackageJsonPath, 'utf8'));
+tempPackageJson.packageManager = repoPackageJson.packageManager;
 delete tempPackageJson.dependencies['@dkcli/components'];
 delete tempPackageJson.dependencies['@dkcli/core'];
 delete tempPackageJson.dependencies['@dkcli/tokens'];
@@ -74,6 +76,7 @@ tempPackageJson.dependencies['@dkcli/tokens'] = tarballByName[tokensTarballName]
 tempPackageJson.dependencies['@dkcli/components'] = tarballByName[componentsTarballName];
 tempPackageJson.pnpm = {
   ...(tempPackageJson.pnpm ?? {}),
+  onlyBuiltDependencies: ['esbuild'],
   overrides: {
     ...(tempPackageJson.pnpm?.overrides ?? {}),
     '@dkcli/core': tarballByName[coreTarballName],
@@ -84,7 +87,10 @@ tempPackageJson.pnpm = {
 writeFileSync(tempPackageJsonPath, `${JSON.stringify(tempPackageJson, null, 2)}\n`);
 
 run('pnpm', ['install', '--ignore-workspace'], tempExampleDir);
+run('pnpm', ['run', 'check'], tempExampleDir);
+run('pnpm', ['run', 'test'], tempExampleDir);
 run('pnpm', ['run', 'build'], tempExampleDir);
+run('pnpm', ['run', 'check:entry'], tempExampleDir);
 
 if (!existsSync(join(tempExampleDir, 'dist', 'index.html'))) {
   throw new Error('Example starter build did not produce dist/index.html');

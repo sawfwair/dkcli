@@ -1,0 +1,257 @@
+{
+  "schemaVersion": 1,
+  "projectCriterion": {
+    "widthPx": 44,
+    "heightPx": 44,
+    "conformanceClaim": false
+  },
+  "sourceReceipt": {
+    "path": "../dkweb/.tmp/qualification/local-receipt.json",
+    "projectIdentity": "336ee2707a33d648d9ff9a754a6712062034e2ba55443c5c00235e8723376050",
+    "artifactFingerprint": "8fd21a61f3998acdd895c420290735e8ee1ad75ac870c178cf273525d286c2f7",
+    "caseId": "playground-default",
+    "findingCount": 32
+  },
+  "classifications": [
+    {
+      "component": "chip",
+      "findingCount": 3,
+      "classification": "deliberate-compact",
+      "rationale": "The shipped compact 40 px chip geometry is preserved. The named 44 px project finding remains visible; this is not a WCAG conformance decision."
+    },
+    {
+      "component": "data-grid-lite",
+      "findingCount": 1,
+      "classification": "defect",
+      "rationale": "Short sortable header text produced a native sort button narrower than 44 px."
+    },
+    {
+      "component": "dialog",
+      "findingCount": 3,
+      "classification": "defect",
+      "rationale": "Generated trigger native button lacked minimum target dimensions."
+    },
+    {
+      "component": "drawer",
+      "findingCount": 3,
+      "classification": "defect",
+      "rationale": "Generated trigger native button lacked minimum target dimensions."
+    },
+    {
+      "component": "file-upload",
+      "findingCount": 3,
+      "classification": "defect",
+      "rationale": "Associated label was an additional chooser activation region 27.72px tall. Expand to 44px while retaining native file-input association and the separate Choose action.",
+      "redEvidence": "/tmp/dkcli-file-label-target-red.log"
+    },
+    {
+      "component": "menu",
+      "findingCount": 3,
+      "classification": "defect",
+      "rationale": "Generated trigger native button lacked minimum target dimensions."
+    },
+    {
+      "component": "popover",
+      "findingCount": 3,
+      "classification": "defect",
+      "rationale": "Generated trigger native button lacked minimum target dimensions."
+    },
+    {
+      "component": "side-nav",
+      "findingCount": 3,
+      "classification": "defect",
+      "rationale": "Generated branch buttons were 24 px wide. Source Chromium regression now requires 44 px in both dimensions."
+    },
+    {
+      "component": "tabs",
+      "findingCount": 3,
+      "classification": "deliberate-compact",
+      "rationale": "The shipped compact 36 px tab geometry is preserved. The named 44 px project finding remains visible; this is not a WCAG conformance decision."
+    },
+    {
+      "component": "text-field",
+      "findingCount": 1,
+      "classification": "defect",
+      "rationale": "Default native input hit region was shorter than 44 px inside a taller field shell. Source regression measures the native input."
+    },
+    {
+      "component": "tooltip",
+      "findingCount": 3,
+      "classification": "consumer-trigger-defect",
+      "rationale": "Tooltip accepts a caller-supplied trigger. The workbench supplied a small native Show hint button, so the repair belongs to the gallery consumer rather than the Tooltip widget."
+    },
+    {
+      "component": "tree-view",
+      "findingCount": 3,
+      "classification": "defect",
+      "rationale": "Generated branch buttons were approximately 6 px wide. Source Chromium regression now requires 44 px in both dimensions."
+    }
+  ],
+  "additionalStateFindings": [
+    {
+      "component": "stepper",
+      "case": "interactive=false",
+      "classification": "defect",
+      "rationale": "Native step actions remained enabled although selection handlers returned; durable source-browser regression now requires disabled native actions.",
+      "redEvidence": "/tmp/dkcli-stepper-disabled-red.log"
+    },
+    {
+      "component": "dialog",
+      "case": "release-open",
+      "classification": "defect",
+      "rationale": "Generated Close native action measures 46.09\u00d717px in source browser.",
+      "redEvidence": "/tmp/dkcli-open-close-targets-red.log"
+    },
+    {
+      "component": "drawer",
+      "case": "release-open",
+      "classification": "defect",
+      "rationale": "Generated Close native action measures 46.09\u00d717px in source browser.",
+      "redEvidence": "/tmp/dkcli-open-close-targets-red.log"
+    },
+    {
+      "component": "dialog",
+      "case": "release-open",
+      "classification": "consumer-trigger-defect",
+      "rationale": "Gallery caller footer actions measured 24px tall; repaired with existing 44px gallery action styling.",
+      "redEvidence": "/tmp/dkweb-dialog-footer-targets-red.log"
+    },
+    {
+      "component": "date-picker",
+      "case": "release-open",
+      "classification": "defect",
+      "rationale": "Generated Previous and Next actions were 36\u00d736px; require 44px without changing calendar day-grid density.",
+      "redEvidence": "/tmp/dkcli-expanded-open-targets-red.log"
+    },
+    {
+      "component": "range-date-picker",
+      "case": "release-open",
+      "classification": "defect",
+      "rationale": "Generated Previous and Next actions were 36\u00d736px; require 44px without changing calendar day-grid density.",
+      "redEvidence": "/tmp/dkcli-expanded-open-targets-red.log"
+    },
+    {
+      "component": "range-date-picker",
+      "case": "open-md at320px",
+      "classification": "deliberate-compact",
+      "selector": ".range-surface .range-day",
+      "rationale": "Seven-column calendar keeps compact day widths to fit its rendered container. Full weekday labels wrap; named 44 px target findings remain failed. Source Range container is200px; actual public-font profile records its own separate bounds.",
+      "beforeDimensionsPx": {
+        "widthMin": 37.703125,
+        "widthMax": 37.71875,
+        "height": 44
+      },
+      "finalDimensionsPx": {
+        "widthMin": 18.765625,
+        "widthMax": 18.765625,
+        "height": 44
+      },
+      "finalEvidence": "/tmp/dkcli-final-calendar-header-widget-green.log"
+    },
+    {
+      "component": "button",
+      "case": "release-long-content",
+      "classification": "defect",
+      "rationale": "Unwrapped complete labels exceeded the parent. Bound control width and allow natural wrapping; preserve short-label dimensions.",
+      "redEvidence": "/tmp/dkcli-long-controls-red.log"
+    },
+    {
+      "component": "badge",
+      "case": "release-long-content",
+      "classification": "defect",
+      "rationale": "Unwrapped complete labels exceeded the parent. Bound control width and allow natural wrapping; preserve short-label dimensions.",
+      "redEvidence": "/tmp/dkcli-long-controls-red.log"
+    },
+    {
+      "component": "anchored surfaces",
+      "case": "release-open and root CSSzoom2",
+      "classification": "defect",
+      "rationale": "Cross-axis placement accepted offscreen positions; viewport caps excluded padding without a global reset, and zoom mixed physical bounds with CSS positions. Clamp cross axes, include border-box padding and convert physical coordinates to CSS units.",
+      "redEvidence": [
+        "/tmp/dkweb-open-surfaces-phone-diagnostic.log",
+        "/tmp/dkcli-open-surface-padding-red.log",
+        "/tmp/dkcli-css-zoom-red.log"
+      ]
+    },
+    {
+      "component": "text-field",
+      "case": "root CSSzoom2 at320px",
+      "classification": "defect",
+      "rationale": "Min-content grid sizing or long-label sizing exceeded available width. Preserve compact heights; constrain grid tracks and allow complete text wrapping.",
+      "redEvidence": "/tmp/dkcli-css-zoom-content-diagnostic.log"
+    },
+    {
+      "component": "tabs",
+      "case": "root CSSzoom2 at320px",
+      "classification": "defect",
+      "rationale": "Min-content grid sizing or long-label sizing exceeded available width. Preserve compact heights; constrain grid tracks and allow complete text wrapping.",
+      "redEvidence": "/tmp/dkcli-css-zoom-content-diagnostic.log"
+    },
+    {
+      "component": "select",
+      "case": "root CSSzoom2 at320px",
+      "classification": "defect",
+      "rationale": "Min-content grid sizing or long-label sizing exceeded available width. Preserve compact heights; constrain grid tracks and allow complete text wrapping.",
+      "redEvidence": "/tmp/dkcli-css-zoom-content-diagnostic.log"
+    },
+    {
+      "component": "inline-edit",
+      "case": "single-line keyboard edit",
+      "classification": "defect",
+      "rationale": "Escape cancelled and Enter committed the draft but removed the focused editor without focusing the replacement display button. Restore focus after those keyboard actions; preserve blur commit behavior.",
+      "redEvidence": "/tmp/dkcli-inline-edit-keyboard-focus-red.log"
+    },
+    {
+      "component": "button",
+      "case": "loading fallback at45degrees",
+      "classification": "defect",
+      "rationale": "Rotated fallback child expanded raw slot scroll width 23px versus 18px client width. Animate the fallback-only wrapper; raw slot scroll width remains 18px. Explicit generated-ring border-box sizing preserves 18\u00d718px without a global reset; caller spinners are unchanged.",
+      "redEvidence": [
+        "/tmp/dkcli-spinner-animation-wrapper-red.log",
+        "/tmp/dkcli-spinner-border-box-red.log"
+      ]
+    },
+    {
+      "component": "date-picker",
+      "case": "source open invalid md at320px",
+      "classification": "deliberate-compact",
+      "finalDimensionsPx": {
+        "widthMin": 31.328125,
+        "widthMax": 31.34375,
+        "height": 44
+      },
+      "finalEvidence": "/tmp/dkcli-final-calendar-header-widget-green.log",
+      "selector": ".date-picker-surface .day",
+      "rationale": "Seven-column calendar keeps compact day widths to fit its rendered container. Full weekday labels wrap; named 44 px target findings remain failed. Source Range container is200px; actual public-font profile records its own separate bounds."
+    },
+    {
+      "component": "date-picker/range-date-picker",
+      "case": "open calendar narrow tracks",
+      "classification": "defect",
+      "rationale": "Date44px minimum day widths overlapped narrower grid tracks; complete Range weekday text escaped its track. Preserve44px day height, allow bounded day width, and wrap full weekday labels without changing text/roles.",
+      "redEvidence": "/tmp/dkcli-calendar-track-paint-red.log"
+    },
+    {
+      "component": "table",
+      "case": "short sortable heading",
+      "classification": "defect",
+      "rationale": "Native sort action21.86\u00d744px lacked minimum inline target size. Set generated action minimum width44px while keeping managed table scrolling.",
+      "redEvidence": "/tmp/dkcli-dialog-fullpanel-zoom-red.log"
+    },
+    {
+      "component": "drawer",
+      "case": "long heading at320px",
+      "classification": "defect",
+      "rationale": "Long-header source surface reached x\u221233.88 without a global reset; current font profile header also exceeded available width. Include padding in surface bounds and wrap the complete heading.",
+      "redEvidence": "/tmp/dkcli-dialog-fullpanel-zoom-red.log"
+    },
+    {
+      "component": "dialog",
+      "case": "root CSSzoom2 at320px",
+      "classification": "defect",
+      "rationale": "Header failed to fit the Close action and zoom doubled viewport-height cap. Actual source panel ran y\u2212432..1392. Wrap header and cap panel to padded backdrop content height; final panel y48..912 retains reachable Close and vertical content scrolling.",
+      "redEvidence": "/tmp/dkcli-dialog-fullpanel-zoom-red.log",
+      "greenEvidence": "/tmp/dkcli-final-calendar-header-widget-green.log"
+    }
+  ]
+}

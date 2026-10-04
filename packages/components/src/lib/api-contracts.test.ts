@@ -201,7 +201,7 @@ describe('component event contracts', () => {
       }
     });
 
-    await fireEvent.click(screen.getByRole('button', { name: /select an option/i }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Environment' }));
     await fireEvent.click(screen.getByRole('option', { name: 'Production' }));
     expect(onChangeEvent).toHaveBeenCalledWith({ value: 'prod' });
   });
@@ -411,7 +411,7 @@ describe('component event contracts', () => {
       }
     });
 
-    await fireEvent.click(screen.getByRole('button', { name: /Apr 15, 2026/i }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Launch date' }));
     await fireEvent.click(screen.getByRole('button', { name: /Apr 16, 2026/i }));
     expect(onChangeEvent).toHaveBeenCalledWith({ value: '2026-04-16' });
   });
@@ -434,7 +434,7 @@ describe('component event contracts', () => {
         },
       });
 
-      await fireEvent.click(screen.getByRole('button', { name: /select a date range/i }));
+      await fireEvent.click(screen.getByRole('button', { name: 'Launch window' }));
       await fireEvent.click(screen.getByRole('button', { name: /Apr 9, 2026/i }));
       await fireEvent.click(screen.getByRole('button', { name: /Apr 12, 2026/i }));
 

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { createEventDispatcher, tick } from 'svelte';
+  import { run } from 'svelte/legacy';
+  import { createEventDispatcher, tick, untrack } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import { getFocusableElements, trapFocus } from '../internal/behavior/index.js';
@@ -11,40 +12,39 @@
   } from './dialog.recipe.js';
   import type { DialogSize } from './dialog.spec.js';
 
-  let nextId = 0;
+  const uid = $props.id();
 
   const dispatch = createEventDispatcher<{ openchange: { open: boolean } }>();
 
-  export let open = false;
-  export let size: DialogSize = 'md';
-  export let title = 'Dialog';
-  export let description: string | undefined = undefined;
-  export let closeOnEscape = true;
-  export let closeOnOutsidePress = true;
-  export let theme: ThemeContract = DEFAULT_DIALOG_THEME;
-  export let onOpenChange: ((detail: { open: boolean }) => void) | undefined = undefined;
+  interface Props {
+    open?: boolean;
+    size?: DialogSize;
+    title?: string;
+    description?: string | undefined;
+    closeOnEscape?: boolean;
+    closeOnOutsidePress?: boolean;
+    theme?: ThemeContract;
+    onOpenChange?: ((detail: { open: boolean }) => void) | undefined;
+  }
+
+  let {
+    open = $bindable(false),
+    size = $bindable('md'),
+    title = $bindable('Dialog'),
+    description = $bindable(undefined),
+    closeOnEscape = $bindable(true),
+    closeOnOutsidePress = $bindable(true),
+    theme = $bindable(DEFAULT_DIALOG_THEME),
+    onOpenChange = $bindable(undefined)
+  }: Props = $props();
 
   const defaultRegistration = createDialogRegistration(DEFAULT_DIALOG_THEME);
-  const localId = `dk-dialog-${++nextId}`;
+  const localId = `dk-dialog-${uid}`;
 
-  let registration = defaultRegistration;
-  let internalOpen = open;
-  let previousOpen = open;
-  let triggerEl: HTMLButtonElement | null = null;
-  let surfaceEl: HTMLElement | null = null;
-  let compiledCase = getDialogRecipeCase(defaultRegistration.recipe, { size });
-  let slotStyles = serializeDialogSlotStyles(compiledCase);
-
-  $: registration = theme.name === DEFAULT_DIALOG_THEME.name ? defaultRegistration : createDialogRegistration(theme);
-  $: if (open !== previousOpen) {
-    internalOpen = open;
-    previousOpen = open;
-  }
-  $: compiledCase = getDialogRecipeCase(registration.recipe, { size });
-  $: slotStyles = serializeDialogSlotStyles(compiledCase);
-  $: if (internalOpen) {
-    void focusSurface();
-  }
+  let internalOpen = $state(untrack(() => open));
+  let previousOpen = $state(untrack(() => open));
+  let triggerEl: HTMLButtonElement | null = $state(null);
+  let surfaceEl: HTMLElement | null = $state(null);
 
   async function focusSurface(): Promise<void> {
     await tick();
@@ -91,6 +91,20 @@
       setOpen(false);
     }
   }
+  let registration = $derived(theme.name === DEFAULT_DIALOG_THEME.name ? defaultRegistration : createDialogRegistration(theme));
+  run(() => {
+    if (open !== previousOpen) {
+      internalOpen = open;
+      previousOpen = open;
+    }
+  });
+  let compiledCase = $derived(getDialogRecipeCase(registration.recipe, { size }));
+  let slotStyles = $derived(serializeDialogSlotStyles(compiledCase));
+  run(() => {
+    if (internalOpen) {
+      void focusSurface();
+    }
+  });
 </script>
 
 <div class="dk-dialog-trigger">
@@ -105,6 +119,7 @@
       setOpen(true);
     }}
   >
+    <!-- svelte-ignore slot_element_deprecated (Preserve the legacy named-slot API.) -->
     <slot name="trigger">Open dialog</slot>
   </button>
 </div>
@@ -141,11 +156,13 @@
       </div>
 
       <div class="dialog-body">
+        <!-- svelte-ignore slot_element_deprecated (Preserve the legacy slot API.) -->
         <slot />
       </div>
 
       {#if $$slots.footer}
         <div class="dialog-footer" style={slotStyles.footer}>
+          <!-- svelte-ignore slot_element_deprecated (Preserve the legacy named-slot API.) -->
           <slot name="footer" />
         </div>
       {/if}
@@ -157,10 +174,13 @@
   .dialog-trigger-button {
     background: transparent;
     border: 0;
-    padding: 0;
+    min-block-size: 44px;
+    min-inline-size: 44px;
+    padding: 0 .75rem;
   }
 
   .dialog-backdrop {
+    box-sizing: border-box;
     align-items: center;
     background: var(--dk-dialog-backdrop-bg);
     inset: 0;
@@ -172,13 +192,17 @@
   }
 
   .dialog-surface {
+    box-sizing: border-box;
+    min-inline-size: 0;
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
     background: var(--dk-dialog-surface-bg);
     border: 1px solid var(--dk-dialog-surface-border);
     border-radius: var(--dk-dialog-surface-radius);
     box-shadow: var(--dk-dialog-surface-shadow);
     color: var(--dk-dialog-surface-fg);
     inline-size: min(var(--dk-dialog-surface-width), calc(100vw - 3rem));
-    max-block-size: calc(100vh - 3rem);
+    max-block-size: 100%;
     overflow: auto;
     padding: var(--dk-dialog-surface-padding);
   }
@@ -186,9 +210,14 @@
   .dialog-header {
     align-items: start;
     display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
     justify-content: space-between;
     margin-bottom: 1rem;
+  }
+
+  .dialog-header > div {
+    min-inline-size: 0;
   }
 
   .dialog-title,
@@ -220,6 +249,10 @@
   }
 
   .dialog-close {
+    flex-shrink: 0;
+    font: inherit;
+    min-block-size: 44px;
+    min-inline-size: 44px;
     background: transparent;
     border: 0;
     color: inherit;

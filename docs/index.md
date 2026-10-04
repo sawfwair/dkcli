@@ -2,34 +2,36 @@
 layout: home
 hero:
   name: DesignKit CLI
-  text: Design tokens with the math shown.
-  tagline: Run one command. Keep the proof.
+  text: Generate design tokens and mathematical evidence.
+  tagline: CLI and package documentation for this source checkout.
   actions:
     - theme: brand
-      text: Start Building
+      text: Get started
       link: /getting-started
 ---
 
 <ProofTable />
 
-## What DesignKit Does
+## Design artifacts
 
-DesignKit turns design-system decisions into inspectable artifacts: palettes, APCA contrast checks, fluid scales, typography recommendations, motion curves, layout rails, CSS audits, token output, and component proof cases.
+DesignKit generates palettes, contrast checks, fluid scales, typography recommendations, motion curves, layout constraints, CSS audits, tokens, and component fixtures.
 
-It is not a screenshot linter and not a moodboard generator. It is a command line workbench for keeping visual decisions repeatable.
+Use the CLI to inspect the calculations behind your design inputs. Mathematical results do not establish browser behavior or accessibility compliance.
 
-## Start Here
+## Generate an artifact
+
+From the repository root, install dependencies and generate a combined result:
 
 ```bash
-pnpm install
+pnpm install --frozen-lockfile
 pnpm dk perfect --seed "#D96F32" --ratio perfect-fourth --motion snappy
 ```
 
-Then use the result as your evidence trail: copy the CSS, inspect the JSON, or wire the tokens into a package.
+Save the CSS or JSON output with the component or release that uses it.
 
-## Next Steps
+## Guides and reference
 
-- [Learn the CLI command map](/cli/)
-- [Build a theme from generated tokens](/guides/build-a-theme)
-- [Understand the package split](/packages/)
-- [Inspect the generated proof artifacts](/reference/generated-proof)
+- [CLI command reference](/cli/)
+- [Build a theme](/guides/build-a-theme)
+- [Package responsibilities](/packages/)
+- [Generated documentation artifacts](/reference/generated-proof)
