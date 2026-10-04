@@ -172,6 +172,9 @@
 
 <style>
   .dialog-trigger-button {
+    box-sizing: border-box;
+    max-inline-size: 100%;
+    overflow-wrap: anywhere;
     background: transparent;
     border: 0;
     min-block-size: 44px;
@@ -205,6 +208,7 @@
     max-block-size: 100%;
     overflow: auto;
     padding: var(--dk-dialog-surface-padding);
+    padding-inline: min(var(--dk-dialog-surface-padding), max(0.25rem, calc(20% - 1rem)));
   }
 
   .dialog-header {

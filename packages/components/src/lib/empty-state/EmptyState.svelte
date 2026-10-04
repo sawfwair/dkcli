@@ -49,6 +49,10 @@
 
 <style>
   .dk-empty-state {
+    box-sizing: border-box;
+    grid-template-columns: minmax(0, 1fr);
+    min-inline-size: 0;
+    max-inline-size: 100%;
     background: var(--dk-empty-bg);
     border: 1px solid var(--dk-empty-border);
     border-radius: var(--dk-empty-radius);
@@ -73,12 +77,16 @@
 
   .empty-copy {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 0.4rem;
+    min-inline-size: 0;
+    max-inline-size: 100%;
   }
 
   .empty-title,
   .empty-description {
     margin: 0;
+    overflow-wrap: anywhere;
   }
 
   .empty-title {

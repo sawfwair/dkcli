@@ -187,7 +187,7 @@ passes all 564 tests across 161 files, with 81.82% statements, 80.61% lines,
 four CLI edge cases add meaningful validation, stdin, and remote-error coverage.
 The complete production Chromium suite passes all 193 flows.
 
-The current measured receipt covers 38 default scenes at 320, 768, and 1280 px:
+The theme-project milestone receipt covers 38 default scenes at 320, 768, and 1280 px:
 114 measurements and 114 bounded JPEGs. All 39 implemented keyboard checks pass;
 measured text and container overflow have no failures. The receipt remains
 `failed` because 46 of 180 mathematical fixtures fail and 32 measured target-size
@@ -209,7 +209,7 @@ project. That temporary harness and development qualification server were stoppe
 afterward. The subsequent release qualification uses a separately staged built
 Worker and records its complete scope.
 
-Current receipts, summaries, and desktop/phone captures are in
+Receipts, summaries, and desktop/phone captures for that milestone are in
 `dkweb/.tmp/qualification/` in the sibling checkout. Layout checks report no page
 overflow or alerts at 1440 px and 390 px. Final logs are
 `/tmp/dkcli-project-final-release-focus-20261004.log`,
@@ -266,11 +266,17 @@ the generated loading ring. Compact Chip, Tabs, and calendar-day targets
 retain the failed 44 px project criterion with their measured geometry.
 This criterion does not establish accessibility conformance.
 
-The final public coverage run passes 701 tests across 121 files, at 85.77%
+The public coverage run passes 701 tests across 122 files, at 85.77%
 statements, 85.38% lines, 88.84% functions, and 69.72% branches. The source
 browser checks retain the compact findings and require the repaired control,
 layout, zoom, and focus behavior to pass. Package verification also checks
 the standalone CLI and packed Vite and SvelteKit consumers.
+
+WebKit qualification also exposed EmptyState text escaping an intrinsic grid
+track and Dialog controls exceeding narrow rows at 200% CSS zoom. Their source
+regressions failed before repair and now pass with the same-origin ABeeZee face.
+The generated Dialog close action retains a 44 CSS px minimum in both dimensions.
+The release gate runs these WebKit checks alongside its Chromium source checks.
 
 The workbench release gate requires all 132 declared scenes at the three
 recorded widths in Chromium, Firefox, and WebKit, using the actual bundled

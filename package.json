@@ -91,7 +91,7 @@
     "release:publish": "npm publish ./packages/core --access public && npm publish ./packages/tokens --access public && npm publish ./packages/components --access public && npm publish . --access public",
     "preflight": "pnpm lint && pnpm check:strict && pnpm test && pnpm test:coverage",
     "verify": "pnpm release:verify",
-    "check:component-targets": "node ./scripts/check-component-targets.mjs",
+    "check:component-targets": "node ./scripts/check-component-targets.mjs && node ./scripts/check-component-narrow-layout.mjs",
     "check:release:math": "node ./scripts/assess-release-math.mjs"
   },
   "devDependencies": {

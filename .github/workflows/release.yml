@@ -27,8 +27,8 @@ jobs:
         run: npm install -g npm@11.5.1
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Install Chromium for the SvelteKit consumer
-        run: pnpm dlx playwright@1.58.2 install --with-deps chromium
+      - name: Install browsers for component geometry and consumers
+        run: pnpm exec playwright install --with-deps chromium webkit
       - name: Release verify
         run: pnpm release:verify
       - name: Detect release mode
