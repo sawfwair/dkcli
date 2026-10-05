@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createTheme } from '@dkcli/tokens';
 
 import { createButtonRegistration, getButtonRecipeCase } from './button.recipe.js';
-import { BUTTON_LAYOUT_FAILURES, expectKnownLayoutFailures } from '../test-utils/proof-expectations.js';
+import { DECLARED_LAYOUT_BEHAVIORS, expectDeclaredLayoutBehavior } from '../test-utils/proof-expectations.js';
 
 describe('button recipe', () => {
   it('compiles the full button case matrix for light and dark themes', () => {
@@ -51,12 +51,12 @@ describe('button recipe', () => {
     expect(darkCase.slots.root.stateVars.hover?.['--dk-button-bg']).toMatch(/^#/);
   });
 
-  it('preserves curated fixtures and reports the two narrow-width mathematical failures', () => {
+  it('preserves curated fixtures with declared label wrapping and natural block growth', () => {
     const registration = createButtonRegistration();
 
     expect(registration.recipe.proofFixtures.length).toBeGreaterThan(0);
     expect(registration.recipe.proofFixtures.every((fixture) => fixture.resolved)).toBe(true);
-    expectKnownLayoutFailures(registration.recipe.proofFixtures, 13, BUTTON_LAYOUT_FAILURES);
+    expectDeclaredLayoutBehavior(registration.recipe.proofFixtures, 13, DECLARED_LAYOUT_BEHAVIORS.button);
     expect(registration.recipe.proofFixtures.some((fixture) => fixture.props.as === 'a')).toBe(true);
     expect(registration.recipe.proofFixtures.some((fixture) => fixture.states.includes('loading'))).toBe(true);
   });

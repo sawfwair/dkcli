@@ -5,6 +5,21 @@ const theme: ProjectTheme = { name: 'Northstar', seed: { color: '#c44724', ratio
 const now = '2026-10-04T12:00:00.000Z';
 
 describe('portable theme projects', () => {
+  it.each(['"Inter', "'Inter", 'Inter,, sans-serif', 'Inter,', '123font, sans-serif', 'serif !important', 'Arial "Inter"', 'inherit, serif', 'initial Inter', 'default'])('rejects malformed font stack %s on project import', (body) => {
+    const project = createThemeProject({ id: 'northstar', theme });
+    const checked = validateThemeProject({ ...project, theme: { ...theme, fonts: { ...theme.fonts, body } } });
+    expect(checked.valid).toBe(false);
+    if (checked.valid) throw new Error('Expected invalid font stack.');
+    expect(checked.errors['fonts.body']).toMatch(/font stack/i);
+    expect(project.theme.fonts.body).toBe(theme.fonts.body);
+  });
+
+  it.each(['"Inter, Display", sans-serif', "'Noto Sans', ui-sans-serif", '日本語, sans-serif', 'IBM Plex Sans, monospace', '"inherit", serif'])('retains valid quoted and unquoted font stack %s', (body) => {
+    const project = createThemeProject({ id: 'northstar', theme: { ...theme, fonts: { ...theme.fonts, body } } });
+    expect(project.theme.fonts.body).toBe(body);
+    expect(validateThemeProject(project).valid).toBe(true);
+  });
+
   it.each(['dk-button-default', 'DK-range-date-picker-default'])('rejects reserved recipe theme name %s on project import', (name) => {
     const project = createThemeProject({ id: 'northstar', theme });
     expect(validateThemeProject({ ...project, theme: { ...theme, name } }).valid).toBe(false);
@@ -56,7 +71,8 @@ describe('portable theme projects', () => {
     ['review', { reviews: [{ verdict: 'up' }] }], ['qualification', { qualification: { status: 'passed' } }],
     ['unsafe font', { theme: { ...theme, fonts: { ...theme.fonts, body: 'serif; color:red' } } }],
     ['unsafe override', { theme: { ...theme, overrides: { color: { primary: 'red;}body{display:none}' } } } }],
-    ['bad ratio', { theme: { ...theme, seed: { ...theme.seed, ratio: 'unknown' } } }]
+    ['bad ratio', { theme: { ...theme, seed: { ...theme.seed, ratio: 'unknown' } } }],
+    ['empty ratio', { theme: { ...theme, seed: { ...theme.seed, ratio: '' } } }]
   ])('rejects malformed %s without changing the current project', (_label, change) => {
     const project = createThemeProject({ theme });
     const original = JSON.stringify(project);

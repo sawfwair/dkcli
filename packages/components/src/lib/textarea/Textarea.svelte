@@ -82,6 +82,7 @@
       {placeholder}
       bind:value
       {rows}
+      {required}
       {disabled}
       aria-invalid={invalid ? 'true' : undefined}
       aria-describedby={describedBy}

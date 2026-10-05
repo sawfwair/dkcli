@@ -69,7 +69,7 @@ function timestamp(value: unknown): value is string {
 }
 function widths(value: unknown): value is number[] {
   return Array.isArray(value) && value.length > 0 && value.length <= 6 &&
-    value.every((width) => Number.isInteger(width) && width >= 320 && width <= 2000) &&
+    Array.from(value).every((width) => Number.isInteger(width) && width >= 320 && width <= 2000) &&
     new Set(value).size === value.length;
 }
 function safeValue(value: unknown): value is ThemeTokenValue {
@@ -78,6 +78,30 @@ function safeValue(value: unknown): value is ThemeTokenValue {
   if (typeof value === 'string' && (value.length === 0 || value.length > 512)) return false;
   try { assertSafeCssValue(value); return true; } catch { return false; }
 }
+
+function fontStack(value: string): boolean {
+  const families: string[] = [];
+  let quote = '';
+  let start = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    const char = value[index];
+    if (quote) {
+      if (char === quote) quote = '';
+    } else if (char === '"' || char === "'") quote = char;
+    else if (char === ',') {
+      families.push(value.slice(start, index).trim());
+      start = index + 1;
+    }
+  }
+  if (quote) return false;
+  families.push(value.slice(start).trim());
+  const identifier = /^(?:--|-?[_a-zA-Z\u0080-\u{10FFFF}])[_a-zA-Z0-9\u0080-\u{10FFFF}-]*$/u;
+  return families.every((family) => {
+    if (/^(?:"[^"]*"|'[^']*')$/.test(family)) return true;
+    return family.length > 0 && family.split(/\s+/).every((name) => identifier.test(name) && !/^(?:inherit|initial|unset|revert|revert-layer|default)$/i.test(name));
+  });
+}
+
 export function validateProjectTheme(value: unknown): { valid: true; theme: ProjectTheme } | { valid: false; errors: Record<string, string> } {
   const errors: Record<string, string> = {};
   if (!record(value)) return { valid: false, errors: { theme: 'Use a theme object.' } };
@@ -90,7 +114,7 @@ export function validateProjectTheme(value: unknown): { valid: true; theme: Proj
     if (seed.mode !== 'light' && seed.mode !== 'dark') errors.mode = 'Choose light or dark mode.';
     if (seed.density !== 'comfortable' && seed.density !== 'compact') errors.density = 'Choose comfortable or compact density.';
     try {
-      if ((typeof seed.ratio !== 'string' && typeof seed.ratio !== 'number') || (typeof seed.ratio === 'number' && !Number.isFinite(seed.ratio))) throw new Error('ratio');
+      if ((typeof seed.ratio !== 'string' && typeof seed.ratio !== 'number') || (typeof seed.ratio === 'string' && !seed.ratio.trim()) || (typeof seed.ratio === 'number' && !Number.isFinite(seed.ratio))) throw new Error('ratio');
       const ratio = resolveRatio(String(seed.ratio));
       if (!Number.isFinite(ratio.value) || ratio.value <= 1 || ratio.value > 3) throw new Error('ratio');
     } catch { errors.ratio = 'Use a supported ratio greater than 1 and no greater than 3.'; }
@@ -100,7 +124,7 @@ export function validateProjectTheme(value: unknown): { valid: true; theme: Proj
   if (!record(value.fonts)) errors.fonts = 'Provide body, display, and mono font stacks.';
   else for (const key of ['body', 'display', 'mono']) {
     const font = value.fonts[key];
-    if (typeof font !== 'string' || font.trim().length === 0 || font.length > 200 || !safeValue(font) || /[()\\]/.test(font)) errors[`fonts.${key}`] = 'Use a CSS font stack with at most 200 characters.';
+    if (typeof font !== 'string' || font.trim().length === 0 || font.length > 200 || !safeValue(font) || /[()\\]/.test(font) || !fontStack(font)) errors[`fonts.${key}`] = 'Use a CSS font stack with at most 200 characters.';
   }
   if (value.overrides !== undefined) {
     if (!record(value.overrides)) errors.overrides = 'Use token family objects.';
@@ -113,7 +137,9 @@ export function validateProjectTheme(value: unknown): { valid: true; theme: Proj
       }
     }
   }
-  return Object.keys(errors).length ? { valid: false, errors } : { valid: true, theme: structuredClone(value) as ProjectTheme };
+  if (Object.keys(errors).length) return { valid: false, errors };
+  try { return { valid: true, theme: structuredClone(value) as ProjectTheme }; }
+  catch { return { valid: false, errors: { theme: 'Use serializable theme inputs.' } }; }
 }
 
 /** Validates portable inputs without discarding historical evidence. */
@@ -153,7 +179,8 @@ export function validateThemeProject(value: unknown): ThemeProjectValidation {
     }
   }
   if (Object.keys(errors).length) return { valid: false, errors };
-  return { valid: true, project: structuredClone(value) as ThemeProject, errors: {} };
+  try { return { valid: true, project: structuredClone(value) as ThemeProject, errors: {} }; }
+  catch { return { valid: false, errors: { project: 'Use serializable project inputs and evidence.' } }; }
 }
 
 export function createThemeProject(input: { id?: string; theme: ProjectTheme; viewports?: number[] }, _now = new Date().toISOString()): ThemeProject {
@@ -178,13 +205,20 @@ export function restoreThemeProjectRevision(project: ThemeProject, revision: num
 }
 /** Produces deterministic JSON independently of object insertion order. */
 export function canonicalProjectJson(value: unknown): string {
+  const serialized = JSON.stringify(value);
+  if (serialized === undefined) throw new Error('Canonical JSON requires serializable values.');
+  const snapshot: unknown = JSON.parse(serialized);
+  return canonicalJsonSnapshot(snapshot);
+}
+
+function canonicalJsonSnapshot(value: unknown): string {
   if (value === null || typeof value !== 'object') {
     const result = JSON.stringify(value);
     if (result === undefined) throw new Error('Canonical JSON requires serializable values.');
     return result;
   }
-  if (Array.isArray(value)) return `[${value.map(canonicalProjectJson).join(',')}]`;
-  return `{${Object.entries(value).filter(([, item]) => item !== undefined).sort(([left], [right]) => left.localeCompare(right, 'en')).map(([key, item]) => `${JSON.stringify(key)}:${canonicalProjectJson(item)}`).join(',')}}`;
+  if (Array.isArray(value)) return `[${value.map(canonicalJsonSnapshot).join(',')}]`;
+  return `{${Object.entries(value).sort(([left], [right]) => left.localeCompare(right, 'en')).map(([key, item]) => `${JSON.stringify(key)}:${canonicalJsonSnapshot(item)}`).join(',')}}`;
 }
 export async function hashProjectValue(value: unknown): Promise<string> {
   const bytes = new TextEncoder().encode(canonicalProjectJson(value));
@@ -216,14 +250,19 @@ export function validateThemeProjectPatch(value: unknown): { valid: true; patch:
       seen.add(key);
     }
   }
-  return errors.length ? { valid: false, errors } : { valid: true, patch: structuredClone(value) as ThemeProjectPatch };
+  if (errors.length) return { valid: false, errors };
+  try { return { valid: true, patch: structuredClone(value) as ThemeProjectPatch }; }
+  catch { return { valid: false, errors: ['Use serializable patch inputs.'] }; }
 }
 export async function applyThemeProjectPatch(project: ThemeProject, value: unknown, now = new Date().toISOString()): Promise<ThemeProject> {
+  const checked = validateThemeProject(project);
+  if (!checked.valid) throw new Error(Object.values(checked.errors).join(' '));
+  const snapshot = checked.project;
   const result = validateThemeProjectPatch(value);
   if (!result.valid) throw new Error(result.errors.join(' '));
   const patch = result.patch;
-  if (await projectIdentity(project) !== patch.projectIdentity) throw new Error('The patch belongs to a different theme revision.');
-  const theme = structuredClone(project.theme);
+  if (await projectIdentity(snapshot) !== patch.projectIdentity) throw new Error('The patch belongs to a different theme revision.');
+  const theme = structuredClone(snapshot.theme);
   theme.overrides ??= {};
   for (const change of patch.changes) {
     let family = theme.overrides[change.family] ?? {};
@@ -232,5 +271,5 @@ export async function applyThemeProjectPatch(project: ThemeProject, value: unkno
     else family[change.token] = change.after;
     theme.overrides[change.family] = family;
   }
-  return reviseThemeProject(project, { theme }, patch.title, now);
+  return reviseThemeProject(snapshot, { theme }, patch.title, now);
 }

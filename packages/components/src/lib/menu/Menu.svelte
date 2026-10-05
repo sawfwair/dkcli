@@ -12,7 +12,7 @@
   import { createEventDispatcher, tick } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
-  import { computeAnchoredPosition, firstEnabledIndex, isEventOutside, nextListIndex, type Placement } from '../internal/behavior/index.js';
+  import { computeAnchoredPosition, firstEnabledIndex, lastEnabledIndex, isEventOutside, nextListIndex, type Placement } from '../internal/behavior/index.js';
   import {
     DEFAULT_MENU_THEME,
     createMenuRegistration,
@@ -57,7 +57,7 @@
   $: compiledCase = getMenuRecipeCase(registration.recipe, { size });
   $: slotStyles = serializeMenuSlotStyles(compiledCase);
   $: if (internalOpen) {
-    highlightIndex = Math.max(0, firstEnabledIndex(items));
+    if (!items[highlightIndex] || items[highlightIndex].disabled) highlightIndex = firstEnabledIndex(items);
     void syncPosition();
   }
 
@@ -92,6 +92,7 @@
     internalOpen = nextOpen;
     open = nextOpen;
     previousOpen = nextOpen;
+    if (nextOpen) highlightIndex = firstEnabledIndex(items);
     onOpenChange?.({ open: nextOpen });
     dispatch('openchange', { open: nextOpen });
     if (!nextOpen && restoreFocus) {
@@ -153,6 +154,14 @@
       event.preventDefault();
     }
   }
+
+  function handleTriggerKeydown(event: KeyboardEvent): void {
+    if (internalOpen || (event.key !== 'ArrowDown' && event.key !== 'ArrowUp')) return;
+    setOpen(true);
+    highlightIndex = event.key === 'ArrowUp' ? lastEnabledIndex(items) : firstEnabledIndex(items);
+    event.preventDefault();
+    event.stopPropagation();
+  }
 </script>
 
 <svelte:window onclick={handleWindowClick} onfocusin={handleWindowFocus} onkeydown={handleKeydown} />
@@ -163,6 +172,7 @@
   class="menu-trigger"
   aria-haspopup="menu"
   aria-expanded={internalOpen ? 'true' : 'false'}
+  onkeydown={handleTriggerKeydown}
   onclick={() => {
     setOpen(!internalOpen);
   }}

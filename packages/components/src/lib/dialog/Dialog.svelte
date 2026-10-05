@@ -48,6 +48,7 @@
 
   async function focusSurface(): Promise<void> {
     await tick();
+    if (!internalOpen) return;
     const focusable = getFocusableElements(surfaceEl);
     if (focusable[0]) {
       focusable[0].focus();
@@ -94,8 +95,10 @@
   let registration = $derived(theme.name === DEFAULT_DIALOG_THEME.name ? defaultRegistration : createDialogRegistration(theme));
   run(() => {
     if (open !== previousOpen) {
+      const restoreFocus = !open && Boolean(surfaceEl?.contains(document.activeElement));
       internalOpen = open;
       previousOpen = open;
+      if (restoreFocus) void returnFocus();
     }
   });
   let compiledCase = $derived(getDialogRecipeCase(registration.recipe, { size }));

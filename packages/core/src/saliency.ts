@@ -1,4 +1,5 @@
 import type { DesignDocument, DesignElement, DesignRole } from './design.ts';
+import { assertDesignDocument } from './geometry-validation.ts';
 import {
   area,
   center,
@@ -92,6 +93,7 @@ export function analyzeImportance(
   document: DesignDocument,
   mode: ImportanceMode = 'heuristic'
 ): ImportanceReport {
+  assertDesignDocument(document);
   const frameArea = Math.max(document.frame.width * document.frame.height, 1);
   const focusRegions: RectLike[] = [];
   if (document.background?.subjectRegion) {

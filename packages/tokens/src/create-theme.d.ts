@@ -5,4 +5,4 @@ export type CreateThemeOptions = {
     seed: ThemeSeed;
 };
 /** Compiles token families and semantic aliases from a theme seed. */
-export declare function createTheme({ name, seed }: CreateThemeOptions): ThemeContract;
+export declare function createTheme({ name, seed: inputSeed }: CreateThemeOptions): ThemeContract;

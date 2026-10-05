@@ -1,6 +1,6 @@
 <script lang="ts">
   import { run } from 'svelte/legacy';
-  import { createEventDispatcher, tick, untrack } from 'svelte';
+  import { createEventDispatcher, onDestroy, tick, untrack } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import {
@@ -51,6 +51,12 @@
   let viewportInlineSize = $state('100vw');
   let position = $state({ left: 0, top: 0 });
 
+  onDestroy(() => {
+    clearOpenTimeout();
+    internalOpen = false;
+    syncTriggerDescription();
+  });
+
   function clearOpenTimeout(): void {
     if (openTimeout) {
       clearTimeout(openTimeout);
@@ -73,7 +79,18 @@
     setOpen(false);
   }
 
+  function handleTriggerEnter(event: MouseEvent | FocusEvent): void {
+    if (event.relatedTarget instanceof Node && triggerEl?.contains(event.relatedTarget)) return;
+    scheduleOpen();
+  }
+
+  function handleTriggerLeave(event: MouseEvent | FocusEvent): void {
+    if (event.relatedTarget instanceof Node && triggerEl?.contains(event.relatedTarget)) return;
+    closeTooltip();
+  }
+
   function setOpen(nextOpen: boolean): void {
+    if (nextOpen && disabled) return;
     if (internalOpen === nextOpen) {
       return;
     }
@@ -164,7 +181,7 @@
   let registration = $derived(theme.name === DEFAULT_TOOLTIP_THEME.name ? defaultRegistration : createTooltipRegistration(theme));
   run(() => {
     if (open !== previousOpen) {
-      internalOpen = open;
+      internalOpen = open && !disabled;
       previousOpen = open;
     }
   });
@@ -176,8 +193,12 @@
     }
   });
   run(() => {
-    if (disabled && internalOpen) {
-      closeTooltip();
+    syncTriggerDescription();
+  });
+  $effect(() => {
+    if (disabled) {
+      clearOpenTimeout();
+      untrack(closeTooltip);
     }
   });
 </script>
@@ -189,12 +210,12 @@
   bind:this={triggerEl}
   class="tooltip-trigger"
   role="group"
-  onmouseover={scheduleOpen}
-  onmouseout={closeTooltip}
+  onmouseover={handleTriggerEnter}
+  onmouseout={handleTriggerLeave}
   onfocus={scheduleOpen}
   onblur={closeTooltip}
-  onfocusin={scheduleOpen}
-  onfocusout={closeTooltip}
+  onfocusin={handleTriggerEnter}
+  onfocusout={handleTriggerLeave}
 >
   <!-- svelte-ignore slot_element_deprecated (Preserve the legacy slot API.) -->
     <slot>Details</slot>

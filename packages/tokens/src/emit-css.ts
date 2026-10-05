@@ -5,6 +5,7 @@ import {
   escapeCssComment,
   type ThemeContract
 } from '@dkcli/core';
+import { assertThemeExportable } from './validate-export.ts';
 
 function emitFamily(prefix: string, family: Record<string, string | number>): string[] {
   return Object.entries(family).map(([name, value]) => {
@@ -31,6 +32,7 @@ function resolveAlias(value: string, aliases: ThemeContract['aliases']): string 
 
 /** Serializes theme families and aliases as CSS custom properties in a `:root` rule. */
 export function emitThemeCss(contract: ThemeContract): string {
+  assertThemeExportable(contract);
   const lines = [
     `/* ${escapeCssComment(contract.name)} */`,
     `/* optimized seed ${escapeCssComment(contract.meta.optimizedSeed)} ratio ${escapeCssComment(contract.meta.ratioName)} */`,

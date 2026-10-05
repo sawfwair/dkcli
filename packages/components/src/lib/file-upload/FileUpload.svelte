@@ -94,6 +94,7 @@
       {name}
       {accept}
       {multiple}
+      {required}
       {disabled}
       aria-describedby={describedBy}
       aria-invalid={invalid ? 'true' : undefined}
@@ -122,7 +123,7 @@
 
     {#if selectedFiles.length > 0}
       <ul class="file-upload-list" style={slotStyles.list}>
-        {#each selectedFiles as file (file.name)}
+        {#each selectedFiles as file, index (index)}
           <li class="file-upload-item" style={slotStyles.item}>{file.name}</li>
         {/each}
       </ul>

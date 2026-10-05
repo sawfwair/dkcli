@@ -1,6 +1,7 @@
 // Generates CSS for layered glass effects.
 
 import { hexToSrgb } from './color.ts';
+import { assertFiniteOutput, assertNonnegativeFinite } from './numeric-validation.ts';
 
 export type GlassParams = {
   blur?: number;
@@ -16,11 +17,13 @@ export type GlassParams = {
 };
 
 export function noiseDataUri(intensity: number): string {
+  assertOpacity(intensity, 'Noise opacity');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#n)" opacity="${intensity}"/></svg>`;
   return `url("data:image/svg+xml;base64,${btoa(svg)}")`;
 }
 
 export function hexToRgba(hex: string, alpha: number): string {
+  assertOpacity(alpha, 'Color opacity');
   const [r, g, b] = hexToSrgb(hex);
   return `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, ${alpha})`;
 }
@@ -30,12 +33,19 @@ export function generateGlassCss(params: GlassParams = {}): string {
   const opacity = params.opacity ?? 0.08;
   const mode = params.mode ?? 'light';
   const tint = params.tint ?? (mode === 'light' ? '#ffffff' : '#000000');
-  const layers = Math.min(3, Math.max(1, params.layers ?? 1));
+  const layers = params.layers ?? 1;
   const borderOpacity = params.borderOpacity ?? 0.15;
   const saturation = params.saturation ?? 120;
   const noise = params.noise ?? 0;
   const selector = params.selector ?? '.glass';
   const radius = params.radius ?? 16;
+  assertNonnegativeFinite(blur, 'Glass blur');
+  assertNonnegativeFinite(saturation, 'Glass saturation');
+  assertNonnegativeFinite(radius, 'Glass radius');
+  assertOpacity(opacity, 'Glass opacity');
+  assertOpacity(borderOpacity, 'Glass border opacity');
+  assertOpacity(noise, 'Glass noise');
+  if (!Number.isInteger(layers) || layers < 1 || layers > 3) throw new Error('Glass layers must be an integer from 1 to 3.');
 
   const lines: string[] = [];
   const bg = hexToRgba(tint, opacity);
@@ -61,6 +71,7 @@ export function generateGlassCss(params: GlassParams = {}): string {
   const pseudos = ['::before', '::after'];
   for (let i = 1; i < layers; i++) {
     const layerBlur = blur * (1 + i * 0.5);
+    assertFiniteOutput(layerBlur, 'Glass layer blur');
     const layerOpacity = parseFloat((opacity * (1 - i * 0.3)).toFixed(3));
     lines.push('');
     lines.push(`${selector}${pseudos[i - 1]} {`);
@@ -76,4 +87,9 @@ export function generateGlassCss(params: GlassParams = {}): string {
   }
 
   return lines.join('\n');
+}
+
+function assertOpacity(value: number, label: string): void {
+  assertNonnegativeFinite(value, label);
+  if (value > 1) throw new Error(`${label} must be at most 1.`);
 }

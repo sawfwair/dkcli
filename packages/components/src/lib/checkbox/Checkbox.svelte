@@ -85,6 +85,7 @@
       {name}
       id={fieldId}
       bind:checked
+      {required}
       {disabled}
       aria-label={label}
       aria-checked={indeterminate ? 'mixed' : checked ? 'true' : 'false'}

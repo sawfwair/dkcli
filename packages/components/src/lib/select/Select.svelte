@@ -13,6 +13,7 @@
 
   import { computeAnchoredPosition, findSelectedItem, firstEnabledIndex, isEventOutside, nextListIndex, type Placement } from '../internal/behavior/index.js';
   import { FieldFrame } from '../primitives/index.js';
+  import RequiredSelection from '../primitives/RequiredSelection.svelte';
   import {
     DEFAULT_SELECT_THEME,
     createSelectRegistration,
@@ -74,6 +75,15 @@
 
   $effect(() => {
     if (disabled) internalOpen = false;
+  });
+
+  $effect(() => {
+    if (internalOpen && (!items[highlightIndex] || items[highlightIndex].disabled)) {
+      highlightIndex = firstEnabledIndex(items);
+      void tick().then(() => {
+        if (internalOpen) itemRefs[highlightIndex]?.focus();
+      });
+    }
   });
 
   async function syncPosition(): Promise<void> {
@@ -178,6 +188,7 @@
   errorStyle={slotStyles.error}
 >
   <input type="hidden" {name} {value} {disabled} />
+  <RequiredSelection {required} {disabled} value={value ?? ''} focusTarget={triggerEl} />
 
   <button
     bind:this={triggerEl}

@@ -1,6 +1,7 @@
 import { round } from './types.ts';
 import { escapeCssComment, escapeCssString } from './css-safety.ts';
 import type { AuditReport } from './audit.ts';
+import { assertGeneratedCount } from './numeric-validation.ts';
 
 export const FUTURE_EMBEDDING_MODELS = [
   '@cf/baai/bge-small-en-v1.5',
@@ -108,11 +109,14 @@ function hashToken(token: string, seed: number): number {
 }
 
 function normalizeVector(values: number[]): number[] {
-  const magnitude = Math.sqrt(values.reduce((sum, value) => sum + value * value, 0));
-  if (magnitude === 0) {
+  if (!Array.from(values).every(Number.isFinite)) throw new Error('Embedding coordinates must be finite numbers.');
+  const scale = values.reduce((max, value) => Math.max(max, Math.abs(value)), 0);
+  if (scale === 0) {
     return values.map(() => 0);
   }
-  return values.map((value) => value / magnitude);
+  const scaled = values.map((value) => value / scale);
+  const magnitude = Math.sqrt(scaled.reduce((sum, value) => sum + value * value, 0));
+  return scaled.map((value) => value / magnitude);
 }
 
 function roleWeight(role: string): number {
@@ -128,6 +132,7 @@ export function composeFutureTopologyText(item: FutureTopologyItem): string {
 }
 
 export function createHeuristicEmbedding(text: string, dimensions: number = HASH_DIMENSIONS): number[] {
+  assertGeneratedCount(dimensions, 'Embedding dimensions', 1);
   const vector = Array<number>(dimensions).fill(0);
   const tokens = tokenize(text);
   const enriched = [...tokens];
@@ -150,27 +155,27 @@ export function createHeuristicEmbeddings(texts: string[]): number[][] {
 }
 
 export function cosineSimilarity(left: number[], right: number[]): number {
-  const dimensions = Math.min(left.length, right.length);
+  if (left.length !== right.length) throw new Error('Embedding dimensions must match.');
+  const normalizedLeft = normalizeVector(left);
+  const normalizedRight = normalizeVector(right);
+  const dimensions = left.length;
   if (dimensions === 0) {
     return 0;
   }
   let dot = 0;
-  let leftMagnitude = 0;
-  let rightMagnitude = 0;
   for (let index = 0; index < dimensions; index += 1) {
-    const leftValue = left[index] ?? 0;
-    const rightValue = right[index] ?? 0;
+    const leftValue = normalizedLeft[index];
+    const rightValue = normalizedRight[index];
     dot += leftValue * rightValue;
-    leftMagnitude += leftValue * leftValue;
-    rightMagnitude += rightValue * rightValue;
   }
-  if (leftMagnitude === 0 || rightMagnitude === 0) {
-    return 0;
-  }
-  return round(dot / Math.sqrt(leftMagnitude * rightMagnitude), 4);
+  return round(Math.min(1, Math.max(-1, dot)), 4);
 }
 
 export function buildSimilarityMatrix(vectors: number[][]): number[][] {
+  for (const vector of vectors) {
+    if (vector.length !== vectors[0].length) throw new Error('Embedding dimensions must match.');
+    normalizeVector(vector);
+  }
   return vectors.map((left, leftIndex) =>
     vectors.map((right, rightIndex) =>
       leftIndex === rightIndex ? 1 : cosineSimilarity(left, right)
@@ -309,7 +314,9 @@ export function analyzeEmbeddingTopology(options: {
   mode: 'heuristic' | 'ml';
   warnings?: string[];
 }): FutureTopologyReport {
-  if (options.items.length === 0 || options.itemEmbeddings.length === 0) {
+  if (options.items.length !== options.itemEmbeddings.length) throw new Error('Provide one embedding for each topology item.');
+  if (options.items.length > 0 && options.queryEmbedding.length === 0) throw new Error('Provide a nonempty query embedding.');
+  if (options.items.length === 0) {
     return {
       mode: options.mode,
       model: options.model,

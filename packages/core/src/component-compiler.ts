@@ -66,6 +66,10 @@ export type ResolvedLayoutWidthCheck = {
   width: number;
   fitsWidth: boolean;
   fitsHeight: boolean;
+  availableTextPx?: number;
+  estimatedLineCount?: number;
+  estimatedBlockPx?: number;
+  fitsLines?: boolean;
   pass: boolean;
 };
 
@@ -77,12 +81,15 @@ export type ProofCoverage = {
   complete: boolean;
 };
 
-/** Reports conservative single-line estimates using maximum token values. */
+/** Reports estimates for the declared text behavior using maximum token values. */
 export type ResolvedLayoutCheck = {
   target: string;
   widths: number[];
   heights: number[];
   estimatedInlinePx: number;
+  minimumInlinePx?: number;
+  textBehavior?: NonNullable<LayoutProofSpec['textBehavior']>;
+  maxLines?: number;
   requiredBlockPx: number;
   widthChecks: ResolvedLayoutWidthCheck[];
   assumptions: string[];
@@ -222,13 +229,34 @@ function toPx(value: { numeric: number; unit: string }): { numeric: number; unit
 }
 
 function multiplyNumberish(value: string | number, factor: number): string | number {
+  if (!Number.isFinite(factor)) throw new Error('Token multiplier must be finite.');
+  const multiply = (numeric: number): number => {
+    const result = numeric * factor;
+    if (!Number.isFinite(result)) throw new Error('Token multiplication exceeds finite numeric bounds.');
+    return Number(result.toFixed(3));
+  };
+  if (typeof value === 'string' && /^clamp\(/i.test(value.trim())) {
+    const clamp = value.trim().match(/^clamp\(\s*(-?\d*\.?\d+)(px|rem|em)\s*,\s*(.+)\s*,\s*(-?\d*\.?\d+)(px|rem|em)\s*\)$/i);
+    if (!clamp) throw new Error(`Cannot multiply unresolved token "${value}".`);
+    const center = clamp[3].trim().replace(/^calc\((.*)\)$/i, '$1').trim();
+    if (!/^-?\d*\.?\d+(?:px|rem|em|vw|vh|%)(?:\s+[+-]\s+\d*\.?\d+(?:px|rem|em|vw|vh|%))*$|^0$/i.test(center)) {
+      throw new Error(`Cannot multiply unresolved token "${value}".`);
+    }
+    const bounds = [`${multiply(Number(clamp[1]))}${clamp[2].toLowerCase()}`, `${multiply(Number(clamp[4]))}${clamp[5].toLowerCase()}`];
+    if (factor < 0) bounds.reverse();
+    const terms = [...center.matchAll(/([+-]?\s*\d*\.?\d+)(px|rem|em|vw|vh|%)/gi)].map((term) => ({
+      numeric: multiply(Number(term[1].replace(/\s/g, ''))), unit: term[2].toLowerCase()
+    }));
+    const scaledCenter = terms.map((term, index) => index === 0 ? `${term.numeric}${term.unit}` : `${term.numeric < 0 ? '-' : '+'} ${Math.abs(term.numeric)}${term.unit}`).join(' ') || '0';
+    return `clamp(${bounds[0]}, ${scaledCenter}, ${bounds[1]})`;
+  }
   const parsed = parseNumberish(value);
   if (!parsed) {
     throw new Error(`Cannot multiply unresolved token "${String(value)}".`);
   }
 
-  const multiplied = parsed.numeric * factor;
-  return parsed.unit ? `${Number(multiplied.toFixed(3))}${parsed.unit}` : Number(multiplied.toFixed(3));
+  const multiplied = multiply(parsed.numeric);
+  return parsed.unit ? `${multiplied}${parsed.unit}` : multiplied;
 }
 
 function resolveAlias(theme: ThemeContract, alias: string, seen: Set<string>): string | number {
@@ -237,7 +265,7 @@ function resolveAlias(theme: ThemeContract, alias: string, seen: Set<string>): s
   }
 
   const resolved = theme.aliases[alias];
-  if (!resolved) {
+  if (!Object.hasOwn(theme.aliases, alias) || !resolved) {
     throw new Error(`Unknown theme alias "${alias}".`);
   }
 
@@ -250,13 +278,15 @@ function resolveThemeToken(theme: ThemeContract, ref: string, seen: Set<string> 
     return resolveAlias(theme, ref, seen);
   }
 
-  const [familyName, tokenName] = ref.split('.', 2) as [keyof ThemeContract['families'], string];
+  const parts = ref.split('.');
+  if (parts.length !== 2 || !parts[0] || !parts[1]) throw new Error(`Invalid theme token reference "${ref}".`);
+  const [familyName, tokenName] = parts as [keyof ThemeContract['families'], string];
   const family = theme.families[familyName];
-  if (!family) {
+  if (!Object.hasOwn(theme.families, familyName) || !family) {
     throw new Error(`Unknown theme family "${familyName}" in token ref "${ref}".`);
   }
 
-  if (!(tokenName in family)) {
+  if (!Object.hasOwn(family, tokenName)) {
     throw new Error(`Unknown theme token "${ref}".`);
   }
 
@@ -315,7 +345,11 @@ function resolveExprToPx(theme: ThemeContract, expr: TokenExpr | number, context
   if (!parsed || !['', 'px', 'rem', 'em'].includes(parsed.unit)) {
     throw new Error(`Token "${JSON.stringify(expr)}" did not resolve to a numeric length.`);
   }
-  return Number(toPx(parsed).numeric.toFixed(2));
+  const pixels = toPx(parsed).numeric;
+  if (!Number.isFinite(pixels)) {
+    throw new Error(`Token "${JSON.stringify(expr)}" did not resolve to a finite length.`);
+  }
+  return Number(pixels.toFixed(2));
 }
 
 function resolveExprToMs(theme: ThemeContract, expr: TokenExpr | number, context: ResolveContext = {}): number {
@@ -324,7 +358,11 @@ function resolveExprToMs(theme: ThemeContract, expr: TokenExpr | number, context
   if (!parsed || !['', 'ms', 's'].includes(parsed.unit) || !Number.isFinite(parsed.numeric) || parsed.numeric < 0) {
     throw new Error(`Token "${JSON.stringify(expr)}" did not resolve to a numeric duration.`);
   }
-  return Number((parsed.numeric * (parsed.unit === 's' ? 1000 : 1)).toFixed(2));
+  const milliseconds = parsed.numeric * (parsed.unit === 's' ? 1000 : 1);
+  if (!Number.isFinite(milliseconds)) {
+    throw new Error(`Token "${JSON.stringify(expr)}" did not resolve to a finite duration.`);
+  }
+  return Number(milliseconds.toFixed(2));
 }
 
 function estimateInlineContentWidth(
@@ -333,18 +371,25 @@ function estimateInlineContentWidth(
   layoutProof: LayoutProofSpec,
   theme: ThemeContract,
   context: ResolveContext
-): number {
+): { fullInlinePx: number; fixedInlinePx: number; fontSizePx: number; text: string } {
   const paddingInline = layoutProof.inlinePadding ? resolveExprToPx(theme, layoutProof.inlinePadding, context) : 0;
   const gap = layoutProof.gap ? resolveExprToPx(theme, layoutProof.gap, context) : 0;
   const fontSize = layoutProof.labelFontSize ? resolveExprToPx(theme, layoutProof.labelFontSize, context) : 16;
   const iconSize = layoutProof.iconSize ? resolveExprToPx(theme, layoutProof.iconSize, context) : 0;
+  const reservedInline = layoutProof.reservedInlineSize !== undefined
+    ? resolveExprToPx(theme, layoutProof.reservedInlineSize, context)
+    : 0;
+  if (!Number.isFinite(reservedInline) || reservedInline < 0) {
+    throw new Error('Reserved inline size must be finite and non-negative.');
+  }
   const hasText = axes.content !== 'icon-only' && Boolean(sampleText);
   const textWidth = hasText ? sampleText!.length * fontSize * 0.56 : 0;
   const hasLeading = axes.content === 'leading' || axes.content === 'leading-trailing';
   const hasTrailing = axes.content === 'trailing' || axes.content === 'leading-trailing';
   const hasIconOnly = axes.content === 'icon-only';
 
-  let inline = paddingInline * 2 + textWidth;
+  let inline = paddingInline * 2 + textWidth + reservedInline;
+  if (reservedInline > 0 && hasText) inline += gap;
   if (hasIconOnly) {
     inline += iconSize;
   } else {
@@ -356,7 +401,41 @@ function estimateInlineContentWidth(
     }
   }
 
-  return Number(inline.toFixed(2));
+  return {
+    fullInlinePx: Number(inline.toFixed(2)),
+    fixedInlinePx: inline - textWidth,
+    fontSizePx: fontSize,
+    text: hasText ? sampleText! : ''
+  };
+}
+
+const graphemeSegmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+
+function textGraphemes(text: string): string[] {
+  return Array.from(graphemeSegmenter.segment(text), ({ segment }) => segment);
+}
+
+function estimateTextLines(text: string, availablePx: number, glyphPx: number, anywhere: boolean): number {
+  if (!text) return 1;
+  const words = text.trim().split(/\s+/).map((word) => textGraphemes(word).length);
+  const capacity = Math.max(1, Math.floor((availablePx + 0.000001) / glyphPx));
+  let lines = 1;
+  let used = 0;
+  for (const length of words) {
+    const gap = used > 0 ? 1 : 0;
+    if (used + gap + length <= capacity) {
+      used += gap + length;
+      continue;
+    }
+    if (used > 0) lines += 1;
+    if (anywhere && length > capacity) {
+      lines += Math.ceil(length / capacity) - 1;
+      used = ((length - 1) % capacity) + 1;
+    } else {
+      used = length;
+    }
+  }
+  return lines;
 }
 
 function buildContrastProofs(
@@ -434,17 +513,43 @@ function buildLayoutProofs(
   context: ResolveContext
 ): ResolvedLayoutCheck[] {
   return (proofs.layout ? [proofs.layout] : []).map((proof) => {
-    const estimatedInlinePx = estimateInlineContentWidth(componentCase.axes, proofCase.sampleText, proof, theme, context);
+    const content = estimateInlineContentWidth(componentCase.axes, proofCase.sampleText, proof, theme, context);
+    const estimatedInlinePx = content.fullInlinePx;
+    const textBehavior = proof.textBehavior ?? 'single-line';
+    const glyphPx = content.fontSizePx * 0.56;
+    const longestWord = Math.max(0, ...content.text.trim().split(/\s+/).map((word) => textGraphemes(word).length));
+    const minimumTextPx = textBehavior === 'wrap'
+      ? longestWord * glyphPx
+      : content.text ? glyphPx : 0;
+    const minimumInlinePx = textBehavior === 'single-line'
+      ? estimatedInlinePx
+      : Number((content.fixedInlinePx + minimumTextPx).toFixed(2));
     const requiredBlockPx = resolveExprToPx(
       theme,
       proof.blockSize ?? { slotVar: { slot: proof.target, name: `--dk-${componentId}-block-size` } },
       context
     );
-    const heights = proof.heights ?? [requiredBlockPx];
-    const fitsHeight = requiredBlockPx <= Math.max(...heights);
+    const heights = proof.heights ?? (textBehavior === 'single-line' ? [requiredBlockPx] : []);
     const widthChecks = proof.widths.map((width) => {
-      const fitsWidth = !proof.noOverflow || estimatedInlinePx <= width;
-      return { width, fitsWidth, fitsHeight, pass: fitsWidth && fitsHeight };
+      const fitsWidth = !proof.noOverflow || minimumInlinePx <= width;
+      if (textBehavior === 'single-line') {
+        const fitsHeight = requiredBlockPx <= Math.max(...heights);
+        return { width, fitsWidth, fitsHeight, pass: fitsWidth && fitsHeight };
+      }
+      const availableTextPx = Number(Math.max(0, width - content.fixedInlinePx).toFixed(2));
+      const estimatedLineCount = textBehavior === 'scroll'
+        ? 1
+        : estimateTextLines(content.text, availableTextPx, glyphPx, textBehavior === 'wrap-anywhere');
+      const estimatedBlockPx = Number(Math.max(
+        requiredBlockPx,
+        content.text ? estimatedLineCount * content.fontSizePx * (proof.lineHeight ?? 1.4) : 0
+      ).toFixed(2));
+      const fitsHeight = heights.length === 0 || estimatedBlockPx <= Math.max(...heights);
+      const fitsLines = proof.maxLines === undefined || estimatedLineCount <= proof.maxLines;
+      return {
+        width, fitsWidth, fitsHeight, availableTextPx, estimatedLineCount, estimatedBlockPx,
+        fitsLines, pass: fitsWidth && fitsHeight && fitsLines
+      };
     });
     const pass = widthChecks.every((check) => check.pass);
 
@@ -453,11 +558,20 @@ function buildLayoutProofs(
       widths: proof.widths,
       heights,
       estimatedInlinePx,
+      minimumInlinePx,
+      textBehavior,
+      ...(proof.maxLines !== undefined ? { maxLines: proof.maxLines } : {}),
       requiredBlockPx,
       widthChecks,
       assumptions: [
-        'Single-line content uses a 0.56em glyph-advance estimate and maximum length token values.',
-        'Font shaping, wrapping, and rendered container geometry are not measured.'
+        'The full single-line estimate uses a 0.56em glyph advance and maximum length token values.',
+        ...(textBehavior === 'wrap' || textBehavior === 'wrap-anywhere' ? [
+          `Text uses ${textBehavior === 'wrap' ? 'whitespace word boundaries' : 'word boundaries and grapheme-safe breaks'} for estimated wrapping.`,
+          ...(proof.lineHeight === undefined ? ['Wrapping uses the default line height of 1.4.'] : []),
+          ...(proof.heights === undefined ? ['Block size is a minimum; no maximum height is declared.'] : [])
+        ] : []),
+        ...(textBehavior === 'scroll' ? ['The native text viewport scrolls horizontally; full text visibility is not verified.'] : []),
+        'Font shaping, vertical padding, and rendered container geometry are not measured.'
       ],
       pass
     };

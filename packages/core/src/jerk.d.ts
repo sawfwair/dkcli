@@ -12,4 +12,5 @@ export type MinimumJerkResult = {
     css: string;
 };
 export declare function minimumJerkPosition(t: number): number;
+/** Generates a positive-duration curve with 1 to 10,000 sample intervals. */
 export declare function generateMinimumJerk(duration?: number, sampleCount?: number): MinimumJerkResult;

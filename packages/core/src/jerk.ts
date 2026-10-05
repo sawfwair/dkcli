@@ -1,5 +1,7 @@
 // Minimum-jerk trajectory generation.
 
+import { assertGeneratedCount, assertPositiveFinite } from './numeric-validation.ts';
+
 export type MinimumJerkSample = {
   t: number;
   x: number;
@@ -24,7 +26,11 @@ export function minimumJerkPosition(t: number): number {
   return 10 * clamped ** 3 - 15 * clamped ** 4 + 6 * clamped ** 5;
 }
 
+/** Generates a positive-duration curve with 1 to 10,000 sample intervals. */
 export function generateMinimumJerk(duration: number = 0.6, sampleCount: number = 40): MinimumJerkResult {
+  assertPositiveFinite(duration, 'Minimum-jerk duration');
+  assertGeneratedCount(sampleCount, 'Minimum-jerk samples', 1);
+  const reportedDuration = duration < 0.001 ? duration : fmt(duration);
   const samples: MinimumJerkSample[] = [];
 
   for (let index = 0; index <= sampleCount; index += 1) {
@@ -44,9 +50,9 @@ export function generateMinimumJerk(duration: number = 0.6, sampleCount: number 
 
   const linear = `linear(\n  ${samples.map((sample) => sample.x.toFixed(3)).join(',\n  ')}\n)`;
   return {
-    duration: fmt(duration),
+    duration: reportedDuration,
     samples,
     linear,
-    css: `/* minimum-jerk */\ntransition-duration: ${fmt(duration)}s;\ntransition-timing-function: ${linear};`
+    css: `/* minimum-jerk */\ntransition-duration: ${reportedDuration}s;\ntransition-timing-function: ${linear};`
   };
 }

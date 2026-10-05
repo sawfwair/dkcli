@@ -1,3 +1,6 @@
+import { assertSafeCssCustomPropertyBody } from './css-safety.ts';
+import { assertFiniteOutput, assertGeneratedCount, assertPositiveFinite } from './numeric-validation.ts';
+
 export const RATIOS: Record<string, number> = {
   'minor-second': 16 / 15,
   'major-second': 9 / 8,
@@ -33,9 +36,9 @@ export type ScaleMeta = {
 
 export function resolveRatio(val?: string): { name: string; value: number } {
   if (!val || val === 'golden') return { name: 'golden', value: RATIOS.golden };
-  if (RATIOS[val]) return { name: val, value: RATIOS[val] };
+  if (Object.hasOwn(RATIOS, val)) return { name: val, value: RATIOS[val] };
   const n = Number(val);
-  if (n > 1) return { name: 'custom', value: n };
+  if (Number.isFinite(n) && n > 1) return { name: 'custom', value: n };
   throw new Error(
     `Unknown ratio: ${val}. Use a name (${Object.keys(RATIOS).join(', ')}) or a number > 1.`
   );
@@ -59,6 +62,16 @@ function fmtPx(px: number): number {
   return parseFloat(px.toFixed(1));
 }
 
+function validateScaleOptions(base: number, steps: number, down: number, unit: string, prefix: string, naming: string): void {
+  assertPositiveFinite(base, 'Scale base');
+  assertGeneratedCount(steps, 'Scale steps');
+  assertGeneratedCount(down, 'Scale down');
+  if (unit !== 'rem' && unit !== 'px') throw new Error('Scale unit must be rem or px.');
+  if (naming !== 'natural' && naming !== 'signed') throw new Error('Scale naming must be natural or signed.');
+  assertSafeCssCustomPropertyBody(prefix, 'scale prefix');
+}
+
+/** Generates finite tokens with integer steps/down from 0 to 10,000 and px or rem units. */
 export function generateScale(options: {
   base?: number;
   ratio?: string;
@@ -76,9 +89,12 @@ export function generateScale(options: {
   const prefix = options.prefix ?? 'space';
   const naming = options.naming ?? 'natural';
 
+  validateScaleOptions(base, steps, down, unit, prefix, naming);
+
   const scale: ScaleStep[] = [];
   for (let i = -down; i <= steps; i++) {
     const px = base * Math.pow(ratio, i);
+    assertFiniteOutput(px, 'Scale step');
     const name = stepName(i, naming);
     const token = `--${prefix}-${name}`;
     const value = unit === 'rem' ? `${fmtRem(px)}rem` : `${fmtPx(px)}px`;
@@ -93,6 +109,7 @@ export function generateScale(options: {
 
 export const FIBONACCI = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233];
 
+/** Extends the Fibonacci recurrence, rejecting overflow and counts outside 0 to 10,000. */
 export function generateFibonacciScale(options: {
   base?: number; steps?: number; down?: number; unit?: string; prefix?: string; naming?: string;
 } = {}): { meta: ScaleMeta; scale: ScaleStep[] } {
@@ -104,11 +121,20 @@ export function generateFibonacciScale(options: {
   const naming = options.naming ?? 'natural';
   const centerIdx = 5;
 
+  validateScaleOptions(base, steps, down, unit, prefix, naming);
+  const fibonacci = [...FIBONACCI];
+  while (fibonacci.length <= centerIdx + steps) {
+    const next = fibonacci[fibonacci.length - 1] + fibonacci[fibonacci.length - 2];
+    assertFiniteOutput(next, 'Fibonacci step');
+    fibonacci.push(next);
+  }
+
   const scale: ScaleStep[] = [];
   for (let i = -down; i <= steps; i++) {
     const fibIdx = Math.max(0, centerIdx + i);
-    const fibVal = fibIdx >= 0 && fibIdx < FIBONACCI.length ? FIBONACCI[fibIdx] : FIBONACCI[FIBONACCI.length - 1];
-    const px = base * fibVal / FIBONACCI[centerIdx];
+    const fibVal = fibonacci[fibIdx];
+    const px = base * (fibVal / FIBONACCI[centerIdx]);
+    assertFiniteOutput(px, 'Fibonacci scale step');
     const name = stepName(i, naming);
     const token = `--${prefix}-${name}`;
     const value = unit === 'rem' ? `${fmtRem(px)}rem` : `${fmtPx(px)}px`;
@@ -120,7 +146,7 @@ export function generateFibonacciScale(options: {
 export type FluidScaleStep = ScaleStep & { clamp: string; pxMin: number; pxMax: number };
 export type FluidScaleMeta = ScaleMeta & { baseMin: number; baseMax: number; vwMin: number; vwMax: number };
 
-/** Generates CSS clamp() values between finite viewport widths with 0 <= vwMin < vwMax. */
+/** Generates CSS clamp() values for ordered finite sizes/viewports, with 0 to 10,000 steps/down. */
 export function generateFluidScale(options: {
   baseMin?: number; baseMax?: number; ratio?: string; steps?: number; down?: number;
   prefix?: string; naming?: string; vwMin?: number; vwMax?: number;
@@ -135,6 +161,10 @@ export function generateFluidScale(options: {
   const vwMin = options.vwMin ?? 320;
   const vwMax = options.vwMax ?? 1440;
 
+  validateScaleOptions(baseMin, steps, down, 'rem', prefix, naming);
+  assertPositiveFinite(baseMax, 'Fluid maximum base');
+  if (baseMax < baseMin) throw new Error('Fluid maximum base must be at least the minimum base.');
+
   if (!Number.isFinite(vwMin) || !Number.isFinite(vwMax) || vwMin < 0 || vwMax <= vwMin) {
     throw new Error('Fluid viewport widths must be finite, with vw-min >= 0 and vw-max > vw-min.');
   }
@@ -143,6 +173,8 @@ export function generateFluidScale(options: {
   for (let i = -down; i <= steps; i++) {
     const pxMin = baseMin * Math.pow(ratio, i);
     const pxMax = baseMax * Math.pow(ratio, i);
+    assertFiniteOutput(pxMin, 'Fluid minimum step');
+    assertFiniteOutput(pxMax, 'Fluid maximum step');
     const remMin = fmtRem(pxMin);
     const remMax = fmtRem(pxMax);
     const name = stepName(i, naming);
@@ -151,6 +183,8 @@ export function generateFluidScale(options: {
     const intercept = pxMin - slope * vwMin;
     const interceptRem = parseFloat((intercept / 16).toFixed(4));
     const slopeVw = parseFloat((slope * 100).toFixed(3));
+    assertFiniteOutput(interceptRem, 'Fluid intercept');
+    assertFiniteOutput(slopeVw, 'Fluid slope');
     const clamp = `clamp(${remMin}rem, ${interceptRem}rem + ${slopeVw}vw, ${remMax}rem)`;
     scale.push({ step: i, name, token, value: clamp, px: fmtPx(pxMax), rem: remMax, clamp, pxMin: fmtPx(pxMin), pxMax: fmtPx(pxMax) });
   }

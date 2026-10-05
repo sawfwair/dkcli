@@ -179,6 +179,8 @@ export const textFieldSpec: ComponentSpec = createComponentSpec({
       widths: [240, 320, 420],
       heights: [44, 48, 52],
       noOverflow: true,
+      textBehavior: 'scroll',
+      lineHeight: 1.2,
       blockSize: slotVar('field', '--dk-text-field-block-size'),
       inlinePadding: slotVar('field', '--dk-text-field-inline-padding'),
       labelFontSize: slotVar('field', '--dk-text-field-input-font-size')

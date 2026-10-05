@@ -11,7 +11,7 @@
 
 <script lang="ts">
   import { run } from 'svelte/legacy';
-  import { createEventDispatcher, tick, untrack } from 'svelte';
+  import { createEventDispatcher, onMount, tick, untrack } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import {
@@ -20,6 +20,7 @@
     groupCommandItems,
     isEventOutside,
     nextListIndex,
+    trapFocus,
     type CommandItem
   } from '../internal/behavior/index.js';
   import {
@@ -79,8 +80,16 @@
   let itemRefs: HTMLButtonElement[] = $state([]);
   let ignoreOutsideClickUntil = 0;
 
+  onMount(() => {
+    if (internalOpen) {
+      restoreFocusEl = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      void focusInput();
+    }
+  });
+
   async function focusInput(): Promise<void> {
     await tick();
+    if (!internalOpen) return;
     inputEl?.focus();
     inputEl?.select();
   }
@@ -118,14 +127,12 @@
     void focusInput();
   }
 
-  function closePalette(): void {
+  function closePalette(restoreFocus = true): void {
     if (!internalOpen) {
       return;
     }
     emitOpen(false);
-    void tick().then(() => {
-      restoreFocusEl?.focus();
-    });
+    if (restoreFocus) void tick().then(() => restoreFocusEl?.focus());
   }
 
   function runAction(item: CommandPaletteItem): void {
@@ -222,7 +229,7 @@
       return;
     }
     if (isEventOutside(surfaceEl, event.target)) {
-      closePalette();
+      closePalette(Boolean(surfaceEl?.contains(document.activeElement)));
     }
   }
   let registration = $derived(theme.name === DEFAULT_COMMAND_PALETTE_THEME.name
@@ -250,7 +257,7 @@
   let filteredItems = $derived(filterCommandItems(items as CommandItem[], internalQuery));
   let groupedItems = $derived(groupCommandItems(filteredItems));
   run(() => {
-    if (internalOpen && filteredItems.length > 0 && (highlightIndex < 0 || filteredItems[highlightIndex]?.disabled)) {
+    if (internalOpen && filteredItems.length > 0 && (!filteredItems[highlightIndex] || filteredItems[highlightIndex].disabled)) {
       highlightIndex = firstEnabledCommandIndex(filteredItems);
     }
   });
@@ -268,6 +275,8 @@
       role="dialog"
       aria-modal="true"
       aria-label="Command palette"
+      tabindex="-1"
+      onkeydown={(event) => trapFocus(event, surfaceEl)}
     >
       <input
         bind:this={inputEl}

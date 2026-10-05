@@ -70,7 +70,7 @@
     (getFocusableElements(surfaceEl)[0] ?? surfaceEl).focus();
   }
 
-  function setOpen(nextOpen: boolean): void {
+  function setOpen(nextOpen: boolean, restoreFocus = true): void {
     if (internalOpen === nextOpen) {
       return;
     }
@@ -79,7 +79,7 @@
     previousOpen = nextOpen;
     onOpenChange?.({ open: nextOpen });
     dispatch('openchange', { open: nextOpen });
-    if (!nextOpen) {
+    if (!nextOpen && restoreFocus) {
       void tick().then(() => {
         triggerEl?.focus();
       });
@@ -93,7 +93,7 @@
     const outsideSurface = isEventOutside(surfaceEl, event.target);
     const outsideTrigger = isEventOutside(triggerEl, event.target);
     if (outsideSurface && outsideTrigger) {
-      setOpen(false);
+      setOpen(false, Boolean(surfaceEl?.contains(document.activeElement)));
     }
   }
 

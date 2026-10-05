@@ -2,13 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createTheme } from '@dkcli/tokens';
 
-import {
-  BADGE_LAYOUT_FAILURES,
-  BUTTON_LAYOUT_FAILURES,
-  CHECKBOX_LAYOUT_FAILURES,
-  expectKnownLayoutFailures,
-  type KnownLayoutFailure
-} from './test-utils/proof-expectations.js';
+import { DECLARED_LAYOUT_BEHAVIORS, expectDeclaredLayoutBehavior } from './test-utils/proof-expectations.js';
 import { COMPONENT_VERIFICATION_REGISTRY, DK_COMPONENT_THEME_PRESETS } from './verification.js';
 
 const FIXTURE_COUNTS: Record<string, number> = {
@@ -21,20 +15,6 @@ const FIXTURE_COUNTS: Record<string, number> = {
   'text-field': 6, textarea: 6, toast: 2, tooltip: 1, 'tree-view': 2
 };
 
-// These single-line width estimates are known limits of the current recipes.
-// Keep failures visible until rendered evidence or an intentional recipe change resolves them.
-function expectedLayoutFailures(slug: string, themeId: string): KnownLayoutFailure[] {
-  switch (slug) {
-    case 'accordion': return [{ name: 'accordion-md-open', widths: [320] }];
-    case 'breadcrumbs': return [{ name: 'breadcrumbs-md', widths: [220] }];
-    case 'button': return themeId === 'linen' ? [BUTTON_LAYOUT_FAILURES[1]] : BUTTON_LAYOUT_FAILURES;
-    case 'badge': return themeId === 'sage' ? [] : BADGE_LAYOUT_FAILURES;
-    case 'checkbox': return ['cobalt', 'ember'].includes(themeId) ? CHECKBOX_LAYOUT_FAILURES : [];
-    case 'text-field': return themeId === 'linen' ? [] : [{ name: 'sizes (size=lg)', widths: [240] }];
-    default: return [];
-  }
-}
-
 describe('component mathematical proof matrix', () => {
   it('keeps explicit fixture-count coverage for every shipped component', () => {
     expect(COMPONENT_VERIFICATION_REGISTRY.map((entry) => entry.slug)).toEqual(Object.keys(FIXTURE_COUNTS));
@@ -44,12 +24,12 @@ describe('component mathematical proof matrix', () => {
     const theme = createTheme(themeDef);
     describe(`theme: ${themeDef.name}`, () => {
       for (const comp of COMPONENT_VERIFICATION_REGISTRY) {
-        it(`${comp.name} — preserves all fixtures and reports known narrow-width failures`, () => {
+        it(`${comp.name} — preserves all fixtures and declared layout behavior`, () => {
           const registration = comp.createRegistration(theme);
-          expectKnownLayoutFailures(
+          expectDeclaredLayoutBehavior(
             registration.recipe.proofFixtures,
             FIXTURE_COUNTS[comp.slug],
-            expectedLayoutFailures(comp.slug, themeDef.id)
+            DECLARED_LAYOUT_BEHAVIORS[comp.slug]
           );
         });
       }

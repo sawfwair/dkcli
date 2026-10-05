@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createTheme } from '@dkcli/tokens';
 
 import { createTextFieldRegistration, getTextFieldRecipeCase } from './text-field.recipe.js';
-import { expectKnownLayoutFailures } from '../test-utils/proof-expectations.js';
+import { DECLARED_LAYOUT_BEHAVIORS, expectDeclaredLayoutBehavior } from '../test-utils/proof-expectations.js';
 
 describe('text field recipe', () => {
   it('compiles all size cases for light and dark themes', () => {
@@ -38,7 +38,7 @@ describe('text field recipe', () => {
     expect(compiledCase.slots.field.baseVars['--dk-text-field-bg']).toMatch(/^#/);
     expect(compiledCase.slots.field.baseVars['--dk-text-field-input-font-size']).toContain('clamp');
     for (const registration of [lightRegistration, darkRegistration]) {
-      expectKnownLayoutFailures(registration.recipe.proofFixtures, 6, [{ name: 'sizes (size=lg)', widths: [240] }]);
+      expectDeclaredLayoutBehavior(registration.recipe.proofFixtures, 6, DECLARED_LAYOUT_BEHAVIORS['text-field']);
     }
   });
 });

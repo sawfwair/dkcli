@@ -40,6 +40,7 @@
   let registration = defaultRegistration;
   let dismissedIds = new Set<string>();
   let timers = new Map<string, ReturnType<typeof setTimeout>>();
+  let previousDuration = durationMs;
   let compiledCase = getToastRecipeCase(defaultRegistration.recipe, { placement });
   let slotStyles = serializeToastSlotStyles(compiledCase);
 
@@ -59,11 +60,16 @@
     if (typeof window === 'undefined') {
       return;
     }
-    for (const handle of timers.values()) {
-      clearTimeout(handle);
+    const nextIds = new Set(nextItems.map((item) => item.id));
+    for (const [id, handle] of timers) {
+      if (!nextIds.has(id) || duration !== previousDuration) {
+        clearTimeout(handle);
+        timers.delete(id);
+      }
     }
-    timers.clear();
+    previousDuration = duration;
     for (const item of nextItems) {
+      if (timers.has(item.id)) continue;
       timers.set(
         item.id,
         setTimeout(() => {
@@ -74,6 +80,9 @@
   }
 
   function dismissItem(id: string): void {
+    if (dismissedIds.has(id)) return;
+    clearTimeout(timers.get(id));
+    timers.delete(id);
     dismissedIds = new Set([...dismissedIds, id]);
     onDismiss?.({ id });
     dispatch('dismiss', { id });

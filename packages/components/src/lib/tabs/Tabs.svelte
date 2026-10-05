@@ -11,7 +11,7 @@
   import { createEventDispatcher, tick, untrack } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
-  import { moveRovingIndex } from '../internal/behavior/index.js';
+  import { firstEnabledIndex, moveRovingIndex } from '../internal/behavior/index.js';
   import {
     DEFAULT_TABS_THEME,
     createTabsRegistration,
@@ -56,10 +56,8 @@
     currentValue = value ?? currentValue ?? items.find((item) => !item.disabled)?.value;
   });
   run(() => {
-    focusedIndex = Math.max(
-      0,
-      items.findIndex((item) => item.value === currentValue)
-    );
+    const selectedIndex = items.findIndex((item) => item.value === currentValue && !item.disabled);
+    focusedIndex = selectedIndex >= 0 ? selectedIndex : firstEnabledIndex(items);
   });
   let compiledCase = $derived(getTabsRecipeCase(registration.recipe, { size, orientation }));
   let slotStyles = $derived(serializeTabsSlotStyles(compiledCase));
@@ -123,9 +121,10 @@
         aria-selected={selected ? 'true' : 'false'}
         aria-controls={`${uid}-panel-${item.value}`}
         id={`${uid}-tab-${item.value}`}
-        tabindex={selected ? 0 : -1}
+        tabindex={index === focusedIndex && !item.disabled ? 0 : -1}
         data-selected={selected}
         disabled={item.disabled}
+        onfocus={() => { focusedIndex = index; }}
         onclick={() => selectTab(item.value, index)}
       >
         <span>{item.label}</span>

@@ -10,7 +10,7 @@
   import { createEventDispatcher, tick } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
-  import { moveRovingIndex } from '../internal/behavior/index.js';
+  import { firstEnabledIndex, moveRovingIndex } from '../internal/behavior/index.js';
   import {
     DEFAULT_SEGMENTED_CONTROL_THEME,
     createSegmentedControlRegistration,
@@ -46,7 +46,9 @@
     previousValue = value;
   }
   $: currentValue = currentValue ?? items.find((item) => !item.disabled)?.value;
-  $: focusedIndex = Math.max(0, items.findIndex((item) => item.value === currentValue));
+  $: focusedIndex = items.some((item) => item.value === currentValue && !item.disabled)
+    ? items.findIndex((item) => item.value === currentValue && !item.disabled)
+    : firstEnabledIndex(items);
   $: compiledCase = getSegmentedControlRecipeCase(registration.recipe, { size });
   $: slotStyles = serializeSegmentedControlSlotStyles(compiledCase);
 
@@ -108,7 +110,8 @@
         aria-checked={selected ? 'true' : 'false'}
         data-selected={selected}
         disabled={item.disabled}
-        tabindex={selected ? 0 : -1}
+        tabindex={index === focusedIndex && !item.disabled ? 0 : -1}
+        onfocus={() => { focusedIndex = index; }}
         onclick={() => {
           focusedIndex = index;
           selectValue(item.value);

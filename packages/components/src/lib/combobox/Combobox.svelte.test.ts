@@ -6,6 +6,19 @@ import Combobox from './Combobox.svelte';
 afterEach(() => document.querySelectorAll('[data-test-outside]').forEach((element) => element.remove()));
 
 describe('Combobox', () => {
+  it('updates the active option when asynchronous results replace the list', async () => {
+    const onChange = vi.fn();
+    const { rerender } = render(Combobox, { props: { items: [{ value: 'one', label: 'One' }, { value: 'two', label: 'Two' }], onChange } });
+    const input = screen.getByRole('combobox');
+    input.focus();
+    await fireEvent.keyDown(input, { key: 'End' });
+    await rerender({ items: [{ value: 'three', label: 'Three' }] });
+    const option = screen.getByRole('option', { name: 'Three' });
+    expect(input.getAttribute('aria-activedescendant')).toBe(option.id);
+    await fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ value: 'three' });
+  });
+
   const items = [
     { value: 'staging', label: 'Staging' },
     { value: 'production', label: 'Production' }

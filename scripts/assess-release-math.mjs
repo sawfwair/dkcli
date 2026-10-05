@@ -28,9 +28,6 @@ function same(actual, expected, message) {
 }
 function identity(fixture) { return Object.fromEntries(identityFields.filter((key) => fixture[key] !== undefined).map((key) => [key, fixture[key]])); }
 function key(fixture) { return `${fixture.componentId}:${fixture.id}`; }
-function layoutSignature(proof) {
-  return Object.fromEntries(['target', 'widths', 'heights', 'estimatedInlinePx', 'requiredBlockPx', 'widthChecks', 'pass'].map((key) => [key, proof[key]]));
-}
 
 /** Checks the exact reviewed project findings without changing mathematical verdicts. */
 export function assertReviewedProjectMath(value, policy) {
@@ -42,10 +39,8 @@ export function assertReviewedProjectMath(value, policy) {
   const inventory = array(expected.fixtureInventory, 'reviewed inventory');
   const reviewed = array(expected.reviewedFailures, 'reviewed failures');
   const expectedById = new Map(inventory.map((fixture) => [key(fixture), fixture]));
-  const failuresById = new Map(reviewed.map((fixture) => [key(fixture), fixture]));
-  if (expectedById.size !== 180 || failuresById.size !== 17 || fixtures.length !== 180) throw new Error('Preserve the reviewed 180-fixture inventory and 17 findings.');
+  if (expectedById.size !== 180 || reviewed.length !== 0 || fixtures.length !== 180) throw new Error('Preserve the reviewed 180-fixture inventory without new findings.');
   const observed = new Set();
-  const observedFailures = new Set();
   for (const value of fixtures) {
     const fixture = object(value, 'fixture');
     const id = key(fixture);
@@ -60,19 +55,13 @@ export function assertReviewedProjectMath(value, policy) {
     for (const category of categories) {
       const proofs = array(fixture[category], `${id} ${category}`);
       if (proofs.length !== baseline.proofCounts[category]) throw new Error(`Proof count changed for ${id} ${category}.`);
-      if (category !== 'layout' && proofs.some((proof) => proof.pass !== true)) throw new Error(`Unreviewed ${category} failure for ${id}.`);
+      if (proofs.some((proof) => proof.pass !== true)) throw new Error(`Unreviewed ${category} failure for ${id}.`);
     }
-    const reviewedFailure = failuresById.get(id);
-    const failedLayout = fixture.layout.filter((proof) => proof.pass !== true);
-    if (reviewedFailure) {
-      same(failedLayout.map(layoutSignature), reviewedFailure.layout.map(layoutSignature), `Reviewed layout checks changed for ${id}.`);
-      if (fixture.pass !== false) throw new Error(`Reviewed finding ${id} must remain a mathematical failure.`);
-      observedFailures.add(id);
-    } else if (failedLayout.length || fixture.pass !== true) throw new Error(`Unreviewed mathematical failure ${id}.`);
+    same(fixture.layout, baseline.layout, `Reviewed layout checks changed for ${id}.`);
+    if (fixture.pass !== true) throw new Error(`Unreviewed mathematical failure ${id}.`);
   }
-  same([...observedFailures].sort(), [...failuresById.keys()].sort(), 'Reviewed failure identities changed.');
   const summary = object(report.summary, 'project summary');
-  same(summary, expected.summary, 'Project totals must retain 180 fixtures, 17 findings, and a failed mathematical verdict.');
+  same(summary, expected.summary, 'Project totals must retain 180 fixtures and the reviewed mathematical verdict.');
   const expectedRuns = new Map(expected.runs.map((run) => [run.slug, run]));
   const runs = array(report.runs, 'project runs');
   const runIds = new Set();
@@ -82,7 +71,7 @@ export function assertReviewedProjectMath(value, policy) {
     runIds.add(run.slug);
     same(run, expectedRuns.get(run.slug), `Reviewed project verdicts changed for ${run.slug}.`);
   }
-  return { fixtureCount: fixtures.length, reviewedFailureCount: observedFailures.size, mathematicalPass: false };
+  return { fixtureCount: fixtures.length, reviewedFailureCount: summary.failedFixtureCount, mathematicalPass: summary.pass };
 }
 
 /** Preserves the exact reviewed component-theme failures, including their check reasons. */
@@ -101,15 +90,21 @@ export function assertReviewedMatrix(value, policy) {
     seen.add(id);
     same(run, byId.get(id), `Reviewed matrix verdicts changed for ${id}.`);
   }
-  return { fixtureCount: 720, reviewedFailureCount: 45, mathematicalPass: false };
+  return { fixtureCount: report.summary.fixtureCount, reviewedFailureCount: report.summary.failedFixtureCount, mathematicalPass: report.summary.pass };
 }
 
 function strictArtifact(executable, args, cwd) {
   const env = { ...process.env };
   delete env.NODE_PATH;
   const result = spawnSync(process.execPath, [executable, ...args, '--json', '--strict'], { cwd, env, encoding: 'utf8', timeout: 90_000, maxBuffer: 8 * 1024 * 1024 });
-  if (result.status !== 1 || !/strict verification failed/.test(result.stderr)) throw new Error(`Strict mathematical verification must fail after emitting its artifact: ${result.error?.message ?? result.stderr}`);
-  return object(JSON.parse(result.stdout), 'strict artifact');
+  if (result.error) throw new Error(`Strict mathematical verification did not finish: ${result.error.message}`);
+  const report = object(JSON.parse(result.stdout), 'strict artifact');
+  const summary = object(report.summary, 'strict artifact summary');
+  if (typeof summary.pass !== 'boolean') throw new Error('Strict artifact requires a mathematical pass verdict.');
+  const expectedStatus = summary.pass ? 0 : 1;
+  const strictFailure = /strict verification failed/.test(result.stderr);
+  if (result.status !== expectedStatus || strictFailure === summary.pass) throw new Error('Strict exit status disagrees with the mathematical verdict.');
+  return report;
 }
 
 export function assessReleaseMath(repositoryRoot = root) {

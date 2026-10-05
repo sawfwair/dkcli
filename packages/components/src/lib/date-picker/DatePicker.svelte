@@ -16,6 +16,7 @@
     type Placement
   } from '../internal/behavior/index.js';
   import { FieldFrame } from '../primitives/index.js';
+  import RequiredSelection from '../primitives/RequiredSelection.svelte';
   import {
     DEFAULT_DATE_PICKER_THEME,
     createDatePickerRegistration,
@@ -124,11 +125,13 @@
     visibleMonth = monthStartIso(focusedDate);
   }
 
-  function closeCalendar(): void {
+  function closeCalendar(restoreFocus = true): void {
     internalOpen = false;
-    void tick().then(() => {
-      triggerEl?.focus();
-    });
+    if (restoreFocus) {
+      void tick().then(() => {
+        triggerEl?.focus();
+      });
+    }
   }
 
   function emitChange(nextValue: string | undefined): void {
@@ -140,7 +143,7 @@
 
   function chooseDate(nextValue: string): void {
     if (
-      isDateDisabled({
+      disabled || isDateDisabled({
         value: nextValue,
         min,
         max,
@@ -153,7 +156,7 @@
     focusedDate = nextValue;
     visibleMonth = monthStartIso(nextValue);
     emitChange(nextValue);
-    internalOpen = false;
+    closeCalendar();
   }
 
   function moveMonth(delta: number): void {
@@ -167,7 +170,7 @@
       return;
     }
     if (isEventOutside(surfaceEl, event.target) && isEventOutside(triggerEl, event.target)) {
-      closeCalendar();
+      closeCalendar(Boolean(surfaceEl?.contains(document.activeElement)));
     }
   }
 
@@ -243,6 +246,9 @@
       void syncPositionAndFocus();
     }
   });
+  run(() => {
+    if (disabled) internalOpen = false;
+  });
 </script>
 
 <svelte:window onclick={handleWindowClick} />
@@ -260,7 +266,8 @@
   descriptionStyle={slotStyles.description}
   errorStyle={slotStyles.error}
 >
-  <input type="hidden" {name} value={currentValue ?? ''} />
+  <input type="hidden" {name} value={currentValue ?? ''} {disabled} />
+  <RequiredSelection {required} {disabled} value={currentValue ?? ''} focusTarget={triggerEl} />
 
   <button
     bind:this={triggerEl}

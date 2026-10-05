@@ -8,6 +8,7 @@ function supportedLength(text: string): boolean {
   if (!clamp) return false;
   const center = clamp[3].trim().replace(/^calc\((.*)\)$/i, '$1');
   if (!/^(?:0|-?\d*\.?\d+(?:px|rem|em|vw|vh|%)(?:\s+[+-]\s+\d*\.?\d+(?:px|rem|em|vw|vh|%))*)$/i.test(center)) return false;
+  if (![...center.matchAll(/-?\d*\.?\d+/g)].every((coefficient) => Number.isFinite(Number(coefficient[0])))) return false;
   const min = Number(clamp[1]) * (clamp[2].toLowerCase() === 'px' ? 1 : 16);
   const max = Number(clamp[4]) * (clamp[5].toLowerCase() === 'px' ? 1 : 16);
   return Number.isFinite(min) && Number.isFinite(max) && min <= max;
@@ -28,7 +29,8 @@ function validateToken(family: ProjectTokenFamily, token: string, value: string 
   if (family === 'type' && token.startsWith('font-')) throw new Error('Edit font stacks through the fonts configuration.');
   if (family === 'motion') {
     if (token === 'preset') throw new Error('Edit the motion preset through the theme seed.');
-    if (!DURATION.test(text)) throw new Error(`Use a nonnegative CSS duration for ${family}.${token}.`);
+    const milliseconds = Number.parseFloat(text) * (text.endsWith('ms') ? 1 : 1000);
+    if (!DURATION.test(text) || !Number.isFinite(milliseconds)) throw new Error(`Use a finite nonnegative CSS duration for ${family}.${token}.`);
   }
   if (family === 'state') throw new Error('Edit state tokens through the theme seed.');
 }
@@ -42,14 +44,6 @@ export function createProjectTheme(input: ProjectTheme): ThemeContract {
   theme.families.type['font-body'] = config.fonts.body;
   theme.families.type['font-display'] = config.fonts.display;
   theme.families.type['font-mono'] = config.fonts.mono;
-  const durations: Record<string, [string, string, string]> = {
-    snappy: ['120ms', '200ms', '320ms'],
-    calm: ['180ms', '300ms', '480ms'],
-    expressive: ['160ms', '280ms', '440ms'],
-    reduced: ['0ms', '0ms', '0ms']
-  };
-  const [fast, normal, slow] = durations[config.seed.motion];
-  Object.assign(theme.families.motion, { fast, normal, slow });
   for (const [family, values] of Object.entries(config.overrides ?? {})) {
     const key = family as ProjectTokenFamily;
     for (const [token, value] of Object.entries(values)) {

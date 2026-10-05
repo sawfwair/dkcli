@@ -14,7 +14,7 @@
 
   import {
     flattenHierarchy,
-    nextVisibleHierarchyIndex,
+    nextListIndex,
     toggleExpandedIds,
     type FlatHierarchyItem,
     type HierarchyItem
@@ -48,6 +48,7 @@
   let previousValue = value;
   let previousExpandedKey = expandedIds.join('|');
   let itemRefs: HTMLButtonElement[] = [];
+  let focusedId = value;
 
   $: registration =
     theme.name === DEFAULT_TREE_VIEW_THEME.name ? defaultRegistration : createTreeViewRegistration(theme);
@@ -56,6 +57,7 @@
   $: if (value !== previousValue) {
     internalValue = value;
     previousValue = value;
+    focusedId = value;
   }
   $: nextExpandedKey = expandedIds.join('|');
   $: if (nextExpandedKey !== previousExpandedKey) {
@@ -63,7 +65,8 @@
     previousExpandedKey = nextExpandedKey;
   }
   $: visibleItems = flattenHierarchy(items as HierarchyItem[], internalExpandedIds, 0);
-  $: activeIndex = Math.max(0, visibleItems.findIndex((entry) => entry.id === internalValue));
+  $: focusedIndex = visibleItems.findIndex((entry) => entry.id === focusedId && !entry.item.disabled);
+  $: tabStopIndex = focusedIndex >= 0 ? focusedIndex : visibleItems.findIndex((entry) => !entry.item.disabled);
 
   function emitExpanded(ids: string[]): void {
     internalExpandedIds = ids;
@@ -77,6 +80,7 @@
     internalValue = nextValue;
     value = nextValue;
     previousValue = nextValue;
+    focusedId = nextValue;
     onChange?.({ value: nextValue });
     dispatch('change', { value: nextValue });
   }
@@ -89,6 +93,8 @@
   }
 
   function focusVisible(index: number): void {
+    if (!visibleItems[index] || visibleItems[index].item.disabled) return;
+    focusedId = visibleItems[index].id;
     void tick().then(() => {
       itemRefs[index]?.focus();
     });
@@ -97,7 +103,7 @@
   function handleKeydown(event: KeyboardEvent, entry: FlatHierarchyItem<HierarchyItem>, index: number): void {
     if (entry.item.disabled) return;
     if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'Home' || event.key === 'End') {
-      const nextIndex = nextVisibleHierarchyIndex(visibleItems, index, event.key);
+      const nextIndex = nextListIndex(visibleItems.map((item) => item.item), index, event.key, { orientation: 'vertical' });
       focusVisible(nextIndex);
       event.preventDefault();
       return;
@@ -106,8 +112,9 @@
     if (event.key === 'ArrowRight') {
       if (entry.hasChildren && !entry.expanded) {
         toggleBranch(entry.item as TreeViewItem);
-      } else if (entry.hasChildren && visibleItems[index + 1]) {
-        focusVisible(index + 1);
+      } else if (entry.hasChildren) {
+        const childIndex = visibleItems.findIndex((item) => item.parentId === entry.id && !item.item.disabled);
+        if (childIndex >= 0) focusVisible(childIndex);
       }
       event.preventDefault();
       return;
@@ -151,6 +158,7 @@
             style={slotStyles.branch}
             type="button"
             disabled={entry.item.disabled}
+            tabindex="-1"
             aria-label={entry.expanded ? `Collapse ${entry.item.label}` : `Expand ${entry.item.label}`}
             onclick={(event) => {
               event.stopPropagation();
@@ -168,6 +176,8 @@
           type="button"
           data-selected={internalValue === entry.id ? 'true' : 'false'}
           disabled={entry.item.disabled}
+          tabindex={index === tabStopIndex && !entry.item.disabled ? 0 : -1}
+          onfocus={() => { focusedId = entry.id; }}
           onclick={() => emitChange(entry.id)}
           onkeydown={(event) => handleKeydown(event, entry, index)}
         >
