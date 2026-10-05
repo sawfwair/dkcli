@@ -4,6 +4,44 @@ import { createTheme } from './create-theme.ts';
 import { emitThemeCss } from './emit-css.ts';
 
 describe('@dkcli/tokens createTheme', () => {
+  it.each([
+    ['snappy', ['120ms', '200ms', '320ms']],
+    ['reduced', ['0ms', '0ms', '0ms']],
+    ['calm', ['180ms', '300ms', '480ms']],
+    ['expressive', ['160ms', '280ms', '440ms']]
+  ] as const)('exports the authored %s motion preset', (motion, durations) => {
+    const contract = createTheme({
+      name: 'Motion',
+      seed: { color: '#295dff', ratio: 'perfect-fourth', mode: 'light', density: 'comfortable', motion }
+    });
+    const css = emitThemeCss(contract);
+    expect([contract.families.motion.fast, contract.families.motion.normal, contract.families.motion.slow]).toEqual(durations);
+    expect(contract.seed.motion).toBe(motion);
+    expect(contract.families.motion.preset).toBe(motion);
+    expect(css).toContain(`--motion-normal: ${durations[1]};`);
+  });
+
+  it.each(['smooth', 'custom-motion', 'toString', '__proto__'])('retains complete fallback durations and metadata for legacy preset %s', (motion) => {
+    const contract = createTheme({
+      name: 'Legacy motion',
+      seed: { color: '#295dff', ratio: 'perfect-fourth', mode: 'light', density: 'comfortable', motion }
+    });
+    expect([contract.families.motion.fast, contract.families.motion.normal, contract.families.motion.slow]).toEqual(['120ms', '200ms', '320ms']);
+    expect(contract.seed.motion).toBe(motion);
+    expect(contract.families.motion.preset).toBe(motion);
+    expect(emitThemeCss(contract)).toContain('--motion-normal: 200ms;');
+  });
+
+  it('keeps compiled seed metadata independent of later caller edits', () => {
+    const seed = { color: '#295dff', ratio: 'perfect-fourth', mode: 'light', density: 'comfortable', motion: 'snappy' } as const;
+    const input = { ...seed };
+    const contract = createTheme({ name: 'Snapshot', seed: input });
+    Object.assign(input, { color: '#c44724', mode: 'dark', motion: 'reduced' });
+    expect(contract.seed).toEqual(seed);
+    expect(contract.seed.mode).toBe(contract.meta.mode);
+    expect(contract.seed.motion).toBe(contract.families.motion.preset);
+  });
+
   it('compiles actual palette and scale families from the seed', () => {
     const contract = createTheme({
       name: 'Ocean',

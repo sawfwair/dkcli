@@ -1,9 +1,28 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import Toast from './Toast.svelte';
 
+afterEach(() => vi.useRealTimers());
+
 describe('Toast', () => {
+  it('keeps each toast deadline when another toast arrives', async () => {
+    vi.useFakeTimers();
+    const onDismiss = vi.fn();
+    const first = { id: 'first', tone: 'neutral' as const, title: 'First message' };
+    const second = { id: 'second', tone: 'neutral' as const, title: 'Second message' };
+    const { rerender } = render(Toast, { props: { items: [first], durationMs: 5000, onDismiss } });
+    await vi.advanceTimersByTimeAsync(4000);
+    await rerender({ items: [first, second] });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(screen.queryByText('First message')).toBeNull();
+    expect(screen.getByText('Second message')).toBeTruthy();
+    expect(onDismiss).toHaveBeenCalledExactlyOnceWith({ id: 'first' });
+    await vi.advanceTimersByTimeAsync(4000);
+    expect(screen.queryByText('Second message')).toBeNull();
+    expect(onDismiss).toHaveBeenLastCalledWith({ id: 'second' });
+  });
+
   it('auto dismisses after the duration', async () => {
     vi.useFakeTimers();
     const onDismiss = vi.fn();

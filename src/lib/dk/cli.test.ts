@@ -88,6 +88,28 @@ function readArtifact(text: string): Record<string, unknown> {
 }
 
 describe('cli', () => {
+  it.each(['layout', 'compose', 'saliency'])('rejects malformed %s documents before emitting null metrics', async (command) => {
+    const captured = makeIo({ '/virtual/bad.json': JSON.stringify({ frame: { width: 960, height: 640, columns: 'invalid' }, elements: [{ id: 'title', kind: 'text', x: 0, y: 0, width: 220, height: 48 }] }) });
+    expect(await runCli([command, '--input=bad.json', '--json'], captured.io)).toBe(1);
+    expect(captured.stdout).toBe('');
+    expect(captured.stderr.length).toBeGreaterThan(0);
+  });
+  it.each([
+    ['scale', '--steps=1.5'],
+    ['scale', '--unit=cm'],
+    ['scale', '--base=-16'],
+    ['ease', '--mass=0'],
+    ['ease', '--preset=typo'],
+    ['jerk', '--duration=-1'],
+    ['linebreak', '--chars=0'],
+    ['text', '--font=0']
+  ])('rejects invalid mathematical input without emitting an artifact: %j', async (args) => {
+    const captured = makeIo();
+    expect(await runCli(args, captured.io)).toBe(1);
+    expect(captured.stdout).toBe('');
+    expect(captured.stderr.length).toBeGreaterThan(0);
+  });
+
   it('lists every advertised tool command in help', () => {
     expect(CLI_COMMANDS).toEqual([
       'cms',
@@ -238,8 +260,8 @@ describe('cli', () => {
     };
 
     const cases: Array<{ args: string[]; expected: string }> = [
-      { args: ['components', 'verify', '--name', 'button', '--theme', 'cobalt'], expected: 'Fail: Button, Cobalt' },
-      { args: ['components', 'matrix', '--name', 'button', '--theme', 'cobalt'], expected: 'Fail 13' },
+      { args: ['components', 'verify', '--name', 'button', '--theme', 'cobalt'], expected: 'Pass: Button, Cobalt' },
+      { args: ['components', 'matrix', '--name', 'button', '--theme', 'cobalt'], expected: 'Pass 13' },
       { args: ['perfect', '--seed', '#295dff', '--ratio', 'perfect-fourth', '--motion', 'snappy'], expected: '--perfect-base-color' },
       { args: ['palette', '#3b82f6', '--mode', 'both'], expected: '/* dk palette #3b82f6 --engine=' },
       { args: ['distinct', '#295dff', '--harmony', 'split-complementary'], expected: 'Minimum color difference:' },
@@ -401,21 +423,36 @@ describe('cli', () => {
     expect(capture.stderr).toContain('strict');
   });
 
-  it.each(['verify', 'matrix'])('strict component %s reports the narrow layout failure and preserves JSON', async (command) => {
+  it.each(['verify', 'matrix'])('strict component %s succeeds for all 13 wrapping button fixtures', async (command) => {
     const capture = makeIo();
 
     const code = await runCli(['components', command, '--name', 'button', '--theme', 'cobalt', '--json', '--strict'], capture.io);
 
     const payload = readArtifact(capture.stdout);
     expect(payload.mode).toBe(command);
-    expect(code).toBe(1);
-    expect(jsonRecord(payload.summary).pass).toBe(false);
-    expect(payload.runs).toEqual(expect.arrayContaining([
-      expect.objectContaining({ failures: expect.arrayContaining([
-        expect.objectContaining({ reasons: expect.arrayContaining([expect.stringContaining('180')]) })
-      ]) })
-    ]));
-    expect(capture.stderr).toContain('strict');
+    expect(code).toBe(0);
+    expect(jsonRecord(payload.summary)).toMatchObject({ pass: true, fixtureCount: 13, failedFixtureCount: 0 });
+    expect(payload.runs).toEqual([expect.objectContaining({ slug: 'button', pass: true, fixtureCount: 13, failures: [] })]);
+    expect(capture.stderr).toBe('');
+  });
+
+  it.each(['verify', 'matrix'])('strict component %s preserves the artifact for a genuinely failed contrast fixture', async (command) => {
+    const tokens = await import('@dkcli/tokens');
+    const original = tokens.createTheme;
+    const spy = vi.spyOn(tokens, 'createTheme').mockImplementation((options) => {
+      const theme = original(options);
+      return { ...theme, families: { ...theme.families, color: { ...theme.families.color, primary: '#ffffff', 'on-primary': '#ffffff' } } };
+    });
+    try {
+      const captured = makeIo();
+      expect(await runCli(['components', command, '--name=button', '--theme=cobalt', '--json', '--strict'], captured.io)).toBe(1);
+      const artifact = readArtifact(captured.stdout);
+      expect(jsonRecord(artifact.summary)).toMatchObject({ pass: false, fixtureCount: 13 });
+      expect(artifact.runs).toEqual([expect.objectContaining({ pass: false, failures: expect.arrayContaining([
+        expect.objectContaining({ reasons: expect.arrayContaining([expect.stringContaining('contrast 0.0Lc')]) })
+      ]) })]);
+      expect(captured.stderr).toContain('strict');
+    } finally { spy.mockRestore(); }
   });
 
   it('strict component verification succeeds for passing mathematical fixtures', async () => {

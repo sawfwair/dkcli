@@ -116,10 +116,12 @@
           style={`${slotStyles.item} ${slotStyles.label} ${slotStyles.description} ${slotStyles.indicator}`}
           type="button"
           disabled={!interactive}
+          tabindex={interactive && index === focusedIndex ? 0 : -1}
           role={interactive ? 'tab' : 'button'}
           aria-selected={interactive ? (selected ? 'true' : 'false') : undefined}
           data-selected={selected}
           data-status={item.status ?? (selected ? 'current' : 'upcoming')}
+          onfocus={() => { focusedIndex = index; }}
           onclick={() => selectValue(item.id)}
         >
           <span class="stepper-indicator" style={slotStyles.indicator} aria-hidden="true">

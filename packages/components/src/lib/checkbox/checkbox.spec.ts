@@ -140,8 +140,12 @@ export const checkboxSpec: ComponentSpec = createComponentSpec({
     layout: {
       target: 'root',
       widths: [240, 320],
-      heights: [44],
+      // The 44px hit-size minimum does not cap a multiline label's height.
       noOverflow: true,
+      textBehavior: 'wrap',
+      lineHeight: 1.35,
+      // The largest 22px control plus both 1.5px borders is persistent chrome.
+      reservedInlineSize: literal(25),
       blockSize: slotVar('root', '--dk-checkbox-hit-size'),
       gap: slotVar('root', '--dk-checkbox-gap'),
       labelFontSize: slotVar('label', '--dk-checkbox-label-size')

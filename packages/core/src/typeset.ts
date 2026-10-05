@@ -1,4 +1,5 @@
 import { clamp01, round, type EngineMode, type WhiteSpaceMode } from './types.ts';
+import { assertFiniteOutput, assertIntegerCount, assertPositiveFinite } from './numeric-validation.ts';
 
 const TAB_SIZE = 8;
 const ENGLISH_VOWEL_PATTERN = /[aeiouy]/i;
@@ -25,6 +26,8 @@ export type PreparedTypesetSegment = {
   text: string;
   width: number;
   canHang: boolean;
+  /** Width of the hyphen rendered only when a line ends after this segment. */
+  discretionaryHyphenWidth?: number;
 };
 
 export type PreparedTypesetChunk = {
@@ -108,6 +111,7 @@ export type TypesetResult = {
 type TypesetChunkResult = {
   lines: TypesetLine[];
   badness: number;
+  usedHyphenation: boolean;
 };
 
 function glyphFactor(char: string): number {
@@ -138,7 +142,9 @@ function glyphFactor(char: string): number {
 function measure(text: string, fontSize: number, opticalSizing: boolean): number {
   const optical = opticalSizing ? 0.985 : 1;
   const units = Array.from(text).reduce((sum, char) => sum + glyphFactor(char), 0);
-  return units * fontSize * optical;
+  const width = units * fontSize * optical;
+  assertFiniteOutput(width, 'Typeset text width');
+  return width;
 }
 
 function isEnglishVowel(char: string): boolean {
@@ -198,6 +204,8 @@ function hyphenateWord(word: string, language: string): string[] {
 }
 
 function normalizePreparationOptions(options: PrepareTypesetOptions): PreparedTypesetParagraph {
+  assertPositiveFinite(options.fontSize, 'Typeset font size');
+  assertPositiveFinite(options.lineHeight ?? 1.5, 'Typeset line height');
   return {
     engine: options.engine ?? 'advanced',
     whiteSpace: options.whiteSpace ?? 'normal',
@@ -222,11 +230,12 @@ function pushWordSegments(
 
   for (let index = 0; index < pieces.length; index += 1) {
     const isLastPiece = index === pieces.length - 1;
-    const text = isLastPiece ? pieces[index] : `${pieces[index]}-`;
+    const text = pieces[index];
     segments.push({
       text,
       width: measure(text, prepared.fontSize, prepared.opticalSizing),
-      canHang: false
+      canHang: false,
+      ...(isLastPiece ? {} : { discretionaryHyphenWidth: measure('-', prepared.fontSize, prepared.opticalSizing) })
     });
   }
 }
@@ -303,7 +312,8 @@ function lineText(
     .slice(start, end)
     .map((segment) => segment.text)
     .join('');
-  return whiteSpace === 'pre-wrap' ? text : text.trim();
+  const visibleText = whiteSpace === 'pre-wrap' ? text : text.trim();
+  return segments[end - 1]?.discretionaryHyphenWidth !== undefined ? `${visibleText}-` : visibleText;
 }
 
 function lineWidths(
@@ -313,7 +323,8 @@ function lineWidths(
   whiteSpace: WhiteSpaceMode
 ): { fitWidth: number; paintWidth: number } {
   const slice = segments.slice(start, end);
-  const paintWidth = slice.reduce((sum, segment) => sum + segment.width, 0);
+  const hyphenWidth = segments[end - 1]?.discretionaryHyphenWidth ?? 0;
+  const paintWidth = slice.reduce((sum, segment) => sum + segment.width, 0) + hyphenWidth;
   let fitEnd = slice.length;
 
   if (whiteSpace === 'pre-wrap') {
@@ -323,7 +334,7 @@ function lineWidths(
   }
 
   return {
-    fitWidth: slice.slice(0, fitEnd).reduce((sum, segment) => sum + segment.width, 0),
+    fitWidth: slice.slice(0, fitEnd).reduce((sum, segment) => sum + segment.width, 0) + hyphenWidth,
     paintWidth
   };
 }
@@ -355,7 +366,8 @@ function typesetPreparedChunk(
   if (segments.length === 0) {
     return {
       lines: [createLine('', 0, 0, widthPx)],
-      badness: 0
+      badness: 0,
+      usedHyphenation: false
     };
   }
 
@@ -375,13 +387,14 @@ function typesetPreparedChunk(
       if (!text && fitWidth === 0) {
         continue;
       }
-      if (fitWidth > limit) {
+      if (fitWidth > limit && end > start + 1) {
         break;
       }
 
       const leftover = Math.max(0, widthPx - fitWidth);
       const isLastLine = end === segments.length;
-      const ragPenalty = isLastLine && targetLastChunk ? leftover * leftover * 0.16 : leftover * leftover;
+      const overflow = Math.max(0, fitWidth - widthPx);
+      const ragPenalty = overflow * overflow + (isLastLine && targetLastChunk ? leftover * leftover * 0.16 : leftover * leftover);
       const visibleText = whiteSpace === 'pre-wrap' ? text.replace(/[ \t]+$/g, '').trim() : text;
       const lengthPenalty = visibleText.length > 0 && visibleText.length <= 2 ? 1200 : 0;
       const hyphenPenalty = visibleText.endsWith('-') ? 120 : 0;
@@ -399,6 +412,7 @@ function typesetPreparedChunk(
         targetLastChunk
       }) ?? 0;
       const nextCost = costs[start] + ragPenalty + lengthPenalty + hyphenPenalty + customPenalty;
+      assertFiniteOutput(nextCost, 'Typeset line badness');
 
       if (nextCost < costs[end]) {
         costs[end] = nextCost;
@@ -408,12 +422,14 @@ function typesetPreparedChunk(
   }
 
   const lines: TypesetLine[] = [];
+  let usedHyphenation = false;
   let cursor = segments.length;
   while (cursor > 0 && breaks[cursor] >= 0) {
     const start = breaks[cursor];
     const text = lineText(segments, start, cursor, whiteSpace);
     const { fitWidth, paintWidth } = lineWidths(segments, start, cursor, whiteSpace);
     lines.unshift(createLine(text, fitWidth, paintWidth, widthPx));
+    usedHyphenation ||= segments[cursor - 1]?.discretionaryHyphenWidth !== undefined;
     cursor = start;
   }
 
@@ -421,11 +437,13 @@ function typesetPreparedChunk(
     const text = lineText(segments, 0, cursor, whiteSpace);
     const { fitWidth, paintWidth } = lineWidths(segments, 0, cursor, whiteSpace);
     lines.unshift(createLine(text, fitWidth, paintWidth, widthPx));
+    usedHyphenation ||= segments[cursor - 1]?.discretionaryHyphenWidth !== undefined;
   }
 
   return {
     lines,
-    badness: Number.isFinite(costs[segments.length]) ? costs[segments.length] : 0
+    badness: Number.isFinite(costs[segments.length]) ? costs[segments.length] : 0,
+    usedHyphenation
   };
 }
 
@@ -526,6 +544,8 @@ export function layoutPreparedParagraphWithPenalty(
     linePenalty?: TypesetLinePenaltyFn;
   } = {}
 ): TypesetResult {
+  assertPositiveFinite(widthPx, 'Typeset measure');
+  if (options.targetLines !== undefined) assertIntegerCount(options.targetLines, 'Target lines', 1);
   if (prepared.chunks.length === 0) {
     return {
       engine: prepared.engine,
@@ -545,6 +565,7 @@ export function layoutPreparedParagraphWithPenalty(
 
   const lines: TypesetLine[] = [];
   let chunkBadness = 0;
+  let usedHyphenation = false;
 
   for (const [index, chunk] of prepared.chunks.entries()) {
     const result = typesetPreparedChunk(
@@ -558,6 +579,7 @@ export function layoutPreparedParagraphWithPenalty(
     );
     lines.push(...result.lines);
     chunkBadness += result.badness;
+    usedHyphenation ||= result.usedHyphenation;
   }
 
   const widths = lines.map((line) => line.width);
@@ -566,6 +588,8 @@ export function layoutPreparedParagraphWithPenalty(
     widths.reduce((sum, value) => sum + (value - averageWidth) ** 2, 0) / Math.max(widths.length, 1);
   const targetPenalty = options.targetLines ? Math.abs(lines.length - options.targetLines) * widthPx * 2.2 : 0;
   const maxLineWidth = round(Math.max(0, ...widths));
+  assertFiniteOutput(chunkBadness + targetPenalty + variance * 0.08, 'Typeset paragraph badness');
+  assertFiniteOutput(lines.length * prepared.fontSize * prepared.lineHeight, 'Typeset paragraph height');
 
   return {
     engine: prepared.engine,
@@ -574,7 +598,7 @@ export function layoutPreparedParagraphWithPenalty(
     badness: Math.round(chunkBadness + targetPenalty + variance * 0.08),
     averageWidth: round(averageWidth),
     variance: round(variance),
-    usedHyphenation: lines.some((line) => line.text.replace(/[ \t]+$/g, '').endsWith('-')),
+    usedHyphenation,
     lineCount: lines.length,
     maxLineWidth,
     heightPx: round(lines.length * prepared.fontSize * prepared.lineHeight),
@@ -588,6 +612,7 @@ export function layoutPreparedNextLine(
   start: TypesetCursor,
   widthPx: number
 ): PreparedTypesetLine | null {
+  assertPositiveFinite(widthPx, 'Typeset measure');
   let chunkIndex = start.chunkIndex;
   let segmentIndex = start.segmentIndex;
   const limit = widthPx * 1.08;

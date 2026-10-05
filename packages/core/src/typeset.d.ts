@@ -19,6 +19,8 @@ export type PreparedTypesetSegment = {
     text: string;
     width: number;
     canHang: boolean;
+    /** Width of the hyphen rendered only when a line ends after this segment. */
+    discretionaryHyphenWidth?: number;
 };
 export type PreparedTypesetChunk = {
     text: string;

@@ -11,6 +11,7 @@ import {
   type TypesetResult
 } from './typeset.ts';
 import { round } from './types.ts';
+import { assertFiniteOutput, assertIntegerCount, assertPositiveFinite } from './numeric-validation.ts';
 
 export type LineBreakResult = {
   lines: string[];
@@ -54,6 +55,8 @@ function lineLength(words: string[], start: number, end: number): number {
 }
 
 export function greedyBreak(text: string, maxChars: number): LineBreakResult {
+  assertPositiveFinite(maxChars, 'Line character measure');
+  if (!text.trim()) return { lines: [], badness: 0 };
   const words = text.trim().split(/\s+/);
   const lines: string[] = [];
   let current: string[] = [];
@@ -72,10 +75,14 @@ export function greedyBreak(text: string, maxChars: number): LineBreakResult {
   }
 
   const badness = lines.reduce((sum, line) => sum + (maxChars - line.length) ** 2, 0);
+  assertFiniteOutput(badness, 'Line badness');
   return { lines, badness };
 }
 
 export function balanceLines(text: string, maxChars: number, targetLines?: number): LineBreakResult {
+  assertPositiveFinite(maxChars, 'Line character measure');
+  if (targetLines !== undefined) assertIntegerCount(targetLines, 'Target lines', 1);
+  if (!text.trim()) return { lines: [], badness: 0 };
   const words = text.trim().split(/\s+/);
   const count = words.length;
   const costs = Array.from({ length: count + 1 }, () => Number.POSITIVE_INFINITY);
@@ -88,7 +95,7 @@ export function balanceLines(text: string, maxChars: number, targetLines?: numbe
     }
     for (let end = start + 1; end <= count; end += 1) {
       const length = lineLength(words, start, end);
-      if (length > maxChars) {
+      if (length > maxChars && end > start + 1) {
         break;
       }
       const remainder = maxChars - length;
@@ -117,6 +124,7 @@ export function balanceLines(text: string, maxChars: number, targetLines?: numbe
   if (targetLines !== undefined) {
     badness += Math.abs(lines.length - targetLines) * maxChars * 2;
   }
+  assertFiniteOutput(badness, 'Line badness');
 
   return {
     lines,

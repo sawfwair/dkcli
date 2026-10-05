@@ -1,10 +1,27 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { tick } from 'svelte';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import PopoverHarness from './PopoverHarness.svelte';
 
+afterEach(() => document.querySelectorAll('[data-test-popover-outside]').forEach((element) => element.remove()));
+
 describe('Popover', () => {
+  it('keeps focus on an outside action after its click dismisses the popover', async () => {
+    render(PopoverHarness);
+    await fireEvent.click(screen.getByRole('button', { name: 'Open popover' }));
+    const outside = document.createElement('button');
+    outside.dataset.testPopoverOutside = 'true';
+    outside.textContent = 'Continue';
+    document.body.append(outside);
+    outside.focus();
+    await fireEvent.click(outside);
+    await tick();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(outside);
+  });
+
   it('focuses a static-content surface on open and restores the trigger after Escape', async () => {
     render(PopoverHarness, { props: { focusableContent: false } });
 

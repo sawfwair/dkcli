@@ -1,5 +1,7 @@
 // Optical correction presets for UI elements.
 
+import { assertPositiveFinite } from './numeric-validation.ts';
+
 export type Correction = {
   property: string;
   value: string;
@@ -104,6 +106,7 @@ export const OPTICAL = {
 } satisfies Record<string, OpticalEntry>;
 
 export function getCorrections(type: string, size: number = 48): CorrectionResult {
+  assertPositiveFinite(size, 'Optical size');
   if (!Object.hasOwn(OPTICAL, type)) {
     throw new Error(
       `Unknown optical type: ${type}. Available types: ${Object.keys(OPTICAL).join(', ')}`

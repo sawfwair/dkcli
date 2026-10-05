@@ -33,6 +33,8 @@ dk audit --css app.css --json --strict > audit.json
 
 Component fixtures evaluate each requested layout width and declared color-distinctness check. Coverage reports declared, evaluated, and unsupported proof kinds. A passing wide layout does not cancel a failing narrow layout.
 
+Layout defaults to a single line. Recipes can declare `textBehavior` as `wrap`, `wrap-anywhere`, or `scroll` when the component supports that behavior. The results retain the full single-line estimate and report the minimum inline space required after padding, icons, and other reserved controls. Wrapped estimates also report line count and height at each width. Explicit `heights` and `maxLines` budgets can still fail; a control with a minimum height and natural block growth can omit those limits. Scrolling checks the text viewport, not full value visibility.
+
 ## Interpret the result
 
 Mathematical evidence includes the following results:

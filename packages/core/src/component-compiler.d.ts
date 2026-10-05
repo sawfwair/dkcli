@@ -1,4 +1,4 @@
-import { type ComponentCase, type ComponentSpec, type ComponentStateName, type TokenExpr } from './component-spec.ts';
+import { type ComponentCase, type ComponentSpec, type ComponentStateName, type LayoutProofSpec, type TokenExpr } from './component-spec.ts';
 import { type DistinctnessReport } from './perception.ts';
 import type { ThemeContract } from './theme-contract.ts';
 type ResolvedSlotVars = Record<string, string>;
@@ -43,6 +43,10 @@ export type ResolvedLayoutWidthCheck = {
     width: number;
     fitsWidth: boolean;
     fitsHeight: boolean;
+    availableTextPx?: number;
+    estimatedLineCount?: number;
+    estimatedBlockPx?: number;
+    fitsLines?: boolean;
     pass: boolean;
 };
 /** Lists declared, evaluated, and unsupported proof categories. */
@@ -52,12 +56,15 @@ export type ProofCoverage = {
     unsupported: string[];
     complete: boolean;
 };
-/** Reports conservative single-line estimates using maximum token values. */
+/** Reports estimates for the declared text behavior using maximum token values. */
 export type ResolvedLayoutCheck = {
     target: string;
     widths: number[];
     heights: number[];
     estimatedInlinePx: number;
+    minimumInlinePx?: number;
+    textBehavior?: NonNullable<LayoutProofSpec['textBehavior']>;
+    maxLines?: number;
     requiredBlockPx: number;
     widthChecks: ResolvedLayoutWidthCheck[];
     assumptions: string[];

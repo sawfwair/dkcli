@@ -89,8 +89,11 @@ export const breadcrumbsSpec: ComponentSpec = createComponentSpec({
     layout: {
       target: 'root',
       widths: [220, 320],
-      heights: [48],
+      // The item row wraps naturally; its minimum block size is not a height cap.
       noOverflow: true,
+      textBehavior: 'wrap',
+      // Two delivered separators reserve at most 12px each in the declared sample.
+      reservedInlineSize: literal(24),
       blockSize: slotVar('item', '--dk-breadcrumbs-item-block-size'),
       inlinePadding: slotVar('item', '--dk-breadcrumbs-item-inline-padding'),
       gap: slotVar('root', '--dk-breadcrumbs-gap'),

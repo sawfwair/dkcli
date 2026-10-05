@@ -1,5 +1,8 @@
 // Verifies supplied render measurements for containment and layout drift.
 
+import { assertFrame, assertRectangles } from './geometry-validation.ts';
+import { assertFiniteOutput, assertNonnegativeFinite, assertPositiveFinite } from './numeric-validation.ts';
+
 export type FitRect = {
   id: string;
   x: number;
@@ -100,6 +103,9 @@ export function verifyContainment(
   options: ContainmentOptions = {}
 ): ContainmentReport {
   const tolerance = options.overflowTolerance ?? 0;
+  assertFrame(frame);
+  assertRectangles(items);
+  assertNonnegativeFinite(tolerance, 'Overflow tolerance');
 
   const evaluated = items.map((item) => {
     const overflowLeft = Math.max(0, 0 - item.x);
@@ -124,6 +130,7 @@ export function verifyContainment(
   const maxOverflowX = Math.max(0, ...evaluated.map((item) => item.overflowX));
   const maxOverflowY = Math.max(0, ...evaluated.map((item) => item.overflowY));
   const totalOverflow = evaluated.reduce((sum, item) => sum + item.overflowX + item.overflowY, 0);
+  assertFiniteOutput(totalOverflow, 'Total rectangle overflow');
   const normalizer = Math.max(frame.width + frame.height, 1) * Math.max(evaluated.length, 1);
   const score = Math.round(clamp01(1 - totalOverflow / normalizer) * 100);
 
@@ -148,6 +155,10 @@ export function verifyPlanFit(
 ): PlanFitReport {
   const positionTolerance = options.positionTolerance ?? 2;
   const sizeTolerance = options.sizeTolerance ?? 2;
+  assertRectangles(expected);
+  assertRectangles(actual);
+  assertNonnegativeFinite(positionTolerance, 'Position tolerance');
+  assertNonnegativeFinite(sizeTolerance, 'Size tolerance');
   const actualById = new Map(actual.map((item) => [item.id, item]));
   const missing: string[] = [];
 
@@ -162,7 +173,8 @@ export function verifyPlanFit(
     const deltaY = measured.y - target.y;
     const deltaWidth = measured.width - target.width;
     const deltaHeight = measured.height - target.height;
-    const drift = Math.sqrt(deltaX ** 2 + deltaY ** 2 + deltaWidth ** 2 + deltaHeight ** 2);
+    const drift = Math.hypot(deltaX, deltaY, deltaWidth, deltaHeight);
+    assertFiniteOutput(drift, 'Rectangle drift');
     const withinTolerance =
       Math.abs(deltaX) <= positionTolerance &&
       Math.abs(deltaY) <= positionTolerance &&
@@ -186,6 +198,7 @@ export function verifyPlanFit(
 
   const mismatchCount = items.filter((item) => !item.withinTolerance).length;
   const totalDrift = items.reduce((sum, item) => sum + item.drift, 0);
+  assertFiniteOutput(totalDrift, 'Total rectangle drift');
   const meanDrift = items.length > 0 ? totalDrift / items.length : 0;
   const maxDrift = Math.max(0, ...items.map((item) => item.drift));
   const maxSpan = Math.max(
@@ -219,16 +232,15 @@ export function recommendMetricGrid(
   const gap = options.gap ?? 12;
   const minCellWidth = options.minCellWidth ?? 112;
   const compactThreshold = options.compactThreshold ?? 132;
-  const maxColumns = Math.max(1, Math.min(options.maxColumns ?? itemCount, itemCount));
-
-  let columns = maxColumns;
-  while (columns > 1) {
-    const width = (containerWidth - gap * (columns - 1)) / columns;
-    if (width >= minCellWidth) {
-      break;
-    }
-    columns -= 1;
-  }
+  assertPositiveFinite(containerWidth, 'Grid container width');
+  assertNonnegativeFinite(gap, 'Grid gap');
+  assertPositiveFinite(minCellWidth, 'Grid minimum cell width');
+  assertNonnegativeFinite(compactThreshold, 'Grid compact threshold');
+  if (!Number.isSafeInteger(itemCount) || itemCount < 0) throw new Error('Grid item count must be a nonnegative safe integer.');
+  const requestedColumns = options.maxColumns ?? Math.max(itemCount, 1);
+  if (!Number.isSafeInteger(requestedColumns) || requestedColumns < 1) throw new Error('Grid maximum columns must be a positive safe integer.');
+  const maxColumns = Math.max(1, Math.min(requestedColumns, itemCount));
+  const columns = Math.min(maxColumns, Math.floor((containerWidth + gap) / (minCellWidth + gap)));
 
   const safeColumns = Math.max(1, columns);
   const cellWidth = Math.max(0, (containerWidth - gap * (safeColumns - 1)) / safeColumns);

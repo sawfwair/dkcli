@@ -4,6 +4,17 @@ import { describe, expect, it } from 'vitest';
 import Dialog from './Dialog.svelte';
 
 describe('Dialog', () => {
+  it('restores focus when its controlled open prop closes the modal', async () => {
+    const { rerender } = render(Dialog);
+    const trigger = screen.getByRole('button', { name: 'Open dialog' });
+    trigger.focus();
+    await fireEvent.click(trigger);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close' }));
+    await rerender({ open: false });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+  });
+
   it('closes on outside press and restores focus to the trigger', async () => {
     render(Dialog, {
       props: {

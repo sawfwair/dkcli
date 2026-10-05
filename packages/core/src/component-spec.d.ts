@@ -81,6 +81,14 @@ export type LayoutProofSpec = {
     gap?: TokenExpr | number;
     labelFontSize?: TokenExpr | number;
     iconSize?: TokenExpr | number;
+    /** Defaults to a single line. Set only when the rendered text supports this behavior. */
+    textBehavior?: 'single-line' | 'wrap' | 'wrap-anywhere' | 'scroll';
+    /** Additional persistent chrome, excluding padding. The gap is added once when text is present. */
+    reservedInlineSize?: TokenExpr | number;
+    /** Unitless text line height. Wrapping estimates default to 1.4. */
+    lineHeight?: number;
+    /** An explicit line budget; growing controls can omit it. */
+    maxLines?: number;
 };
 export type MotionProofSpec = {
     target: string;

@@ -342,7 +342,9 @@ function getNumberFlag(flags: FlagMap, name: string, fallback: number, helpComma
 }
 
 function getIntegerFlag(flags: FlagMap, name: string, fallback: number, helpCommand: string): number {
-  return Math.round(getNumberFlag(flags, name, fallback, helpCommand));
+  const value = getNumberFlag(flags, name, fallback, helpCommand);
+  if (!Number.isInteger(value)) fail(`Option --${name} requires an integer.`, helpCommand);
+  return value;
 }
 
 function resolveFormat(
@@ -884,6 +886,9 @@ function renderEase(flags: FlagMap): string {
   const helpCommand = 'ease';
   const format = resolveFormat(flags, 'css', ['css', 'json', 'text'], helpCommand);
   const preset = getStringFlag(flags, 'preset');
+  if (preset !== undefined && !Object.hasOwn(SPRING_PRESETS, preset)) {
+    fail(`Unknown spring preset "${preset}". Use ${Object.keys(SPRING_PRESETS).join(', ')}.`, helpCommand);
+  }
   const params =
     preset && Object.hasOwn(SPRING_PRESETS, preset)
       ? SPRING_PRESETS[preset]

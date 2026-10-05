@@ -108,6 +108,7 @@
           {name}
           value={item.value}
           bind:group={currentValue}
+          {required}
           disabled={disabled || item.disabled}
           onchange={() => handleValueChange(item.value)}
         />

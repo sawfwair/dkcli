@@ -3,10 +3,10 @@ import { describe, expect, it } from 'vitest';
 import { createTheme } from '@dkcli/tokens';
 
 import { createAccordionRegistration, getAccordionRecipeCase } from './accordion.recipe.js';
-import { expectKnownLayoutFailures } from '../test-utils/proof-expectations.js';
+import { DECLARED_LAYOUT_BEHAVIORS, expectDeclaredLayoutBehavior } from '../test-utils/proof-expectations.js';
 
 describe('accordion recipe', () => {
-  it('compiles light and dark recipe cases and reports the known narrow-width estimate', () => {
+  it('compiles light and dark cases with declared panel wrapping and height budget', () => {
     const light = createTheme({
       name: 'accordion-light',
       seed: {
@@ -31,7 +31,7 @@ describe('accordion recipe', () => {
     for (const theme of [light, dark]) {
       const registration = createAccordionRegistration(theme);
       expect(getAccordionRecipeCase(registration.recipe, { size: 'md' }).caseKey).toContain('size=md');
-      expectKnownLayoutFailures(registration.recipe.proofFixtures, 2, [{ name: 'accordion-md-open', widths: [320] }]);
+      expectDeclaredLayoutBehavior(registration.recipe.proofFixtures, 2, DECLARED_LAYOUT_BEHAVIORS.accordion);
     }
   });
 });

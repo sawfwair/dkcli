@@ -3,6 +3,8 @@
 import { analyzeImportance, type ImportanceReport } from './saliency.ts';
 import type { DesignDocument, LayoutObjectiveElement, LayoutObjectiveReport } from './design.ts';
 import { area, center, clamp01, intersectionArea, intersects, round, type RectLike } from './types.ts';
+import { assertFiniteOutput, assertNonnegativeFinite, assertPositiveFinite } from './numeric-validation.ts';
+import { assertDesignDocument } from './geometry-validation.ts';
 
 export type LayoutItem = {
   id: string;
@@ -109,6 +111,23 @@ export function solveStackLayout(items: LayoutItem[], options: LayoutSolveOption
   const gap = options.gap ?? 0;
   const padding = options.padding ?? 0;
   const align = options.align ?? 'start';
+  assertPositiveFinite(options.container, 'Layout container');
+  assertNonnegativeFinite(gap, 'Layout gap');
+  assertNonnegativeFinite(padding, 'Layout padding');
+  if (!['start', 'center', 'end'].includes(align)) throw new Error('Layout alignment must be start, center, or end.');
+  const ids = new Set<string>();
+  for (const item of items) {
+    if (!item.id || ids.has(item.id)) throw new Error('Layout IDs must be nonempty and distinct.');
+    ids.add(item.id);
+    assertNonnegativeFinite(item.min, 'Layout minimum');
+    assertNonnegativeFinite(item.preferred, 'Layout preferred size');
+    if (item.max !== undefined) {
+      assertNonnegativeFinite(item.max, 'Layout maximum');
+      if (item.max < item.min) throw new Error('Layout maximum must be at least its minimum.');
+    }
+    assertNonnegativeFinite(item.grow ?? 1, 'Layout growth weight');
+    assertNonnegativeFinite(item.shrink ?? 1, 'Layout shrink weight');
+  }
   const available = Math.max(0, options.container - padding * 2 - Math.max(0, items.length - 1) * gap);
 
   const solved: SolvedLayoutItem[] = items.map((item) => {
@@ -125,6 +144,9 @@ export function solveStackLayout(items: LayoutItem[], options: LayoutSolveOption
   });
 
   const preferredTotal = solved.reduce((sum, item) => sum + item.size, 0);
+  assertFiniteOutput(preferredTotal, 'Layout preferred total');
+  assertFiniteOutput(items.reduce((sum, item) => sum + (item.grow ?? 1), 0), 'Layout total growth weight');
+  assertFiniteOutput(items.reduce((sum, item) => sum + (item.shrink ?? 1), 0), 'Layout total shrink weight');
   if (preferredTotal < available) {
     distributeExtra(solved, available - preferredTotal);
   } else if (preferredTotal > available) {
@@ -133,6 +155,7 @@ export function solveStackLayout(items: LayoutItem[], options: LayoutSolveOption
 
   const contentUsed = solved.reduce((sum, item) => sum + item.size, 0);
   const totalUsed = contentUsed + padding * 2 + Math.max(0, items.length - 1) * gap;
+  assertFiniteOutput(totalUsed, 'Layout total size');
   const free = Math.max(0, options.container - totalUsed);
   const overflow = Math.max(0, totalUsed - options.container);
 
@@ -213,6 +236,7 @@ export function solveDesignLayout(
     preservePositions?: boolean;
   } = {}
 ): LayoutObjectiveReport {
+  assertDesignDocument(document);
   const padding = document.frame.padding ?? 32;
   const gap = document.frame.gap ?? 20;
   const columns = Math.max(1, document.frame.columns ?? 12);

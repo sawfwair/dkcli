@@ -94,6 +94,7 @@
       {type}
       {placeholder}
       bind:value
+      {required}
       {disabled}
       {readonly}
       aria-invalid={invalid ? 'true' : undefined}

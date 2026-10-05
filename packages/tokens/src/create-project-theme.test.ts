@@ -53,3 +53,7 @@ it.each(['transparent', 'rgba(0, 0, 0, 0)', '#0000', 'rgba(0, 0, 0, 0.9999)', 'r
 it('rejects a static CSS length that converts to infinity', () => {
   expect(() => createProjectTheme({ ...config, overrides: { space: { md: `${'9'.repeat(400)}px` } } })).toThrow(/length/i);
 });
+
+it.each([`${'9'.repeat(400)}ms`, `1${'0'.repeat(306)}s`])('rejects a duration that the mathematical motion proof cannot resolve to finite milliseconds', (normal) => {
+  expect(() => createProjectTheme({ ...config, overrides: { motion: { normal } } })).toThrow(/duration/i);
+});

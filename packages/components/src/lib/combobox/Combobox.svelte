@@ -20,6 +20,7 @@
     type Placement
   } from '../internal/behavior/index.js';
   import { FieldFrame } from '../primitives/index.js';
+  import { requiredSelection } from '../internal/behavior/required-selection.js';
   import {
     DEFAULT_COMBOBOX_THEME,
     createComboboxRegistration,
@@ -89,6 +90,12 @@
 
   $effect(() => {
     if (disabled) internalOpen = false;
+  });
+
+  $effect(() => {
+    if (internalOpen && (!filteredItems[highlightIndex] || filteredItems[highlightIndex].disabled)) {
+      highlightIndex = firstEnabledIndex(filteredItems);
+    }
   });
 
   async function syncPosition(): Promise<void> {
@@ -204,6 +211,7 @@
   <div class="combobox-trigger" style={`${slotStyles.input}; ${slotStyles.icon}`}>
     <input
       bind:this={inputEl}
+      use:requiredSelection={{ required, disabled, value }}
       class="combobox-input"
       style={slotStyles.input}
       id={fieldId}
@@ -214,6 +222,7 @@
       aria-controls={`${fieldId}-listbox`}
       aria-describedby={describedBy}
       aria-invalid={invalid ? 'true' : 'false'}
+      aria-required={required ? 'true' : undefined}
       {disabled}
       {placeholder}
       value={displayQuery}

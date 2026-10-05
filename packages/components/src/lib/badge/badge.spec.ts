@@ -177,8 +177,10 @@ export const badgeSpec: ComponentSpec = createComponentSpec({
     layout: {
       target: 'root',
       widths: [120, 200],
-      heights: [30],
+      // The badge has a minimum block size and grows when its label wraps.
       noOverflow: true,
+      textBehavior: 'wrap-anywhere',
+      lineHeight: 1,
       blockSize: slotVar('root', '--dk-badge-block-size'),
       inlinePadding: slotVar('root', '--dk-badge-inline-padding'),
       gap: slotVar('root', '--dk-badge-gap'),

@@ -8,6 +8,16 @@ import MenuHarness from './MenuHarness.svelte';
 afterEach(() => document.querySelectorAll('[data-test-outside]').forEach((element) => element.remove()));
 
 describe('Menu', () => {
+  it.each([['ArrowDown', 'First'], ['ArrowUp', 'Last']])('opens from %s and focuses %s', async (key, label) => {
+    render(Menu, { props: { items: [{ value: 'first', label: 'First' }, { value: 'last', label: 'Last' }] } });
+    const trigger = screen.getByRole('button', { name: 'Open menu' });
+    trigger.focus();
+    await fireEvent.keyDown(trigger, { key });
+    await tick();
+    expect(screen.getByRole('menu')).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: label }));
+  });
+
   it('closes when focus leaves without stealing outside focus or choosing an action', async () => {
     const onAction = vi.fn();
     render(Menu, { props: { items: [{ value: 'rename', label: 'Rename' }], onAction } });

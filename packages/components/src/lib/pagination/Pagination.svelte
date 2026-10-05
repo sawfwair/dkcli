@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, tick } from 'svelte';
   import type { ThemeContract } from '@dkcli/core';
 
   import {
@@ -26,6 +26,7 @@
   let registration = defaultRegistration;
   let compiledCase = getPaginationRecipeCase(defaultRegistration.recipe, { size });
   let slotStyles = serializePaginationSlotStyles(compiledCase);
+  let pageRefs: Record<number, HTMLButtonElement> = {};
 
   $: registration =
     theme.name === DEFAULT_PAGINATION_THEME.name ? defaultRegistration : createPaginationRegistration(theme);
@@ -59,13 +60,14 @@
     return tokens;
   }
 
-  function updatePage(nextPage: number): void {
+  function updatePage(nextPage: number, restoreFocus = false): void {
     if (nextPage < 1 || nextPage > pageCount || nextPage === currentPage) {
       return;
     }
     page = nextPage;
     onChange?.({ page: nextPage });
     dispatch('change', { page: nextPage });
+    if (restoreFocus) void tick().then(() => pageRefs[nextPage]?.focus());
   }
 </script>
 
@@ -84,12 +86,16 @@
   {#each pageTokens as token, index (`${token}-${index}`)}
     {#if token === 'ellipsis'}
       <span class="pagination-ellipsis" style={slotStyles.ellipsis} aria-hidden="true">…</span>
-    {:else if token === currentPage}
-      <span class="pagination-item current" style={`${slotStyles.item} ${slotStyles.current}`} aria-current="page">
-        {token}
-      </span>
     {:else}
-      <button class="pagination-item" style={slotStyles.item} type="button" onclick={() => updatePage(token)}>
+      <button
+        bind:this={pageRefs[token]}
+        class="pagination-item"
+        class:current={token === currentPage}
+        style={`${slotStyles.item} ${token === currentPage ? slotStyles.current : ''}`}
+        aria-current={token === currentPage ? 'page' : undefined}
+        type="button"
+        onclick={() => updatePage(token, true)}
+      >
         {token}
       </button>
     {/if}

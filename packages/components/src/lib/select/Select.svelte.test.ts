@@ -6,6 +6,17 @@ import Select from './Select.svelte';
 afterEach(() => document.querySelectorAll('[data-test-outside]').forEach((element) => element.remove()));
 
 describe('Select', () => {
+  it('moves focus off an option that becomes disabled while open', async () => {
+    const onChange = vi.fn();
+    const { rerender } = render(Select, { props: { items: [{ value: 'one', label: 'One' }, { value: 'two', label: 'Two' }], onChange } });
+    await fireEvent.click(screen.getByRole('button'));
+    await rerender({ items: [{ value: 'one', label: 'One', disabled: true }, { value: 'two', label: 'Two' }] });
+    const second = screen.getByRole('option', { name: 'Two' });
+    expect(document.activeElement).toBe(second);
+    await fireEvent.keyDown(second, { key: 'Enter' });
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ value: 'two' });
+  });
+
   const items = [
     { value: 'staging', label: 'Staging' },
     { value: 'production', label: 'Production' }

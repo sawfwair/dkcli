@@ -93,6 +93,14 @@ export type LayoutProofSpec = {
   gap?: TokenExpr | number;
   labelFontSize?: TokenExpr | number;
   iconSize?: TokenExpr | number;
+  /** Defaults to a single line. Set only when the rendered text supports this behavior. */
+  textBehavior?: 'single-line' | 'wrap' | 'wrap-anywhere' | 'scroll';
+  /** Additional persistent chrome, excluding padding. The gap is added once when text is present. */
+  reservedInlineSize?: TokenExpr | number;
+  /** Unitless text line height. Wrapping estimates default to 1.4. */
+  lineHeight?: number;
+  /** An explicit line budget; growing controls can omit it. */
+  maxLines?: number;
 };
 
 export type MotionProofSpec = {
@@ -250,6 +258,18 @@ export function validateComponentSpec(spec: ComponentSpec): ComponentSpec {
   }
   if (layout?.heights && (layout.heights.length === 0 || layout.heights.some((height) => !Number.isFinite(height) || height <= 0))) {
     throw new Error('Layout proof heights must be finite positive values.');
+  }
+  if (layout?.textBehavior !== undefined && !['single-line', 'wrap', 'wrap-anywhere', 'scroll'].includes(layout.textBehavior)) {
+    throw new Error('Unsupported layout text behavior.');
+  }
+  if (layout?.lineHeight !== undefined && (!Number.isFinite(layout.lineHeight) || layout.lineHeight <= 0)) {
+    throw new Error('Layout line height must be finite and positive.');
+  }
+  if (layout?.maxLines !== undefined && (!Number.isInteger(layout.maxLines) || layout.maxLines <= 0)) {
+    throw new Error('Layout maxLines must be a positive integer.');
+  }
+  if (typeof layout?.reservedInlineSize === 'number' && (!Number.isFinite(layout.reservedInlineSize) || layout.reservedInlineSize < 0)) {
+    throw new Error('Reserved inline size must be finite and non-negative.');
   }
 
   return spec;

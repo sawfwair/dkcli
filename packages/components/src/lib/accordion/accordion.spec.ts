@@ -135,11 +135,11 @@ export const accordionSpec: ComponentSpec = createComponentSpec({
       widths: [320, 420],
       heights: [160],
       noOverflow: true,
+      textBehavior: 'wrap-anywhere',
+      lineHeight: 1.6,
       blockSize: literal('128px'),
       inlinePadding: slotVar('panel', '--dk-accordion-panel-padding'),
-      gap: slotVar('trigger', '--dk-accordion-trigger-gap'),
-      labelFontSize: slotVar('trigger', '--dk-accordion-trigger-size'),
-      iconSize: slotVar('indicator', '--dk-accordion-indicator-size')
+      labelFontSize: slotVar('panel', '--dk-accordion-panel-size')
     }
   },
   proofCases: [

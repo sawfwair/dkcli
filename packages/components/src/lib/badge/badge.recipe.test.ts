@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createTheme } from '@dkcli/tokens';
 
 import { createBadgeRegistration, getBadgeRecipeCase } from './badge.recipe.js';
-import { BADGE_LAYOUT_FAILURES, expectKnownLayoutFailures } from '../test-utils/proof-expectations.js';
+import { DECLARED_LAYOUT_BEHAVIORS, expectDeclaredLayoutBehavior } from '../test-utils/proof-expectations.js';
 
 describe('badge recipe', () => {
   it('compiles all tone, emphasis, and size cases across light and dark themes', () => {
@@ -42,7 +42,7 @@ describe('badge recipe', () => {
     expect(compiledCase.slots.root.baseVars['--dk-badge-bg']).toMatch(/^#/);
     expect(compiledCase.slots.label.baseVars['--dk-badge-label-size']).toContain('clamp');
     for (const registration of [lightRegistration, darkRegistration]) {
-      expectKnownLayoutFailures(registration.recipe.proofFixtures, 15, BADGE_LAYOUT_FAILURES);
+      expectDeclaredLayoutBehavior(registration.recipe.proofFixtures, 15, DECLARED_LAYOUT_BEHAVIORS.badge);
     }
   });
 });

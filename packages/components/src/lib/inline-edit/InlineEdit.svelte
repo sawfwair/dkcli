@@ -92,14 +92,17 @@
     dispatch('change', { value: nextValue });
   }
 
-  function commitValue(): void {
+  function commitValue(restoreFocus = false): void {
+    if (disabled || !editState.editing) return;
     editState = commitInlineEdit(editState, editState.draft);
     value = editState.committed;
     onCommit?.({ value: editState.committed });
     dispatch('commit', { value: editState.committed });
+    if (restoreFocus) void tick().then(() => displayEl?.focus());
   }
 
   function cancelValue(): void {
+    if (disabled || !editState.editing) return;
     editState = cancelInlineEdit(editState);
     onCancel?.({ value: editState.committed });
     dispatch('cancel', { value: editState.committed });
@@ -107,6 +110,7 @@
   }
 
   function handleInputKeydown(event: KeyboardEvent): void {
+    if (disabled) return;
     if (event.key === 'Escape') {
       cancelValue();
       event.preventDefault();
@@ -114,8 +118,7 @@
     }
 
     if (!multiline && event.key === 'Enter') {
-      commitValue();
-      void tick().then(() => displayEl?.focus());
+      commitValue(true);
       event.preventDefault();
     }
   }
@@ -144,8 +147,8 @@
         onkeydown={handleInputKeydown}
       ></textarea>
       <div class="inline-actions" style={slotStyles.actions}>
-        <button type="button" onclick={commitValue}>Save</button>
-        <button type="button" onclick={cancelValue}>Cancel</button>
+        <button type="button" {disabled} onclick={() => commitValue(true)}>Save</button>
+        <button type="button" {disabled} onclick={cancelValue}>Cancel</button>
       </div>
     {:else}
       <input
@@ -157,7 +160,7 @@
         placeholder={placeholder}
         disabled={disabled}
         oninput={(event) => updateDraft((event.currentTarget as HTMLInputElement).value)}
-        onblur={commitValue}
+        onblur={() => commitValue()}
         onkeydown={handleInputKeydown}
       />
     {/if}

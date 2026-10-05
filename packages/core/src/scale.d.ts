@@ -21,6 +21,7 @@ export declare function resolveRatio(val?: string): {
     value: number;
 };
 export declare function stepName(step: number, naming: string): string;
+/** Generates finite tokens with integer steps/down from 0 to 10,000 and px or rem units. */
 export declare function generateScale(options: {
     base?: number;
     ratio?: string;
@@ -34,6 +35,7 @@ export declare function generateScale(options: {
     scale: ScaleStep[];
 };
 export declare const FIBONACCI: number[];
+/** Extends the Fibonacci recurrence, rejecting overflow and counts outside 0 to 10,000. */
 export declare function generateFibonacciScale(options?: {
     base?: number;
     steps?: number;
@@ -56,7 +58,7 @@ export type FluidScaleMeta = ScaleMeta & {
     vwMin: number;
     vwMax: number;
 };
-/** Generates CSS clamp() values between finite viewport widths with 0 <= vwMin < vwMax. */
+/** Generates CSS clamp() values for ordered finite sizes/viewports, with 0 to 10,000 steps/down. */
 export declare function generateFluidScale(options?: {
     baseMin?: number;
     baseMax?: number;

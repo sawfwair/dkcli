@@ -15,6 +15,13 @@ export type CreateThemeOptions = {
   seed: ThemeSeed;
 };
 
+const MOTION_DURATIONS: Record<ThemeSeed['motion'], { fast: string; normal: string; slow: string }> = {
+  snappy: { fast: '120ms', normal: '200ms', slow: '320ms' },
+  calm: { fast: '180ms', normal: '300ms', slow: '480ms' },
+  expressive: { fast: '160ms', normal: '280ms', slow: '440ms' },
+  reduced: { fast: '0ms', normal: '0ms', slow: '0ms' }
+};
+
 function colorHex(value: string | { hex: string }): string {
   return typeof value === 'string' ? value : value.hex;
 }
@@ -28,7 +35,11 @@ function scaleValue(scale: FluidScaleStep[], name: string, fallback: string): st
 }
 
 /** Compiles token families and semantic aliases from a theme seed. */
-export function createTheme({ name, seed }: CreateThemeOptions): ThemeContract {
+export function createTheme({ name, seed: inputSeed }: CreateThemeOptions): ThemeContract {
+  const seed = { ...inputSeed };
+  const motionDurations = Object.hasOwn(MOTION_DURATIONS, seed.motion)
+    ? MOTION_DURATIONS[seed.motion]
+    : MOTION_DURATIONS.snappy;
   const optimized = optimizePalette(seed.color, {
     engine: 'advanced',
     goal: 'ui',
@@ -101,9 +112,7 @@ export function createTheme({ name, seed }: CreateThemeOptions): ThemeContract {
       },
       motion: {
         preset: seed.motion,
-        fast: '120ms',
-        normal: '200ms',
-        slow: '320ms'
+        ...motionDurations
       },
       state: {
         mode: seed.mode,

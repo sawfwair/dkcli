@@ -25,6 +25,7 @@
     type DateRangeValue as InternalDateRangeValue
   } from '../internal/behavior/index.js';
   import { FieldFrame } from '../primitives/index.js';
+  import RequiredSelection from '../primitives/RequiredSelection.svelte';
   import {
     DEFAULT_RANGE_DATE_PICKER_THEME,
     createRangeDatePickerRegistration,
@@ -92,7 +93,7 @@
 
   let internalValue = $state(untrack(() => normalizeRange(value)));
   let previousValue = $state(untrack(() => JSON.stringify(value ?? {})));
-  let internalOpen = $state(untrack(() => open));
+  let internalOpen = $state(untrack(() => open && !disabled));
   let previousOpen = $state(untrack(() => open));
 
   let visibleMonth = $state(untrack(() => monthStartIso(value?.start ?? todayIso())));
@@ -100,13 +101,16 @@
   let triggerEl: HTMLButtonElement | null = $state(null);
   let surfaceEl: HTMLDivElement | null = $state(null);
   let restoreFocusEl: HTMLElement | null = null;
-  let dayRefs: Record<string, HTMLButtonElement | undefined> = {};
+  let dayRefs: Record<string, Set<HTMLButtonElement> | undefined> = {};
 
   function registerDay(node: HTMLButtonElement, iso: string) {
-    dayRefs[iso] = node;
+    const refs = dayRefs[iso] ?? new Set<HTMLButtonElement>();
+    refs.add(node);
+    dayRefs[iso] = refs;
     return {
       destroy() {
-        delete dayRefs[iso];
+        refs.delete(node);
+        if (refs.size === 0 && dayRefs[iso] === refs) delete dayRefs[iso];
       }
     };
   }
@@ -129,7 +133,9 @@
 
   async function syncFocus(): Promise<void> {
     await tick();
-    dayRefs[focusedDate]?.focus();
+    const candidates = Array.from(dayRefs[focusedDate] ?? []);
+    const preferred = candidates.find((node) => node.dataset.outside !== 'true') ?? candidates[0];
+    preferred?.focus();
   }
 
   function openCalendar(): void {
@@ -145,18 +151,20 @@
     void syncFocus();
   }
 
-  function closeCalendar(): void {
+  function closeCalendar(restoreFocus = true): void {
     const focusTarget = restoreFocusEl ?? triggerEl;
     emitOpen(false);
-    focusTarget?.focus();
-    void tick().then(() => {
+    if (restoreFocus) {
       focusTarget?.focus();
-    });
+      void tick().then(() => {
+        focusTarget?.focus();
+      });
+    }
   }
 
   function chooseDate(iso: string): void {
     if (
-      isDateDisabled({
+      disabled || isDateDisabled({
         value: iso,
         min,
         max,
@@ -233,7 +241,7 @@
       return;
     }
     if (isEventOutside(surfaceEl, event.target) && isEventOutside(triggerEl, event.target)) {
-      closeCalendar();
+      closeCalendar(Boolean(surfaceEl?.contains(document.activeElement)));
     }
   }
 
@@ -272,12 +280,15 @@
   });
   run(() => {
     if (open !== previousOpen) {
-      internalOpen = open;
+      internalOpen = open && !disabled;
       previousOpen = open;
       if (internalOpen) {
         void syncFocus();
       }
     }
+  });
+  run(() => {
+    if (disabled && internalOpen) emitOpen(false);
   });
   let describedBy = $derived(error ? `${fieldId}-error` : description ? `${fieldId}-description` : undefined);
   let calendarPair = $derived(buildRangeCalendarPair({
@@ -306,9 +317,15 @@
   descriptionStyle={slotStyles.description}
   errorStyle={slotStyles.error}
 >
+  <RequiredSelection
+    {required}
+    {disabled}
+    value={internalValue.start && internalValue.end ? `${internalValue.start}/${internalValue.end}` : ''}
+    focusTarget={triggerEl}
+  />
   {#if name}
-    <input type="hidden" name={`${name}[start]`} value={internalValue.start ?? ''} />
-    <input type="hidden" name={`${name}[end]`} value={internalValue.end ?? ''} />
+    <input type="hidden" name={`${name}[start]`} value={internalValue.start ?? ''} {disabled} />
+    <input type="hidden" name={`${name}[end]`} value={internalValue.end ?? ''} {disabled} />
   {/if}
 
   <button
@@ -383,7 +400,7 @@
                   data-in-range={day.inRange && !day.edge ? 'true' : 'false'}
                   data-outside={day.outsideMonth ? 'true' : 'false'}
                   data-today={day.today ? 'true' : 'false'}
-                  tabindex={day.focused ? 0 : -1}
+                  tabindex={day.focused && !day.outsideMonth ? 0 : -1}
                   disabled={day.disabled}
                   onclick={() => chooseDate(day.iso)}
                   onkeydown={(event) => handleDayKeydown(event, day.iso)}

@@ -2,6 +2,7 @@
 
 import { typesetParagraph, type TypesetOptions, type TypesetResult } from './typeset.ts';
 import type { EngineMode, WhiteSpaceMode } from './types.ts';
+import { assertFiniteOutput, assertPositiveFinite } from './numeric-validation.ts';
 
 export type TypographyProfile = 'default' | 'low-vision';
 
@@ -47,11 +48,14 @@ function scoreCrowdingRisk(
 }
 
 export function recommendTypography(input: TypographyInput): TypographyRecommendation {
+  assertPositiveFinite(input.fontSize, 'Typography font size');
+  assertPositiveFinite(input.containerWidth, 'Typography container width');
   const engine = input.engine ?? 'basic';
   const profile = input.profile ?? 'default';
   const contrastLc = input.contrastLc ?? 75;
   const averageGlyphWidth = input.fontSize * 0.52;
   const charactersPerLine = parseFloat((input.containerWidth / averageGlyphWidth).toFixed(1));
+  assertFiniteOutput(charactersPerLine, 'Characters per line');
 
   let lineHeight = 1.45;
   let letterSpacingEm = 0;

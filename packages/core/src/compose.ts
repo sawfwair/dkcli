@@ -3,6 +3,8 @@
 import type { DesignDocument } from './design.ts';
 import { analyzeImportance, type ImportanceReport } from './saliency.ts';
 import { area, center, round } from './types.ts';
+import { assertDesignDocument, assertFrame, assertRectangles } from './geometry-validation.ts';
+import { assertFiniteOutput } from './numeric-validation.ts';
 
 export type Rect = {
   id: string;
@@ -38,6 +40,7 @@ function clamp01(value: number): number {
 }
 
 function normalizeScore(value: number): number {
+  assertFiniteOutput(value, 'Composition score');
   return parseFloat(clamp01(value).toFixed(3));
 }
 
@@ -69,6 +72,8 @@ function gapSeries(values: number[]): number[] {
 
 /** Scores geometric composition heuristics for rectangles within a frame. */
 export function scoreComposition(rects: Rect[], frame: Frame): CompositionScore {
+  assertFrame(frame);
+  assertRectangles(rects);
   const centerX = frame.width / 2;
   const centerY = frame.height / 2;
   const totalArea = rects.reduce((sum, rect) => sum + rect.width * rect.height, 0);
@@ -188,6 +193,7 @@ export function scoreDesignComposition(
   document: DesignDocument,
   importanceReport?: ImportanceReport
 ): AdvancedCompositionScore {
+  assertDesignDocument(document);
   const rects = document.elements.map((element) => ({
     id: element.id,
     x: element.x,

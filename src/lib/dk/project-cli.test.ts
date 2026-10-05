@@ -15,11 +15,19 @@ const project = {
   viewports: [320, 768, 1280], history: [], reviews: []
 };
 
+const failedProject = {
+  ...project,
+  theme: { ...project.theme, overrides: { color: { primary: '#ffffff', 'on-primary': '#ffffff' } } }
+};
+
 function canonical(value: unknown): string {
   return JSON.stringify(value, (_key, current: unknown) => isRecord(current)
     ? Object.fromEntries(Object.keys(current).sort().map((key) => [key, current[key]])) : current);
 }
-const identity = createHash('sha256').update(canonical({ schemaVersion: project.schemaVersion, theme: project.theme, viewports: project.viewports })).digest('hex');
+function identityFor(input: typeof project): string {
+  return createHash('sha256').update(canonical({ schemaVersion: input.schemaVersion, theme: input.theme, viewports: input.viewports })).digest('hex');
+}
+const identity = identityFor(project);
 
 type Capture = { io: CliIO & { writeFile: (filePath: string, value: string) => Promise<void> }; writes: Record<string, string>; readonly stdout: string; readonly stderr: string };
 function capture(files: Record<string, string> = {}): Capture {
@@ -55,7 +63,8 @@ describe('portable project CLI', () => {
     const summary = object(result.summary);
     expect(summary.componentCount).toBe(38);
     expect(summary.fixtureCount).toBe(180);
-    expect(summary.failedFixtureCount).toBeGreaterThan(0);
+    expect(summary.failedFixtureCount).toBe(0);
+    expect(summary.pass).toBe(true);
     const fixtures = result.fixtures;
     expect(Array.isArray(fixtures)).toBe(true);
     if (!Array.isArray(fixtures)) throw new Error('Expected mathematical fixtures.');
@@ -69,15 +78,32 @@ describe('portable project CLI', () => {
       });
     });
     expect(widthChecks.map((check) => check.width)).toEqual(expect.arrayContaining([320, 768, 1280]));
-    expect(widthChecks.some((check) => typeof check.width === 'number' && check.width < 320 && check.pass === false)).toBe(true);
+    expect(widthChecks.some((check) => typeof check.width === 'number' && check.width < 320)).toBe(true);
+    expect(widthChecks.every((check) => check.pass === true)).toBe(true);
   });
 
-  it('emits the complete math artifact before a strict failure', async () => {
+  it('emits the complete math artifact with a strict success for the reviewed theme', async () => {
     const output = capture({ '/virtual/project.json': JSON.stringify(project) });
+    expect(await runCli(['project', 'verify', '--input=project.json', '--format=json', '--strict'], output.io)).toBe(0);
+    expect(object(artifact(output.stdout).summary)).toMatchObject({ componentCount: 38, fixtureCount: 180, failedFixtureCount: 0, pass: true });
+    expect(output.stderr).toBe('');
+  });
+
+  it('emits the complete math artifact before a real contrast failure exits strictly', async () => {
+    const output = capture({ '/virtual/project.json': JSON.stringify(failedProject) });
     expect(await runCli(['project', 'verify', '--input=project.json', '--format=json', '--strict'], output.io)).toBe(1);
-    expect(object(artifact(output.stdout).summary).componentCount).toBe(38);
+    const result = artifact(output.stdout);
+    expect(object(result.summary).componentCount).toBe(38);
+    expect(object(result.summary).failedFixtureCount).toBeGreaterThan(0);
+    if (!Array.isArray(result.fixtures)) throw new Error('Expected mathematical fixtures.');
+    const contrast = result.fixtures.flatMap((fixture: unknown) => {
+      const checks = object(fixture).contrast;
+      if (!Array.isArray(checks)) throw new Error('Expected contrast proofs.');
+      return checks.map((check: unknown) => object(check));
+    });
+    expect(contrast.some((check) => check.pass === false && check.lc === 0 && check.foreground === check.background)).toBe(true);
     expect(output.stderr).toContain('strict verification failed');
-    expect(output.stderr).toContain('layout overflow');
+    expect(output.stderr).toContain('contrast');
   });
 
   it('applies a matching override patch while retaining the previous revision', async () => {
@@ -117,44 +143,50 @@ function string(value: unknown): string {
   if (typeof value !== 'string') throw new Error('Expected a string.');
   return value;
 }
-let receiptPromise: Promise<ProjectQualificationReceipt> | undefined;
-async function makeReceipt(): Promise<ProjectQualificationReceipt> {
-  receiptPromise ??= (async () => {
-    const output = capture({ '/virtual/project.json': JSON.stringify(project) });
-    await runCli(['project', 'verify', '--input=project.json', '--json'], output.io);
-    const report = artifact(output.stdout);
-    if (!Array.isArray(report.fixtures) || !Array.isArray(report.runs)) throw new Error('Expected complete math results.');
-    const fixtures = report.fixtures.map((fixture: unknown) => object(fixture));
-    const components = report.runs.map((run: unknown) => {
-      const item = object(run);
-      const slug = string(item.slug);
-      const cases = fixtures.filter((fixture) => fixture.componentId === slug);
+const receiptPromises = new Map<string, Promise<ProjectQualificationReceipt>>();
+async function makeReceipt(sourceProject = project): Promise<ProjectQualificationReceipt> {
+  const sourceIdentity = identityFor(sourceProject);
+  let receiptPromise = receiptPromises.get(sourceIdentity);
+  if (!receiptPromise) {
+    receiptPromise = (async () => {
+      const output = capture({ '/virtual/project.json': JSON.stringify(sourceProject) });
+      await runCli(['project', 'verify', '--input=project.json', '--json'], output.io);
+      const report = artifact(output.stdout);
+      if (!Array.isArray(report.fixtures) || !Array.isArray(report.runs)) throw new Error('Expected complete math results.');
+      const fixtures = report.fixtures.map((fixture: unknown) => object(fixture));
+      const components = report.runs.map((run: unknown) => {
+        const item = object(run);
+        const slug = string(item.slug);
+        const cases = fixtures.filter((fixture) => fixture.componentId === slug);
+        return {
+          component: slug, fixtureCount: number(item.fixtureCount),
+          failedCaseIds: cases.filter((fixture) => fixture.pass === false).map((fixture) => string(fixture.id)),
+          unsupportedCaseIds: cases.filter((fixture) => object(fixture.coverage).complete === false).map((fixture) => string(fixture.id))
+        };
+      });
+      const failedCount = components.reduce((sum, component) => sum + component.failedCaseIds.length, 0);
       return {
-        component: slug, fixtureCount: number(item.fixtureCount),
-        failedCaseIds: cases.filter((fixture) => fixture.pass === false).map((fixture) => string(fixture.id)),
-        unsupportedCaseIds: cases.filter((fixture) => object(fixture.coverage).complete === false).map((fixture) => string(fixture.id))
+        schemaVersion: 1, createdAt: '2026-10-04T12:00:00.000Z', projectIdentity: sourceIdentity,
+        artifactFingerprint: 'a'.repeat(64), status: failedCount > 0 ? 'failed' : 'incomplete',
+        browser: { provider: 'local-chromium', version: '131.0.0', userAgent: 'Qualification test browser' },
+        viewports: [...sourceProject.viewports], fonts: { requested: { ...sourceProject.theme.fonts }, ready: true, loaded: [] },
+        mathematics: {
+          fixtureCount: components.reduce((sum, component) => sum + component.fixtureCount, 0),
+          failedCount,
+          unsupportedCount: components.reduce((sum, component) => sum + component.unsupportedCaseIds.length, 0), components
+        },
+        measurements: sourceProject.viewports.map((width) => ({
+          component: 'button', caseId: 'rest', axes: { size: 'md' }, state: { rest: true },
+          viewport: { width, height: 900 },
+          checks: [{ kind: 'overflow', status: 'pass', message: 'The measured button fits its container.' }],
+          geometry: [{ selector: 'button', bounds: { x: 0, y: 0, width: 80, height: 44 }, clientWidth: 80, scrollWidth: 80, textOverflow: false, containerOverflow: false, fontFamily: 'system-ui', fontSize: '16px' }],
+          screenshot: { mediaType: 'image/jpeg', data: 'aGVsbG8=', width, height: 900 }
+        })),
+        coverage: { componentCount: 1, caseCount: 1, widthCount: sourceProject.viewports.length, untested: ['Other components have no measured scenes in this test receipt.'], unsupported: [] }
       };
-    });
-    return {
-      schemaVersion: 1, createdAt: '2026-10-04T12:00:00.000Z', projectIdentity: identity,
-      artifactFingerprint: 'a'.repeat(64), status: 'failed',
-      browser: { provider: 'local-chromium', version: '131.0.0', userAgent: 'Qualification test browser' },
-      viewports: [...project.viewports], fonts: { requested: { ...project.theme.fonts }, ready: true, loaded: [] },
-      mathematics: {
-        fixtureCount: components.reduce((sum, component) => sum + component.fixtureCount, 0),
-        failedCount: components.reduce((sum, component) => sum + component.failedCaseIds.length, 0),
-        unsupportedCount: components.reduce((sum, component) => sum + component.unsupportedCaseIds.length, 0), components
-      },
-      measurements: project.viewports.map((width) => ({
-        component: 'button', caseId: 'rest', axes: { size: 'md' }, state: { rest: true },
-        viewport: { width, height: 900 },
-        checks: [{ kind: 'overflow', status: 'pass', message: 'The measured button fits its container.' }],
-        geometry: [{ selector: 'button', bounds: { x: 0, y: 0, width: 80, height: 44 }, clientWidth: 80, scrollWidth: 80, textOverflow: false, containerOverflow: false, fontFamily: 'system-ui', fontSize: '16px' }],
-        screenshot: { mediaType: 'image/jpeg', data: 'aGVsbG8=', width, height: 900 }
-      })),
-      coverage: { componentCount: 1, caseCount: 1, widthCount: project.viewports.length, untested: ['Other components have no measured scenes in this test receipt.'], unsupported: [] }
-    };
-  })();
+    })();
+    receiptPromises.set(sourceIdentity, receiptPromise);
+  }
   return structuredClone(await receiptPromise);
 }
 function respond(output: Capture, receipt: unknown): ReturnType<typeof vi.fn<typeof fetch>> {
@@ -205,12 +237,13 @@ describe('project qualification transport', () => {
   });
 
   it('posts exact project content with optional bearer authentication and emits a failed receipt before strict exit', async () => {
-    const receipt = await makeReceipt();
-    const output = capture({ '/virtual/project.json': JSON.stringify(project) });
+    const receipt = await makeReceipt(failedProject);
+    expect(receipt.mathematics.failedCount).toBeGreaterThan(0);
+    const output = capture({ '/virtual/project.json': JSON.stringify(failedProject) });
     const request = respond(output, receipt);
     expect(await runCli(['project', 'qualify', '--input=project.json', '--runtime-url=https://runtime.example/workbench', '--runtime-token=private-test-token', `--artifact-fingerprint=${receipt.artifactFingerprint}`, '--json', '--strict'], output.io)).toBe(1);
     expect(request).toHaveBeenCalledWith('https://runtime.example/api/dk/projects/qualify', expect.objectContaining({
-      method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer private-test-token' }, body: JSON.stringify({ project })
+      method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer private-test-token' }, body: JSON.stringify({ project: failedProject })
     }));
     expect(artifact(output.stdout)).toEqual(receipt);
     expect(output.stderr).toContain('strict verification failed');
@@ -219,8 +252,8 @@ describe('project qualification transport', () => {
   });
 
   it('keeps the default artifact exit compatible and identifies provenance as reported by the runtime', async () => {
-    const output = capture({ '/virtual/project.json': JSON.stringify(project) });
-    respond(output, await makeReceipt());
+    const output = capture({ '/virtual/project.json': JSON.stringify(failedProject) });
+    respond(output, await makeReceipt(failedProject));
     expect(await runCli(['project', 'qualify', '--input=project.json', '--runtime-url=http://localhost:4173'], output.io)).toBe(0);
     expect(output.stdout).toContain('(reported by runtime)');
     expect(output.stdout).toContain('unsigned runtime claims');
@@ -228,7 +261,7 @@ describe('project qualification transport', () => {
   });
 
   it.each(['identity', 'fingerprint', 'false pass', 'math coverage'])('rejects mismatched or malformed %s evidence before emitting an artifact', async (kind) => {
-    const receipt = await makeReceipt();
+    const receipt = await makeReceipt(failedProject);
     if (kind === 'identity') receipt.projectIdentity = '0'.repeat(64);
     if (kind === 'false pass') receipt.status = 'passed';
     if (kind === 'math coverage') {
@@ -238,7 +271,7 @@ describe('project qualification transport', () => {
       receipt.mathematics.failedCount -= removed.failedCaseIds.length;
       receipt.mathematics.unsupportedCount -= removed.unsupportedCaseIds.length;
     }
-    const output = capture({ '/virtual/project.json': JSON.stringify(project) });
+    const output = capture({ '/virtual/project.json': JSON.stringify(failedProject) });
     respond(output, receipt);
     const args = ['project', 'qualify', '--input=project.json', '--runtime-url=http://localhost:4173', '--json'];
     if (kind === 'fingerprint') args.push(`--artifact-fingerprint=${'b'.repeat(64)}`);

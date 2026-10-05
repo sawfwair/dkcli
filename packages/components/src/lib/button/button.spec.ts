@@ -354,8 +354,10 @@ export const buttonSpec: ComponentSpec = createComponentSpec({
     layout: {
       target: 'root',
       widths: [180, 240, 320],
-      heights: [44, 48, 52],
+      // Size presets define minimum block sizes; complete labels may add lines.
       noOverflow: true,
+      textBehavior: 'wrap-anywhere',
+      lineHeight: 1.1,
       inlinePadding: slotVar('root', '--dk-button-inline-padding'),
       gap: slotVar('root', '--dk-button-gap'),
       labelFontSize: slotVar('label', '--dk-button-label-font-size'),
