@@ -19,15 +19,15 @@ test('public components hydrate and complete release and theme flows', async ({ 
   });
   await createRelease.click();
   await expect(releaseName).toBeFocused();
-  expect(await releaseName.evaluate((input) => input.validity.valueMissing)).toBe(true);
-  expect(await releaseOwner.evaluate((input) => input.validity.valueMissing)).toBe(true);
+  expect(await releaseName.evaluate((input) => input instanceof HTMLInputElement && input.validity.valueMissing)).toBe(true);
+  expect(await releaseOwner.evaluate((input) => input instanceof HTMLInputElement && input.validity.valueMissing)).toBe(true);
   expect(createRequests).toEqual([]);
   expect(await page.locator('tbody tr').allTextContents()).toEqual(initialRows);
   await releaseName.fill('Browser release');
   await createRelease.click();
   await expect(releaseOwner).toBeFocused();
   await expect(releaseName).toHaveValue('Browser release');
-  expect(await releaseOwner.evaluate((input) => input.validity.valueMissing)).toBe(true);
+  expect(await releaseOwner.evaluate((input) => input instanceof HTMLInputElement && input.validity.valueMissing)).toBe(true);
   expect(createRequests).toEqual([]);
   expect(await page.locator('tbody tr').allTextContents()).toEqual(initialRows);
   await releaseOwner.fill('Rafi');
