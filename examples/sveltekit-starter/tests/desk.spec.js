@@ -6,12 +6,34 @@ test('public components hydrate and complete release and theme flows', async ({ 
   page.on('pageerror', (error) => errors.push(error.message));
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Releases', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'Create release' }).click();
-  await expect(page.getByText('Correct the marked fields.')).toBeVisible();
-  await page.getByRole('textbox', { name: 'Release name', exact: true }).fill('Browser release');
-  await page.getByRole('textbox', { name: 'Release owner', exact: true }).fill('Rafi');
-  await page.getByRole('button', { name: 'Create release' }).click();
+  const releaseName = page.getByRole('textbox', { name: 'Release name', exact: true });
+  const releaseOwner = page.getByRole('textbox', { name: 'Release owner', exact: true });
+  const createRelease = page.getByRole('button', { name: 'Create release' });
+  const initialRows = await page.locator('tbody tr').allTextContents();
+  /** @type {string[]} */
+  const createRequests = [];
+  page.on('request', (request) => {
+    if (request.method() === 'POST' && new URL(request.url()).search === '?/create') {
+      createRequests.push(request.url());
+    }
+  });
+  await createRelease.click();
+  await expect(releaseName).toBeFocused();
+  expect(await releaseName.evaluate((input) => input.validity.valueMissing)).toBe(true);
+  expect(await releaseOwner.evaluate((input) => input.validity.valueMissing)).toBe(true);
+  expect(createRequests).toEqual([]);
+  expect(await page.locator('tbody tr').allTextContents()).toEqual(initialRows);
+  await releaseName.fill('Browser release');
+  await createRelease.click();
+  await expect(releaseOwner).toBeFocused();
+  await expect(releaseName).toHaveValue('Browser release');
+  expect(await releaseOwner.evaluate((input) => input.validity.valueMissing)).toBe(true);
+  expect(createRequests).toEqual([]);
+  expect(await page.locator('tbody tr').allTextContents()).toEqual(initialRows);
+  await releaseOwner.fill('Rafi');
+  await createRelease.click();
   await expect(page.getByRole('status')).toHaveText('Created Browser release.');
+  expect(createRequests).toHaveLength(1);
   await page.getByRole('row').filter({ hasText: 'Browser release' }).getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Review release' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
